@@ -51,82 +51,71 @@
   <FileSets Version="1" Minor="31">
     <FileSet Name="sources_1" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1">
       <Filter Type="Srcs"/>
-      <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/DSR_left_N_S.v">
+      <File Path="$PPRDIR/src/DSR_left_N_S.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/DSR_left_N_S.v"/>
-          <Attr Name="ImportTime" Val="1522155431"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/DSR_right_N_S.v">
+      <File Path="$PPRDIR/src/DSR_right_N_S.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/DSR_right_N_S.v"/>
-          <Attr Name="ImportTime" Val="1522155432"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/LOD_N.v">
+      <File Path="$PPRDIR/src/LOD_N.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/LOD_N.v"/>
-          <Attr Name="ImportTime" Val="1522155431"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/LZD_N.v">
+      <File Path="$PPRDIR/src/LZD_N.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/LZD_N.v"/>
-          <Attr Name="ImportTime" Val="1522155431"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/add_N.v">
+      <File Path="$PPRDIR/src/add_N.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/add_N.v"/>
-          <Attr Name="ImportTime" Val="1522155432"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/add_mantovf.v">
+      <File Path="$PPRDIR/src/add_mantovf.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/add_mantovf.v"/>
-          <Attr Name="ImportTime" Val="1522155431"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/data_extract.v">
+      <File Path="$PPRDIR/src/data_extract.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/data_extract.v"/>
-          <Attr Name="ImportTime" Val="1522155432"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/sub_N.v">
+      <File Path="$PPRDIR/src/sub_N.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/sub_N.v"/>
-          <Attr Name="ImportTime" Val="1522155432"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/posit_adder.v">
+      <File Path="$PPRDIR/src/posit_adder.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/posit_adder.v"/>
-          <Attr Name="ImportTime" Val="1522155431"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/src/posit_adder_8bit_tb.v">
+        <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -134,7 +123,7 @@
       </File>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopModule" Val="posit_adder"/>
+        <Option Name="TopModule" Val="posit_adder_8bit_tb_v"/>
         <Option Name="TopAutoSet" Val="TRUE"/>
       </Config>
     </FileSet>
@@ -145,31 +134,7 @@
       </Config>
     </FileSet>
     <FileSet Name="sim_1" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_1">
-      <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/posit_adder_8bit_tb.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sim_1/imports/pairhmm_posit_hdl/Pin1_8bit.txt">
-        <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../Pin1_8bit.txt"/>
-          <Attr Name="ImportTime" Val="1522156248"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sim_1/imports/pairhmm_posit_hdl/Pout_8bit_ES4.txt">
-        <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../Pout_8bit_ES4.txt"/>
-          <Attr Name="ImportTime" Val="1522156248"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sim_1/imports/pairhmm_posit_hdl/Pin2_8bit.txt">
-        <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../Pin2_8bit.txt"/>
-          <Attr Name="ImportTime" Val="1522156248"/>
-        </FileInfo>
-      </File>
+      <Filter Type="Srcs"/>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
         <Option Name="TopModule" Val="posit_adder_8bit_tb_v"/>
@@ -205,9 +170,7 @@
   <Runs Version="1" Minor="10">
     <Run Id="synth_1" Type="Ft3:Synth" SrcSet="sources_1" Part="xc7a35tcpg236-3" ConstrsSet="constrs_1" Description="Vivado Synthesis Defaults" State="current" Dir="$PRUNDIR/synth_1" IncludeInArchive="true">
       <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2017">
-          <Desc>Vivado Synthesis Defaults</Desc>
-        </StratHandle>
+        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2017"/>
         <Step Id="synth_design"/>
       </Strategy>
       <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
@@ -216,9 +179,7 @@
     </Run>
     <Run Id="impl_1" Type="Ft2:EntireDesign" Part="xc7a35tcpg236-3" ConstrsSet="constrs_1" Description="Default settings for Implementation." State="current" Dir="$PRUNDIR/impl_1" SynthRun="synth_1" IncludeInArchive="true">
       <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2017">
-          <Desc>Default settings for Implementation.</Desc>
-        </StratHandle>
+        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2017"/>
         <Step Id="init_design"/>
         <Step Id="opt_design"/>
         <Step Id="power_opt_design"/>
