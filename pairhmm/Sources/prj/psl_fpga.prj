@@ -1,0 +1,52 @@
+vhdl work "top/psl_accel.vhdl"
+vhdl work "top/psl_fpga.vhdl"
+
+vhdl2008 work "afu/lib/psl.vhd"
+
+vhdl2008 work "afu/pkg/control_package.vhd"
+vhdl2008 work "afu/pkg/cu_package.vhd"
+vhdl2008 work "afu/pkg/dma_package.vhd"
+vhdl2008 work "afu/pkg/frame_package.vhd"
+vhdl2008 work "afu/pkg/mmio_package.vhd"
+
+vhdl2008 work "afu/rtl/afu.vhd"
+vhdl2008 work "afu/rtl/control.vhd"
+vhdl2008 work "afu/rtl/cu.vhd"
+vhdl2008 work "afu/rtl/dma.vhd"
+vhdl2008 work "afu/rtl/fifo.vhd"
+vhdl2008 work "afu/rtl/frame.vhd"
+vhdl2008 work "afu/rtl/mmio.vhd"
+vhdl2008 work "afu/rtl/ram.vhd"
+
+## POSIT ARITHMETIC
+system work "posit/lib/shift_left.v"
+system work "posit/lib/shift_right.v"
+system work "posit/lib/LOD_N.sv"
+system work "posit/lib/LZD_N.sv"
+
+#system work "posit/es2/posit_defines.sv"
+#system work "posit/es2/posit_extract.sv"
+#system work "posit/es2/positmult_4.sv"
+#system work "posit/es2/positadd_4.sv"
+#system work "posit/es2/positadd_8.sv"
+#system work "posit/es2/posit_extract_accum.sv"
+#system work "posit/es2/positaccum_16.sv"
+
+system work "posit/es3/posit_defines_es3.sv"
+system work "posit/es3/posit_extract_es3.sv"
+system work "posit/es3/positmult_4_es3.sv"
+system work "posit/es3/positadd_4_es3.sv"
+system work "posit/es3/positadd_8_es3.sv"
+system work "posit/es3/posit_extract_accum_es3.sv"
+system work "posit/es3/positaccum_16_es3.sv"
+
+## PAIR-HMM CORE
+vhdl2008 work "pairhmm_sa/lib/functions.vhd"
+vhdl2008 work "pairhmm_sa/lib/wed.vhd"
+
+vhdl2008 work "pairhmm_sa/pkg/pe_package.vhd"
+vhdl2008 work "pairhmm_sa/pkg/pairhmm_package.vhd"
+
+verilog work "pairhmm_sa/rtl/asym_ram.v"
+vhdl2008 work "pairhmm_sa/rtl/pe.vhd"
+vhdl2008 work "pairhmm_sa/rtl/pairhmm.vhd"

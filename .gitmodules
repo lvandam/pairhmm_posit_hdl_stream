@@ -1,0 +1,9 @@
+[submodule "pairhmm/Sources/sim/pslse"]
+	path = pairhmm/Sources/sim/pslse
+	url = git://github.com/ibm-capi/pslse
+[submodule "pairhmm/Sources/pairhmm_sa"]
+	path = pairhmm/Sources/pairhmm_sa
+	url = https://github.com/lvandam/pairhmm_sa
+[submodule "pairhmm/Sources/posit"]
+	path = pairhmm/Sources/posit
+	url = https://github.com/lvandam/posit_arith_hdl
