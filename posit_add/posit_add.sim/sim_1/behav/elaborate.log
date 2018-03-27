@@ -1,0 +1,41 @@
+Vivado Simulator 2017.1
+Copyright 1986-1999, 2001-2016 Xilinx, Inc. All Rights Reserved.
+Running: /opt/applics/xilinx-vivado-2017.1/Vivado/2017.1/bin/unwrapped/lnx64.o/xelab -wto 2570ef0e721043cdaae16d02868fc0c5 --debug typical --relax --mt 8 -L xil_defaultlib -L unisims_ver -L unimacro_ver -L secureip --snapshot posit_adder_8bit_tb_v_behav xil_defaultlib.posit_adder_8bit_tb_v xil_defaultlib.glbl -log elaborate.log 
+Using 8 slave threads.
+Starting static elaboration
+Completed static elaboration
+Starting simulation data flow analysis
+WARNING: [XSIM 43-4099] "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/sub_N.v" Line 1. Module sub_N(N=32'b011) doesn't have a timescale but at least one module in design has a timescale.
+WARNING: [XSIM 43-4099] "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/sub_N.v" Line 1. Module sub_N(N=32'b011) doesn't have a timescale but at least one module in design has a timescale.
+WARNING: [XSIM 43-4099] "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/sub_N.v" Line 1. Module sub_N(N=32'b01000) doesn't have a timescale but at least one module in design has a timescale.
+WARNING: [XSIM 43-4099] "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/sub_N.v" Line 1. Module sub_N(N=8) doesn't have a timescale but at least one module in design has a timescale.
+WARNING: [XSIM 43-4099] "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/sub_N.v" Line 1. Module sub_N(N=32'b01000) doesn't have a timescale but at least one module in design has a timescale.
+WARNING: [XSIM 43-4099] "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/sub_N.v" Line 1. Module sub_N(N=32'b011) doesn't have a timescale but at least one module in design has a timescale.
+WARNING: [XSIM 43-4099] "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/sub_N.v" Line 1. Module sub_N(N=32'b011) doesn't have a timescale but at least one module in design has a timescale.
+WARNING: [XSIM 43-4099] "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/sub_N.v" Line 1. Module sub_N(N=32'b01000) doesn't have a timescale but at least one module in design has a timescale.
+WARNING: [XSIM 43-4099] "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/sub_N.v" Line 1. Module sub_N(N=8) doesn't have a timescale but at least one module in design has a timescale.
+WARNING: [XSIM 43-4099] "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/sub_N.v" Line 1. Module sub_N(N=32'b01000) doesn't have a timescale but at least one module in design has a timescale.
+Completed simulation data flow analysis
+Time Resolution for simulation is 1ps
+Compiling module xil_defaultlib.LOD(N=2)
+Compiling module xil_defaultlib.LOD(N=4)
+Compiling module xil_defaultlib.LOD(N=8)
+Compiling module xil_defaultlib.LOD_N(N=8)
+Compiling module xil_defaultlib.LZD(N=2)
+Compiling module xil_defaultlib.LZD(N=4)
+Compiling module xil_defaultlib.LZD(N=8)
+Compiling module xil_defaultlib.LZD_N(N=8)
+Compiling module xil_defaultlib.DSR_left_N_S(N=8,S=32'b011)
+Compiling module xil_defaultlib.data_extract(N=8,es=4)
+Compiling module xil_defaultlib.sub_N(N=32'b011)
+Compiling module xil_defaultlib.add_N(N=32'b011)
+Compiling module xil_defaultlib.sub_N(N=32'b01000)
+Compiling module xil_defaultlib.DSR_right_N_S(N=8,S=32'b011)
+Compiling module xil_defaultlib.add_N(N=8)
+Compiling module xil_defaultlib.sub_N(N=8)
+Compiling module xil_defaultlib.add_mantovf(N=32'b01000)
+Compiling module xil_defaultlib.DSR_right_N_S(N=16,S=32'b011)
+Compiling module xil_defaultlib.posit_adder(N=8,es=4)
+Compiling module xil_defaultlib.posit_adder_8bit_tb_v
+Compiling module xil_defaultlib.glbl
+Built simulation snapshot posit_adder_8bit_tb_v_behav

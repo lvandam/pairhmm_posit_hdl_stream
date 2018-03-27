@@ -1,0 +1,17 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  "../../../posit_add.srcs/sources_1/imports/Posit-Adder/DSR_left_N_S.v"
+verilog xil_defaultlib  "../../../posit_add.srcs/sources_1/imports/Posit-Adder/DSR_right_N_S.v"
+verilog xil_defaultlib  "../../../posit_add.srcs/sources_1/imports/Posit-Adder/LOD_N.v"
+verilog xil_defaultlib  "../../../posit_add.srcs/sources_1/imports/Posit-Adder/LZD_N.v"
+verilog xil_defaultlib  "../../../posit_add.srcs/sources_1/imports/Posit-Adder/add_N.v"
+verilog xil_defaultlib  "../../../posit_add.srcs/sources_1/imports/Posit-Adder/add_mantovf.v"
+verilog xil_defaultlib  "../../../posit_add.srcs/sources_1/imports/Posit-Adder/data_extract.v"
+verilog xil_defaultlib  "../../../posit_add.srcs/sources_1/imports/Posit-Adder/posit_adder.v"
+verilog xil_defaultlib  "../../../posit_add.srcs/sources_1/imports/Posit-Adder/sub_N.v"
+verilog xil_defaultlib  "../../../posit_add.srcs/sources_1/imports/Posit-Adder/posit_adder_8bit_tb.v"
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenRun Id="impl_1" LaunchPart="xc7a35tcpg236-3" LaunchTime="1522155664">
+  <File Type="WBT-USG" Name="usage_statistics_webtalk.html"/>
+  <File Type="BG-DRC" Name="posit_adder.drc"/>
+  <File Type="BG-BGN" Name="posit_adder.bgn"/>
+  <File Type="BITSTR-SYSDEF" Name="posit_adder.sysdef"/>
+  <File Type="BITSTR-MMI" Name="posit_adder.mmi"/>
+  <File Type="BITSTR-BMM" Name="posit_adder_bd.bmm"/>
+  <File Type="BITSTR-NKY" Name="posit_adder.nky"/>
+  <File Type="BITSTR-RBT" Name="posit_adder.rbt"/>
+  <File Type="BITSTR-MSK" Name="posit_adder.msk"/>
+  <File Type="BG-BIN" Name="posit_adder.bin"/>
+  <File Type="BG-BIT" Name="posit_adder.bit"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING-RPX" Name="posit_adder_timing_summary_postroute_physopted.rpx"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING-PB" Name="posit_adder_timing_summary_postroute_physopted.pb"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING" Name="posit_adder_timing_summary_postroute_physopted.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-BLACKBOX-DCP" Name="posit_adder_postroute_physopt_bb.dcp"/>
+  <File Type="POSTROUTE-PHYSOPT-DCP" Name="posit_adder_postroute_physopt.dcp"/>
+  <File Type="ROUTE-CLK" Name="posit_adder_clock_utilization_routed.rpt"/>
+  <File Type="ROUTE-SIMILARITY" Name="posit_adder_incremental_reuse_routed.rpt"/>
+  <File Type="ROUTE-TIMING-RPX" Name="posit_adder_timing_summary_routed.rpx"/>
+  <File Type="ROUTE-TIMING-PB" Name="posit_adder_timing_summary_routed.pb"/>
+  <File Type="ROUTE-TIMINGSUMMARY" Name="posit_adder_timing_summary_routed.rpt"/>
+  <File Type="ROUTE-STATUS-PB" Name="posit_adder_route_status.pb"/>
+  <File Type="ROUTE-STATUS" Name="posit_adder_route_status.rpt"/>
+  <File Type="PLACE-CTRL" Name="posit_adder_control_sets_placed.rpt"/>
+  <File Type="PLACE-IO" Name="posit_adder_io_placed.rpt"/>
+  <File Type="PWROPT-TIMING" Name="posit_adder_timing_summary_pwropted.rpt"/>
+  <File Type="PLACE-DCP" Name="posit_adder_placed.dcp"/>
+  <File Type="PLACE-UTIL-PB" Name="posit_adder_utilization_placed.pb"/>
+  <File Type="PHYSOPT-TIMING" Name="posit_adder_timing_summary_physopted.rpt"/>
+  <File Type="PWROPT-DRC" Name="posit_adder_drc_pwropted.rpt"/>
+  <File Type="PWROPT-DCP" Name="posit_adder_pwropt.dcp"/>
+  <File Type="PLACE-UTIL" Name="posit_adder_utilization_placed.rpt"/>
+  <File Type="POSTPLACE-PWROPT-TIMING" Name="posit_adder_timing_summary_postplace_pwropted.rpt"/>
+  <File Type="OPT-TIMING" Name="posit_adder_timing_summary_opted.rpt"/>
+  <File Type="OPT-HWDEF" Name="posit_adder.hwdef"/>
+  <File Type="PLACE-CLK" Name="posit_adder_clock_utilization_placed.rpt"/>
+  <File Type="RDI-RDI" Name="posit_adder.vdi"/>
+  <File Type="PLACE-TIMING" Name="posit_adder_timing_summary_placed.rpt"/>
+  <File Type="INIT-TIMING" Name="posit_adder_timing_summary_init.rpt"/>
+  <File Type="OPT-DRC" Name="posit_adder_drc_opted.rpt"/>
+  <File Type="OPT-DCP" Name="posit_adder_opt.dcp"/>
+  <File Type="OPT-METHODOLOGY-DRC" Name="posit_adder_methodology_drc_opted.rpt"/>
+  <File Type="PLACE-PRE-SIMILARITY" Name="posit_adder_incremental_reuse_pre_placed.rpt"/>
+  <File Type="PLACE-SIMILARITY" Name="posit_adder_incremental_reuse_placed.rpt"/>
+  <File Type="PA-TCL" Name="posit_adder.tcl"/>
+  <File Type="POSTPLACE-PWROPT-DCP" Name="posit_adder_postplace_pwropt.dcp"/>
+  <File Type="PHYSOPT-DCP" Name="posit_adder_physopt.dcp"/>
+  <File Type="PHYSOPT-DRC" Name="posit_adder_drc_physopted.rpt"/>
+  <File Type="ROUTE-ERROR-DCP" Name="posit_adder_routed_error.dcp"/>
+  <File Type="ROUTE-DCP" Name="posit_adder_routed.dcp"/>
+  <File Type="ROUTE-BLACKBOX-DCP" Name="posit_adder_routed_bb.dcp"/>
+  <File Type="ROUTE-DRC" Name="posit_adder_drc_routed.rpt"/>
+  <File Type="ROUTE-METHODOLOGY-DRC" Name="posit_adder_methodology_drc_routed.rpt"/>
+  <File Type="ROUTE-DRC-PB" Name="posit_adder_drc_routed.pb"/>
+  <File Type="ROUTE-METHODOLOGY-DRC-PB" Name="posit_adder_methodology_drc_routed.pb"/>
+  <File Type="ROUTE-DRC-RPX" Name="posit_adder_drc_routed.rpx"/>
+  <File Type="ROUTE-PWR" Name="posit_adder_power_routed.rpt"/>
+  <File Type="ROUTE-METHODOLOGY-DRC-RPX" Name="posit_adder_methodology_drc_routed.rpx"/>
+  <File Type="ROUTE-PWR-SUM" Name="posit_adder_power_summary_routed.pb"/>
+  <File Type="ROUTE-PWR-RPX" Name="posit_adder_power_routed.rpx"/>
+  <FileSet Name="sources" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1">
+    <Filter Type="Srcs"/>
+    <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/DSR_left_N_S.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/DSR_left_N_S.v"/>
+        <Attr Name="ImportTime" Val="1522155431"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/DSR_right_N_S.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/DSR_right_N_S.v"/>
+        <Attr Name="ImportTime" Val="1522155432"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/LOD_N.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/LOD_N.v"/>
+        <Attr Name="ImportTime" Val="1522155431"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/LZD_N.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/LZD_N.v"/>
+        <Attr Name="ImportTime" Val="1522155431"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/add_N.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/add_N.v"/>
+        <Attr Name="ImportTime" Val="1522155432"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/add_mantovf.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/add_mantovf.v"/>
+        <Attr Name="ImportTime" Val="1522155431"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/data_extract.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/data_extract.v"/>
+        <Attr Name="ImportTime" Val="1522155432"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/sub_N.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/sub_N.v"/>
+        <Attr Name="ImportTime" Val="1522155432"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/Posit-Adder/posit_adder.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/Posit-Adder/posit_adder.v"/>
+        <Attr Name="ImportTime" Val="1522155431"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/new/test.v">
+      <FileInfo>
+        <Attr Name="AutoDisabled" Val="1"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <Config>
+      <Option Name="DesignMode" Val="RTL"/>
+      <Option Name="TopModule" Val="posit_adder"/>
+      <Option Name="TopAutoSet" Val="TRUE"/>
+    </Config>
+  </FileSet>
+  <FileSet Name="constrs_in" Type="Constrs" RelSrcDir="$PSRCDIR/constrs_1">
+    <Filter Type="Constrs"/>
+    <Config>
+      <Option Name="ConstrsType" Val="XDC"/>
+    </Config>
+  </FileSet>
+  <Strategy Version="1" Minor="2">
+    <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2017">
+      <Desc>Default settings for Implementation.</Desc>
+    </StratHandle>
+    <Step Id="init_design"/>
+    <Step Id="opt_design"/>
+    <Step Id="power_opt_design"/>
+    <Step Id="place_design"/>
+    <Step Id="post_place_power_opt_design"/>
+    <Step Id="phys_opt_design"/>
+    <Step Id="route_design"/>
+    <Step Id="post_route_phys_opt_design"/>
+    <Step Id="write_bitstream"/>
+  </Strategy>
+</GenRun>

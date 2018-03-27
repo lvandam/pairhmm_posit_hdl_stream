@@ -1,0 +1,7 @@
+Running: xsim.dir/posit_adder_8bit_tb_v_behav/xsimk -simmode gui -wdb posit_adder_8bit_tb_v_behav.wdb -simrunnum 0 -socket 44958
+Design successfully loaded
+Design Loading Memory Usage: 42068 KB (Peak: 42068 KB)
+Design Loading CPU Usage: 30 ms
+Simulation completed
+Simulation Memory Usage: 128632 KB (Peak: 189344 KB)
+Simulation CPU Usage: 1790 ms

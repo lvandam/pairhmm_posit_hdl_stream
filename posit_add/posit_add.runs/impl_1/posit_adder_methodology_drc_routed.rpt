@@ -1,0 +1,34 @@
+Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2017.1 (lin64) Build 1846317 Fri Apr 14 18:54:47 MDT 2017
+| Date         : Tue Mar 27 15:02:12 2018
+| Host         : ce-xportal.et.tudelft.nl running 64-bit unknown
+| Command      : report_methodology -file posit_adder_methodology_drc_routed.rpt -rpx posit_adder_methodology_drc_routed.rpx
+| Design       : posit_adder
+| Device       : xc7a35tcpg236-3
+| Speed File   : -3
+| Design State : Routed
+-----------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: netlist
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max violations: <unlimited>
+             Violations found: 0
++------+----------+-------------+------------+
+| Rule | Severity | Description | Violations |
++------+----------+-------------+------------+
++------+----------+-------------+------------+
+
+2. REPORT DETAILS
+-----------------
+

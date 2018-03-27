@@ -1,0 +1,7 @@
+Vivado Simulator 2017.1
+Time resolution is 1 ps
+Stopped at time : 1005 ns : File "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/posit_adder_8bit_tb.v" Line 57
+Stopped at time : 1005 ns : File "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/posit_adder_8bit_tb.v" Line 57
+Stopped at time : 1005 ns : File "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/posit_adder_8bit_tb.v" Line 60
+Stopped at time : 1005 ns : File "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/posit_adder_8bit_tb.v" Line 61
+$finish called at time : 655455 ns : File "/home/laurensvandam/pairhmm_posit_hdl/posit_add/posit_add.srcs/sources_1/imports/Posit-Adder/posit_adder_8bit_tb.v" Line 63
