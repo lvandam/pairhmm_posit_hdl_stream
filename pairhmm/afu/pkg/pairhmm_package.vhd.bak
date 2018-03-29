@@ -1,0 +1,98 @@
+---------------------------------------------------------------------------------------------------
+--    _____          _____  _____   _    _  __  __  __  __ 
+--   |  __ \  /\    |_   _||  __ \ | |  | ||  \/  ||  \/  |
+--   | |__) |/  \     | |  | |__) || |__| || \  / || \  / |
+--   |  ___// /\ \    | |  |  _  / |  __  || |\/| || |\/| |
+--   | |   / ____ \  _| |_ | | \ \ | |  | || |  | || |  | |
+--   |_|  /_/    \_\|_____||_|  \_\|_|  |_||_|  |_||_|  |_|
+--                                                         
+---------------------------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+library work;
+  use work.psl.all;
+  use work.functions.all;
+  use work.pe_package.all;
+  use work.dma_package.all;
+
+package pairhmm_package is
+    
+    constant PAIRHMM_MAX_SIZE                 : integer := 128;
+    constant PAIRHMM_BASEPAIRS_PER_CACHELINE  : integer := 128;
+    constant PAIRHMM_STRING_CACHELINES        : integer := PAIRHMM_MAX_SIZE / PAIRHMM_BASEPAIRS_PER_CACHELINE;
+    constant PAIRHMM_NUM_PES                  : integer := 4;
+    
+    type x_array_type is array (0 to NUM_PES - 1) of bp_type;
+    constant x_array_empty              : x_array_type  := (others => IGNORE);
+    constant x_array_actg               : x_array_type  := (0=>A, 1=>C, 2=>T, 3=>G, others=>IGNORE);
+    
+    type x_all_type   is array (0 to PE_DEPTH - 1) of x_array_type;
+    constant x_all_empty                : x_all_type    := (others => x_array_empty);
+    constant x_all_actg                 : x_all_type    := (others => x_array_actg);
+                
+    type pairhmm_in is record
+      cr                    : cr_in;
+      first                 : pe_in;
+      x_all                 : x_all_type;
+    end record;    
+   
+    constant pairhmm_in_empty : pairhmm_in := (
+      cr  => (
+        clk                 => '0',
+        rst                 => '0'
+      ),
+      first                 => pe_in_empty,
+      x_all                 => x_all_empty
+    );
+    
+    type pairhmm_out is record
+      score                 : prob;
+      last                  : pe_out;
+      ready                 : std_logic;
+    end record;
+
+    type pairhmm_regs_in is record
+      control               : std_logic_vector(PSL_MMIO_DATA_WIDTH - 1 downto 0);
+      size                  : std_logic_vector(PSL_MMIO_DATA_WIDTH - 1 downto 0);
+    end record;
+
+    type pairhmm_regs_out is record
+      status                : std_logic_vector(PSL_MMIO_DATA_WIDTH - 1 downto 0); -- status
+      reqs                  : std_logic_vector(PSL_MMIO_DATA_WIDTH - 1 downto 0); -- requests to streaming framework
+      reps                  : std_logic_vector(PSL_MMIO_DATA_WIDTH - 1 downto 0); -- replies from streaming framework
+      fifo                  : std_logic_vector(PSL_MMIO_DATA_WIDTH - 1 downto 0); -- fifo status
+      fifo_rvs              : std_logic_vector(PSL_MMIO_DATA_WIDTH - 1 downto 0); -- fifo read valids
+      fifo_was              : std_logic_vector(PSL_MMIO_DATA_WIDTH - 1 downto 0); -- fifo write acks
+    end record;
+
+    type pairhmm_regs is record
+      i                     : pairhmm_regs_in;
+      o                     : pairhmm_regs_out;
+    end record;
+    
+    type pairhmm_item is record
+      i                     : pairhmm_in;
+      o                     : pairhmm_out;
+      block_in              : std_logic_vector(DMA_DATA_WIDTH-1 downto 0);
+      block_in_valid        : std_logic;
+      block_out             : std_logic_vector(DMA_DATA_WIDTH-1 downto 0);
+      block_out_valid       : std_logic;
+      rst                   : std_logic;
+      in_fifo_empty         : std_logic;
+      in_fifo_full          : std_logic;
+      out_fifo_empty        : std_logic;
+      out_fifo_full         : std_logic;
+      regs                  : pairhmm_regs;    
+    end record;  
+    
+    component pairhmm is 
+      port (
+        i                   : in  pairhmm_in;
+        o                   : out pairhmm_out
+      );
+    end component;
+  
+end package;
