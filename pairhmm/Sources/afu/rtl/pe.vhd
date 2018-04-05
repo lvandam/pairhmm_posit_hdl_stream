@@ -18,8 +18,6 @@ library work;
   use work.functions.all;
   use work.pe_package.all;
 
-library xil_defaultlib;
-
 entity pe is
   generic (
     FIRST                   :   std_logic             := '0';   -- Not first processing element by default

@@ -8,7 +8,7 @@ hd_visual/
 *.dcp.bak
 .DS_Store
 posit_add/posit_add.cache/
-
+work/
 !pairhmm/Sources/cores/FPADD_12/FPADD_12.dcp
 !pairhmm/Sources/cores/FPADD_6/FPADD_6.dcp
 !pairhmm/Sources/cores/FPMULT/FPMULT.dcp

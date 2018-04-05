@@ -10,8 +10,6 @@ library work;
   use work.pairhmm_package.all;
   use work.pe_package.all;
 
-library xil_defaultlib;
-
 entity cu is
   port (
     i                                       : in  cu_in;

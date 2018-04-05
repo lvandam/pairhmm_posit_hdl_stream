@@ -19,8 +19,6 @@ library work;
   use work.pe_package.all;
   use work.pairhmm_package.all;
 
-library xil_defaultlib;
-
 entity pairhmm is
   port (
     cr  : in  cr_in;
