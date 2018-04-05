@@ -1,0 +1,567 @@
+Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2017.4 (lin64) Build 2086221 Fri Dec 15 20:54:30 MST 2017
+| Date         : Wed Apr  4 16:38:25 2018
+| Host         : ce-hpc02.ewi.tudelft.nl running 64-bit unknown
+| Command      : report_drc -ruledeck methodology_checks -name psl_fpga -file ./Implement/psl_fpga/reports/psl_fpga_drc_methodology_checks.rpt
+| Design       : psl_fpga
+| Device       : xc7vx690tffg1157-2
+| Speed File   : -2
+| Design State : Synthesized
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+Report DRC
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: netlist
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max violations: <unlimited>
+             Violations found: 101
++-----------+----------+-------------------------------------------------+------------+
+| Rule      | Severity | Description                                     | Violations |
++-----------+----------+-------------------------------------------------+------------+
+| PDRC-190  | Warning  | Suboptimally placed synchronized register chain | 6          |
+| SYNTH-6   | Warning  | Timing of a block RAM might be sub-optimal      | 70         |
+| TIMING-3  | Warning  | Invalid primary clock on Clock Modifying Block  | 1          |
+| TIMING-13 | Warning  | Timing paths ignored due to path segmentation   | 8          |
+| TIMING-16 | Warning  | Large setup violation                           | 1          |
+| XDCB-1    | Warning  | Runtime intensive exceptions                    | 3          |
+| XDCB-5    | Warning  | Runtime inefficient way to find pin objects     | 12         |
++-----------+----------+-------------------------------------------------+------------+
+
+2. REPORT DETAILS
+-----------------
+PDRC-190#1 Warning
+Suboptimally placed synchronized register chain  
+The FDPE cell b/pcihip0/shim_inst/PIO_i/PIO_EP/EP_TX/tx_wr_fifo_inst/U0/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.rd_rst_asreg_reg in site SLICE_X183Y399 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell b/pcihip0/shim_inst/PIO_i/PIO_EP/EP_TX/tx_wr_fifo_inst/U0/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.rd_rst_asreg_d1_reg is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#2 Warning
+Suboptimally placed synchronized register chain  
+The FDPE cell b/pcihip0/shim_inst/PIO_i/PIO_EP/EP_TX/tx_wr_fifo_inst/U0/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.wr_rst_asreg_reg in site SLICE_X183Y404 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell b/pcihip0/shim_inst/PIO_i/PIO_EP/EP_TX/tx_wr_fifo_inst/U0/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.wr_rst_asreg_d1_reg is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#3 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell b/pcihip0/psl_pcihip0_inst/pcie3_7x_0_i/inst/gt_top.gt_top_i/pipe_wrapper_i/pipe_reset_i/rxusrclk_rst_reg1_reg in site SLICE_X211Y421 is part of a synchronized register chain that is suboptimally placed as the load FDSE cell b/pcihip0/psl_pcihip0_inst/pcie3_7x_0_i/inst/gt_top.gt_top_i/pipe_wrapper_i/pipe_reset_i/rxusrclk_rst_reg2_reg is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#4 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell b/pcihip0/psl_pcihip0_inst/pcie3_7x_0_i/inst/pcie_top_i/force_adapt_i/loopback.cfg_loopback_reg in site SLICE_X194Y375 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell b/pcihip0/psl_pcihip0_inst/pcie3_7x_0_i/inst/pcie_top_i/force_adapt_i/cfg_loopback_reg0_reg is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#5 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell b/pcihip0/psl_pcihip0_inst/pcie3_7x_0_i/inst/pcie_top_i/force_adapt_i/speed_change_reg in site SLICE_X194Y380 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell b/pcihip0/psl_pcihip0_inst/pcie3_7x_0_i/inst/pcie_top_i/force_adapt_i/speed_change_reg0_reg is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#6 Warning
+Suboptimally placed synchronized register chain  
+The FDSE cell b/pcihip0/psl_pcihip0_inst/pcie3_7x_0_i/inst/gt_top.gt_top_i/pipe_wrapper_i/pipe_reset_i/dclk_rst_reg1_reg in site SLICE_X212Y409 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell b/pcihip0/psl_pcihip0_inst/pcie3_7x_0_i/inst/gt_top.gt_top_i/pipe_wrapper_i/pipe_reset_i/dclk_rst_reg2_reg is not placed in the same (SLICE) site.
+Related violations: <none>
+
+SYNTH-6#1 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/c0/cu0/hapl_ram/RAM_reg_bram_0, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#2 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/c0/cu0/hapl_ram/RAM_reg_bram_1, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#3 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/c0/cu0/hapl_ram/RAM_reg_bram_2, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#4 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/c0/cu0/hapl_ram/RAM_reg_bram_3, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#5 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/c0/cu0/hapl_ram/RAM_reg_bram_4, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#6 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/c0/cu0/hapl_ram/RAM_reg_bram_5, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#7 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/c0/cu0/read_ram/RAM_reg_bram_0, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#8 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/c0/cu0/read_ram/RAM_reg_bram_1, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#9 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/c0/cu0/read_ram/RAM_reg_bram_2, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#10 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/c0/cu0/read_ram/RAM_reg_bram_3, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#11 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/c0/cu0/read_ram/RAM_reg_bram_4, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#12 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/c0/cu0/read_ram/RAM_reg_bram_5, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#13 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb0/r_w.mem_reg_0, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#14 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb0/r_w.mem_reg_1, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#15 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb0/r_w.mem_reg_2, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#16 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb0/r_w.mem_reg_3, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#17 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb0/r_w.mem_reg_4, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#18 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb0/r_w.mem_reg_5, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#19 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb0/r_w.mem_reg_6, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#20 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb0/r_w.mem_reg_7, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#21 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb1/r_w.mem_reg_0, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#22 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb1/r_w.mem_reg_1, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#23 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb1/r_w.mem_reg_2, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#24 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb1/r_w.mem_reg_3, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#25 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb1/r_w.mem_reg_4, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#26 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb1/r_w.mem_reg_5, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#27 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb1/r_w.mem_reg_6, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#28 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rb1/r_w.mem_reg_7, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#29 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/rh/r_w.mem_reg, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#30 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_0, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#31 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_1, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#32 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_10, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#33 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_11, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#34 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_12, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#35 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_13, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#36 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_14, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#37 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_2, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#38 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_3, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#39 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_4, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#40 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_5, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#41 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_6, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#42 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_7, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#43 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_8, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#44 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wb/r_w.mem_reg_9, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#45 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wh/r_w.mem_reg, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#46 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_0, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#47 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_1, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#48 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_10, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#49 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_11, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#50 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_12, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#51 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_13, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#52 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_14, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#53 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_2, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#54 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_3, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#55 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_4, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#56 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_5, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#57 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_6, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#58 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_7, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#59 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_8, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#60 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance a0/afu0/f0/d0/wqs[0].wqb/ram/r_w.mem_reg_9, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#61 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance b/p/cd/wbufe/r_reg, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#62 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance b/p/ct/qt0/ll_in_cnt/r_reg, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#63 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance b/p/ct/qt0/ll_out_cnt1/r_reg, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#64 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance b/p/ct/qt0/ll_out_cnt2/r_reg, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#65 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance b/p/rx/rx0/ert/fmiss_16M/ram_wt/r_reg, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#66 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance b/p/rx/rx0/ert/fmiss_4k/ram_wt/r_reg, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#67 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance b/p/rx/rx0/ert/fmiss_64k/ram_wt/r_reg, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#68 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance b/p/rx/rx0/ert/mark_16M/ram_wt/r_reg, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#69 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance b/p/rx/rx0/ert/mark_4k/ram_wt/r_reg, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+SYNTH-6#70 Warning
+Timing of a block RAM might be sub-optimal  
+The timing for the instance b/p/rx/rx0/ert/mark_64k/ram_wt/r_reg, implemented as a block RAM, might be sub-optimal as no output register was merged into the block
+Related violations: <none>
+
+TIMING-3#1 Warning
+Invalid primary clock on Clock Modifying Block  
+A primary clock sys_clk is created on the output pin or net b/pcihip0/IBUFDS_GTE2_inst/O of a Clock Modifying Block
+Related violations: <none>
+
+TIMING-13#1 Warning
+Timing paths ignored due to path segmentation  
+Some timing paths are not reported due to path segmentation on pin(s) b/axihwicap/CLOCK_GEN_INST/Clk_Wiz/inst/mmcm_adv_inst/CLKFBOUT. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Related violations: <none>
+
+TIMING-13#2 Warning
+Timing paths ignored due to path segmentation  
+Some timing paths are not reported due to path segmentation on pin(s) b/axihwicap/CLOCK_GEN_INST/Clk_Wiz/inst/mmcm_adv_inst/CLKOUT0. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Related violations: <none>
+
+TIMING-13#3 Warning
+Timing paths ignored due to path segmentation  
+Some timing paths are not reported due to path segmentation on pin(s) b/pcihip0/psl_pcihip0_inst/pipe_clock_i/mmcm_i/CLKFBOUT. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Related violations: <none>
+
+TIMING-13#4 Warning
+Timing paths ignored due to path segmentation  
+Some timing paths are not reported due to path segmentation on pin(s) b/pcihip0/psl_pcihip0_inst/pipe_clock_i/mmcm_i/CLKOUT0. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Related violations: <none>
+
+TIMING-13#5 Warning
+Timing paths ignored due to path segmentation  
+Some timing paths are not reported due to path segmentation on pin(s) b/pcihip0/psl_pcihip0_inst/pipe_clock_i/mmcm_i/CLKOUT1. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Related violations: <none>
+
+TIMING-13#6 Warning
+Timing paths ignored due to path segmentation  
+Some timing paths are not reported due to path segmentation on pin(s) b/pcihip0/psl_pcihip0_inst/pipe_clock_i/mmcm_i/CLKOUT2. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Related violations: <none>
+
+TIMING-13#7 Warning
+Timing paths ignored due to path segmentation  
+Some timing paths are not reported due to path segmentation on pin(s) b/pcihip0/psl_pcihip0_inst/pipe_clock_i/mmcm_i/CLKOUT3. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Related violations: <none>
+
+TIMING-13#8 Warning
+Timing paths ignored due to path segmentation  
+Some timing paths are not reported due to path segmentation on pin(s) b/pcihip0/psl_pcihip0_inst/pipe_clock_i/pclk_i1_bufgctrl.pclk_i1/O. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Related violations: <none>
+
+TIMING-16#1 Warning
+Large setup violation  
+There is a large setup violation of -1.128 ns between a0/afu0/f0/c0/cu0/rs_reg[basepair][4]/C (clocked by userclk2_1) and a0/afu0/f0/c0/cu0/rs_reg[cell][0]/D (clocked by userclk2_1). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+XDCB-1#1 Warning
+Runtime intensive exceptions  
+The following constraint contains more than 10000 objects. To preserve runtime and memory performance, it is recommended to include minimum number of objects. Check whether this list can be simplified.
+-from = expands to 98567 design objects. 
+set_max_delay -datapath_only -from [get_cells {p/rx/rx0/tlbi_comp/ram_wt/r_reg_192_255_0_2/RAMA {p/jm/afummio0/slv3x/endff_data_upper_cap_q/dout_int_r...
+/afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/xdc/b_ooc_black_box.xdc (Line: 21)
+Related violations: <none>
+
+XDCB-1#2 Warning
+Runtime intensive exceptions  
+The following constraint contains more than 10000 objects. To preserve runtime and memory performance, it is recommended to include minimum number of objects. Check whether this list can be simplified.
+-from = expands to 98567 design objects. 
+set_max_delay -datapath_only -from [get_cells {p/rx/rx0/tlbi_comp/ram_wt/r_reg_192_255_0_2/RAMA {p/jm/afummio0/slv3x/endff_data_upper_cap_q/dout_int_r...
+/afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/xdc/b_ooc_black_box.xdc (Line: 22)
+Related violations: <none>
+
+XDCB-1#3 Warning
+Runtime intensive exceptions  
+The following constraint contains more than 10000 objects. To preserve runtime and memory performance, it is recommended to include minimum number of objects. Check whether this list can be simplified.
+-to = expands to 98567 design objects. 
+set_max_delay -datapath_only -from [get_ports [list {b_flash_dq[0]} {b_flash_dq[10]} {b_flash_dq[11]} {b_flash_dq[12]} {b_flash_dq[13]} {b_flash_dq[14...
+/afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/xdc/b_ooc_black_box.xdc (Line: 20)
+Related violations: <none>
+
+XDCB-5#1 Warning
+Runtime inefficient way to find pin objects  
+The option '-through : [get_pins -hierarchical -filter NAME=~*/CPLLLOCK]' of constraint 'set_false_path' uses inefficient query to find pin objects (see constraint position '11' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/cores/pcie3_7x_0/source/pcie3_7x_0-PCIE_X0Y2.xdc (Line: 135)
+Related violations: <none>
+
+XDCB-5#2 Warning
+Runtime inefficient way to find pin objects  
+The option '-through : [get_pins -hierarchical -filter NAME=~*/QPLLLOCK]' of constraint 'set_false_path' uses inefficient query to find pin objects (see constraint position '18' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/cores/pcie3_7x_0/source/pcie3_7x_0-PCIE_X0Y2.xdc (Line: 142)
+Related violations: <none>
+
+XDCB-5#3 Warning
+Runtime inefficient way to find pin objects  
+The option '-through : [get_pins -hierarchical -filter NAME=~*/RXCDRLOCK]' of constraint 'set_false_path' uses inefficient query to find pin objects (see constraint position '8' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/cores/pcie3_7x_0/source/pcie3_7x_0-PCIE_X0Y2.xdc (Line: 132)
+Related violations: <none>
+
+XDCB-5#4 Warning
+Runtime inefficient way to find pin objects  
+The option '-through : [get_pins -hierarchical -filter NAME=~*/RXDLYSRESETDONE]' of constraint 'set_false_path' uses inefficient query to find pin objects (see constraint position '17' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/cores/pcie3_7x_0/source/pcie3_7x_0-PCIE_X0Y2.xdc (Line: 141)
+Related violations: <none>
+
+XDCB-5#5 Warning
+Runtime inefficient way to find pin objects  
+The option '-through : [get_pins -hierarchical -filter NAME=~*/RXELECIDLE]' of constraint 'set_false_path' uses inefficient query to find pin objects (see constraint position '7' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/cores/pcie3_7x_0/source/pcie3_7x_0-PCIE_X0Y2.xdc (Line: 131)
+Related violations: <none>
+
+XDCB-5#6 Warning
+Runtime inefficient way to find pin objects  
+The option '-through : [get_pins -hierarchical -filter NAME=~*/RXPHALIGNDONE]' of constraint 'set_false_path' uses inefficient query to find pin objects (see constraint position '13' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/cores/pcie3_7x_0/source/pcie3_7x_0-PCIE_X0Y2.xdc (Line: 137)
+Related violations: <none>
+
+XDCB-5#7 Warning
+Runtime inefficient way to find pin objects  
+The option '-through : [get_pins -hierarchical -filter NAME=~*/RXPMARESETDONE]' of constraint 'set_false_path' uses inefficient query to find pin objects (see constraint position '12' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/cores/pcie3_7x_0/source/pcie3_7x_0-PCIE_X0Y2.xdc (Line: 136)
+Related violations: <none>
+
+XDCB-5#8 Warning
+Runtime inefficient way to find pin objects  
+The option '-through : [get_pins -hierarchical -filter NAME=~*/RXSYNCDONE]' of constraint 'set_false_path' uses inefficient query to find pin objects (see constraint position '14' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/cores/pcie3_7x_0/source/pcie3_7x_0-PCIE_X0Y2.xdc (Line: 138)
+Related violations: <none>
+
+XDCB-5#9 Warning
+Runtime inefficient way to find pin objects  
+The option '-through : [get_pins -hierarchical -filter NAME=~*/TXDLYSRESETDONE]' of constraint 'set_false_path' uses inefficient query to find pin objects (see constraint position '15' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/cores/pcie3_7x_0/source/pcie3_7x_0-PCIE_X0Y2.xdc (Line: 139)
+Related violations: <none>
+
+XDCB-5#10 Warning
+Runtime inefficient way to find pin objects  
+The option '-through : [get_pins -hierarchical -filter NAME=~*/TXPHALIGNDONE]' of constraint 'set_false_path' uses inefficient query to find pin objects (see constraint position '9' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/cores/pcie3_7x_0/source/pcie3_7x_0-PCIE_X0Y2.xdc (Line: 133)
+Related violations: <none>
+
+XDCB-5#11 Warning
+Runtime inefficient way to find pin objects  
+The option '-through : [get_pins -hierarchical -filter NAME=~*/TXPHINITDONE]' of constraint 'set_false_path' uses inefficient query to find pin objects (see constraint position '10' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/cores/pcie3_7x_0/source/pcie3_7x_0-PCIE_X0Y2.xdc (Line: 134)
+Related violations: <none>
+
+XDCB-5#12 Warning
+Runtime inefficient way to find pin objects  
+The option '-through : [get_pins -hierarchical -filter NAME=~*/TXSYNCDONE]' of constraint 'set_false_path' uses inefficient query to find pin objects (see constraint position '16' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /afs/rchland.ibm.com/scratch/s394/p44/1448321368.4000000/vivadobld.temp10/Sources/cores/pcie3_7x_0/source/pcie3_7x_0-PCIE_X0Y2.xdc (Line: 140)
+Related violations: <none>
+
+

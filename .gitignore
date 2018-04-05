@@ -1,0 +1,10 @@
+*.jou
+*.log
+hd_visual/
+.Xil/
+*.cache/
+*.bin
+*.dcp
+*.dcp.bak
+.DS_Store
+posit_add/posit_add.cache/
