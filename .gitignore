@@ -8,3 +8,11 @@ hd_visual/
 *.dcp.bak
 .DS_Store
 posit_add/posit_add.cache/
+
+!pairhmm/Sources/cores/FPADD_12/FPADD_12.dcp
+!pairhmm/Sources/cores/FPADD_6/FPADD_6.dcp
+!pairhmm/Sources/cores/FPMULT/FPMULT.dcp
+!pairhmm/Sources/cores/kernel_to_streaming_fifo/kernel_to_streaming_fifo.dcp
+!pairhmm/Sources/cores/probabilities_fifo/probabilities_fifo.dcp
+!pairhmm/Sources/cores/feedback_fifo/feedback_fifo.dcp
+!pairhmm/Checkpoint/b_route_design.dcp
