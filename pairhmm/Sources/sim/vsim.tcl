@@ -1,8 +1,6 @@
 # recompile
 proc r  {} {
 
-  # compile vhdl files
-
   # compile libs
   echo "Compiling libs"
   vcom -2008 -quiet ../afu/lib/functions.vhd
@@ -19,11 +17,20 @@ proc r  {} {
   vcom -2008 -quiet ../afu/pkg/mmio_package.vhd
   vcom -2008 -quiet ../afu/pkg/control_package.vhd
 
+  # compile ip
+  # fifo
+  vlog -quiet ../cores/feedback_fifo/sim/feedback_fifo.v
+  vlog -quiet ../cores/kernel_to_streaming_fifo/sim/kernel_to_streaming_fifo.v
+  vlog -quiet ../cores/probabilities_fifo/sim/probabilities_fifo.v
+  # FP units
+  vcom -2008 -quiet ../cores/FPADD_6/sim/FPADD_6.vhd
+  vcom -2008 -quiet ../cores/FPADD_12/sim/FPADD_12.vhd
+  vcom -2008 -quiet ../cores/FPMULT/sim/FPMULT.vhd
+
   # compile rtl
   echo "Compiling rtl"
   vlog -quiet ../afu/rtl/asym_ram.v
   vcom -2008 -quiet ../afu/rtl/buffers.vhd
-
   vcom -2008 -quiet ../afu/rtl/pe.vhd
   vcom -2008 -quiet ../afu/rtl/ram.vhd
   vcom -2008 -quiet ../afu/rtl/fifo.vhd
@@ -45,7 +52,7 @@ proc r  {} {
 
 # simulate
 proc s  {} {
-  vsim -t ns -novopt -c -pli pslse/afu_driver/src/veriuser.sl +nowarnTSCALE work.top
+  vsim -L fifo_generator_v13_2_1 -t ns -novopt -c -pli pslse/afu_driver/src/veriuser.sl +nowarnTSCALE work.top
   view wave
   radix h
   log * -r
