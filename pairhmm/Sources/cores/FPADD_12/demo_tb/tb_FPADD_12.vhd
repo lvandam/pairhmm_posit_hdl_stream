@@ -85,7 +85,7 @@ architecture tb of tb_FPADD_12 is
   constant CLOCK_PERIOD : time := 100 ns;
   constant T_HOLD       : time := 10 ns;
   constant T_STROBE     : time := CLOCK_PERIOD - (1 ns);
-  constant DUT_DELAY    : time := CLOCK_PERIOD * 11;
+  constant DUT_DELAY    : time := CLOCK_PERIOD * 12;
 
   -----------------------------------------------------------------------
   -- Testbench types and signals
@@ -327,10 +327,12 @@ architecture tb of tb_FPADD_12 is
 
   -- A operand slave channel signals
   signal s_axis_a_tvalid         : std_logic := '0';  -- payload is valid
+  signal s_axis_a_tready         : std_logic := '1';  -- slave is ready
   signal s_axis_a_tdata          : std_logic_vector(31 downto 0) := (others => '0');  -- data payload
 
   -- B operand slave channel signals
   signal s_axis_b_tvalid         : std_logic := '0';  -- payload is valid
+  signal s_axis_b_tready         : std_logic := '1';  -- slave is ready
   signal s_axis_b_tdata          : std_logic_vector(31 downto 0) := (others => '0');  -- data payload
 
   -- Result master channel signals
@@ -379,9 +381,11 @@ begin
       aclk                    => aclk,
     -- AXI4-Stream slave channel for operand A
       s_axis_a_tvalid         => s_axis_a_tvalid,
+      s_axis_a_tready         => s_axis_a_tready,
       s_axis_a_tdata          => s_axis_a_tdata,
       -- AXI4-Stream slave channel for operand B
       s_axis_b_tvalid         => s_axis_b_tvalid,
+      s_axis_b_tready         => s_axis_b_tready,
       s_axis_b_tdata          => s_axis_b_tdata,
       -- AXI4-Stream master channel for output result
       m_axis_result_tvalid    => m_axis_result_tvalid,
@@ -459,7 +463,10 @@ begin
       s_axis_a_tvalid <= '1';
       s_axis_a_tdata  <= tdata;
       abort := false;
-      wait until rising_edge(aclk);
+      loop
+        wait until rising_edge(aclk);
+        exit when s_axis_a_tready = '1';
+      end loop;
       wait for T_HOLD;
       s_axis_a_tvalid <= '0';
     end procedure drive_a_single;
@@ -518,7 +525,7 @@ begin
 
 
     -- Run a consecutive series of 100 operations with incrementing data
-    drive_a(0.1, normal, 100, 0.1);
+    drive_a(0.10000000000000001, normal, 100, 0.10000000000000001);
 
     -- Wait for simulation control to signal the next phase
     wait until sim_phase = phase_axi_handshake;
@@ -587,7 +594,10 @@ begin
       s_axis_b_tvalid <= '1';
       s_axis_b_tdata  <= tdata;
       abort := false;
-      wait until rising_edge(aclk);
+      loop
+        wait until rising_edge(aclk);
+        exit when s_axis_b_tready = '1';
+      end loop;
       wait for T_HOLD;
       s_axis_b_tvalid <= '0';
     end procedure drive_b_single;
