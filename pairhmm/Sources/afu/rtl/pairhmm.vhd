@@ -60,15 +60,15 @@ architecture logic of pairhmm is
   signal    addm_ina_valid  : std_logic;
   signal    addm_inb        : prob;
   signal    addm_inb_valid  : std_logic;
-  signal    addm_out        : prob;
-  signal    addm_out_valid  : std_logic;
+  signal    addm_out, addm_out_buf        : prob; -- Laurens: 1 extra delay (11 -> 12 cycles latency)
+  signal    addm_out_valid, addm_out_valid_buf  : std_logic;
 
   signal    addi_ina        : prob;
   signal    addi_ina_valid  : std_logic;
   signal    addi_inb        : prob;
   signal    addi_inb_valid  : std_logic;
-  signal    addi_out        : prob;
-  signal    addi_out_valid  : std_logic;
+  signal    addi_out, addi_out_buf        : prob;
+  signal    addi_out_valid, addi_out_valid_buf  : std_logic;
 
   signal    res_acc         : prob;
   signal    res_acc_valid   : std_logic;
@@ -89,7 +89,7 @@ architecture logic of pairhmm is
   signal    lastlast        : std_logic;
   signal    lastlast1       : std_logic;
 
-    COMPONENT FPADD_12
+    COMPONENT FPADD_11
       PORT (
         aclk : IN STD_LOGIC;
         s_axis_a_tvalid : IN STD_LOGIC;
@@ -219,7 +219,7 @@ begin
     end if;
   end process;
 
-  add_m : FPADD_12 port map (
+  add_m : FPADD_11 port map (
     aclk                    => cr.clk,
     s_axis_a_tvalid         => addm_ina_valid,
     s_axis_a_tdata          => addm_ina,
@@ -229,7 +229,7 @@ begin
     m_axis_result_tdata     => addm_out
   );
 
-  add_i : FPADD_12 port map (
+  add_i : FPADD_11 port map (
     aclk                    => cr.clk,
     s_axis_a_tvalid         => addi_ina_valid,
     s_axis_a_tdata          => addi_ina,
@@ -252,6 +252,11 @@ begin
         i_valid_delay(0)    <= lastlast1;
         rm                  <= resbusm;
         i_delay(0)          <= resbusi;
+        -- Laurens: 1 extra delay (11 -> 12 cycles latency)
+        addm_out_buf <= addm_out;
+        addm_out_valid_buf <= addm_out_valid;
+        addi_out_buf <= addi_out;
+        addi_out_valid_buf <= addi_out_valid;
 
         for K in 1 to 2*PE_ADD_CYCLES - 1 loop
           i_delay(K)        <= i_delay(K-1);
@@ -278,13 +283,13 @@ begin
 
         prevlast := lastlast1;
 
-        o.score       <= addi_out;
-        o.score_valid <= addi_out_valid;
+        o.score       <= addi_out_buf;
+        o.score_valid <= addi_out_valid_buf;
       end if;
     end if;
   end process;
 
-  res_acc                   <= addi_out        when res_rst = '0' else
+  res_acc                   <= addi_out_buf        when res_rst = '0' else
                                (others => '0');
 
   addm_ina                  <= res_acc;
@@ -293,8 +298,8 @@ begin
   addm_inb                  <= resbusm;
   addm_inb_valid            <= '1';
 
-  addi_ina                  <= addm_out;
-  addi_ina_valid            <= addm_out_valid;
+  addi_ina                  <= addm_out_buf;
+  addi_ina_valid            <= addm_out_valid_buf;
 
   addi_inb                  <= i_delay(2*PE_ADD_CYCLES-1);
   addi_inb_valid            <= i_valid_delay(2*PE_ADD_CYCLES-1);

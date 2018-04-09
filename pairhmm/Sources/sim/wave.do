@@ -5,6 +5,7 @@ add wave -noupdate    -group cu       -radix hex /top/a0/f0/c0/cu0/*
 add wave -noupdate    -group control  -radix hex /top/a0/f0/c0/*
 add wave -noupdate -r -group mmio     -radix hex /top/a0/f0/m0/*
 add wave -noupdate    -group dma      -radix hex /top/a0/f0/d0/*
+add wave -noupdate    -group cu0r      -radix hex /top/a0/f0/c0/cu0/r
 
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 1} {0 ns} 0}

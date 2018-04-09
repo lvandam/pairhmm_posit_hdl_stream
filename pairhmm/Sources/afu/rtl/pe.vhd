@@ -67,8 +67,11 @@ architecture rtl of pe is
   signal  fp_areadys        :   fp_readys_type;
   signal  fp_breadys        :   fp_readys_type;
   signal  fp_valids         :   fp_valids_type;
+  signal  fp_valid_add_delta_epsilon, fp_valid_add_zeta_eta : std_logic;
 
-  COMPONENT FPADD_12
+  signal tdata_add_delta_epsilon, tdata_add_zeta_eta : prob;
+
+  COMPONENT FPADD_11
     PORT (
       aclk : IN STD_LOGIC;
       s_axis_a_tvalid : IN STD_LOGIC;
@@ -330,7 +333,7 @@ begin
     m_axis_result_tdata   => step.add.albegatl
   );
 
-  add_delta_epsilon       : FPADD_12 port map (
+  add_delta_epsilon       : FPADD_11 port map (
     aclk                  => cr.clk,
     --aclken                => i.en,
     --aresetn               => not(cr.rst),
@@ -340,11 +343,11 @@ begin
     s_axis_b_tvalid       => step.init.valid,
     --s_axis_b_tready       => fp_breadys(9),
     s_axis_b_tdata        => step.trans.epit,
-    m_axis_result_tvalid  => fp_valids(9),
-    m_axis_result_tdata   => step.add.deept
+    m_axis_result_tvalid  => fp_valid_add_delta_epsilon,
+    m_axis_result_tdata   => tdata_add_delta_epsilon
   );
 
-  add_zeta_eta            : FPADD_12 port map (
+  add_zeta_eta            : FPADD_11 port map (
     aclk                  => cr.clk,
     --aclken                => i.en,
     --aresetn               => not(cr.rst),
@@ -354,9 +357,26 @@ begin
     s_axis_b_tvalid       => step.init.valid,
     --s_axis_b_tready       => fp_breadys(10),
     s_axis_b_tdata        => step.trans.etdl,
-    m_axis_result_tvalid  => fp_valids(10),
-    m_axis_result_tdata   => step.add.zeett
+    m_axis_result_tvalid  => fp_valid_add_zeta_eta,
+    m_axis_result_tdata   => tdata_add_zeta_eta
   );
+
+  -- Laurens: add extra buffer since FPADD11 should be 12 (11 is max to be generated)
+  process(cr.clk)
+  begin
+      if(rising_edge(cr.clk)) then
+          -- if cr.rst = '1' then
+
+          -- else
+          fp_valids(9) <= fp_valid_add_delta_epsilon;
+          fp_valids(10) <= fp_valid_add_zeta_eta;
+
+          step.add.deept <= tdata_add_delta_epsilon;
+          step.add.zeett <= tdata_add_zeta_eta;
+          -- end
+      end if;
+  end process;
+
 
 ---------------------------------------------------------------------------------------------------
 --     _____ _               ____      __  __       _ _   _       _ _           _   _

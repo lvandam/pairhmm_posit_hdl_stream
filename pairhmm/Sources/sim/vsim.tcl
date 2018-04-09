@@ -24,7 +24,7 @@ proc r  {} {
   vlog -quiet ../cores/probabilities_fifo/sim/probabilities_fifo.v
   # FP units
   vcom -2008 -quiet ../cores/FPADD_6/sim/FPADD_6.vhd
-  vcom -2008 -quiet ../cores/FPADD_12/sim/FPADD_12.vhd
+  vcom -2008 -quiet ../cores/FPADD_11/sim/FPADD_11.vhd
   vcom -2008 -quiet ../cores/FPMULT/sim/FPMULT.vhd
 
   # compile rtl

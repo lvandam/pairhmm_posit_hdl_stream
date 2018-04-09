@@ -1,6 +1,8 @@
 #ifndef __DEFINES_H
 #define __DEFINES_H
 
+#define DEBUG                 1
+
 #define MAX_POLLS             32000
 #define REPEATS               10
 #define MAX_DIFF_REPORT       50

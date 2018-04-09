@@ -3,6 +3,7 @@
 ###############################################################
 #set tclParams [list <param1> <value> <param2> <value> ... <paramN> <value>]
 set tclParams [list hd.visual 1 \
+               general.maxThreads 8 \
               ]
 
 #Define location for "Tcl" directory. Defaults to "./Tcl"
@@ -72,7 +73,7 @@ set_attribute module $top    top_level     1
 set_attribute module $top    prj           $prjDir/$top.prj
 set_attribute module $top    synth         ${run.topSynth}
 set_attribute module $top    synth_options "-flatten_hierarchy rebuilt -fanout_limit 60 -fsm_extraction one_hot -keep_equivalent_registers -resource_sharing off -no_lc -shreg_min_size 5 -no_iobuf"
-set_attribute module $top    ip            [list  $coreDir/FPADD_12/FPADD_12.xci       \
+set_attribute module $top    ip            [list  $coreDir/FPADD_11/FPADD_11.xci       \
                                                   $coreDir/FPADD_6/FPADD_6.xci         \
                                                   $coreDir/FPMULT/FPMULT.xci         \
                                                   $coreDir/feedback_fifo/feedback_fifo.xci         \

@@ -1,10 +1,10 @@
 -- Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
 -- --------------------------------------------------------------------------------
 -- Tool Version: Vivado v.2017.4 (lin64) Build 2086221 Fri Dec 15 20:54:30 MST 2017
--- Date        : Wed Apr  4 15:36:11 2018
--- Host        : ce-hpc02.ewi.tudelft.nl running 64-bit unknown
+-- Date        : Mon Apr  9 18:38:09 2018
+-- Host        : laurens-ubuntu running 64-bit Ubuntu 16.04.4 LTS
 -- Command     : write_vhdl -force -mode synth_stub
---               /home/laurensvandam/pairhmm/Sources/cores/kernel_to_streaming_fifo/kernel_to_streaming_fifo_stub.vhdl
+--               /home/laurens/Desktop/project_1/project_1.srcs/sources_1/ip/kernel_to_streaming_fifo/kernel_to_streaming_fifo_stub.vhdl
 -- Design      : kernel_to_streaming_fifo
 -- Purpose     : Stub declaration of top-level module interface
 -- Device      : xc7vx690tffg1157-2

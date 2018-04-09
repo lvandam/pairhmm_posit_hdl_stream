@@ -327,12 +327,10 @@ architecture tb of tb_FPADD_6 is
 
   -- A operand slave channel signals
   signal s_axis_a_tvalid         : std_logic := '0';  -- payload is valid
-  signal s_axis_a_tready         : std_logic := '1';  -- slave is ready
   signal s_axis_a_tdata          : std_logic_vector(31 downto 0) := (others => '0');  -- data payload
 
   -- B operand slave channel signals
   signal s_axis_b_tvalid         : std_logic := '0';  -- payload is valid
-  signal s_axis_b_tready         : std_logic := '1';  -- slave is ready
   signal s_axis_b_tdata          : std_logic_vector(31 downto 0) := (others => '0');  -- data payload
 
   -- Result master channel signals
@@ -381,11 +379,9 @@ begin
       aclk                    => aclk,
     -- AXI4-Stream slave channel for operand A
       s_axis_a_tvalid         => s_axis_a_tvalid,
-      s_axis_a_tready         => s_axis_a_tready,
       s_axis_a_tdata          => s_axis_a_tdata,
       -- AXI4-Stream slave channel for operand B
       s_axis_b_tvalid         => s_axis_b_tvalid,
-      s_axis_b_tready         => s_axis_b_tready,
       s_axis_b_tdata          => s_axis_b_tdata,
       -- AXI4-Stream master channel for output result
       m_axis_result_tvalid    => m_axis_result_tvalid,
@@ -463,10 +459,7 @@ begin
       s_axis_a_tvalid <= '1';
       s_axis_a_tdata  <= tdata;
       abort := false;
-      loop
-        wait until rising_edge(aclk);
-        exit when s_axis_a_tready = '1';
-      end loop;
+      wait until rising_edge(aclk);
       wait for T_HOLD;
       s_axis_a_tvalid <= '0';
     end procedure drive_a_single;
@@ -594,10 +587,7 @@ begin
       s_axis_b_tvalid <= '1';
       s_axis_b_tdata  <= tdata;
       abort := false;
-      loop
-        wait until rising_edge(aclk);
-        exit when s_axis_b_tready = '1';
-      end loop;
+      wait until rising_edge(aclk);
       wait for T_HOLD;
       s_axis_b_tvalid <= '0';
     end procedure drive_b_single;
