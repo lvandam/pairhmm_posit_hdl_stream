@@ -55,3 +55,6 @@ host-run:
 
 clean:
 	rm -rf $(APP_BUILD_DIR) $(APP_SIM_BUILD_DIR) $(APP_DIR)/src/*.o
+
+clean-logs:
+	rm -rf *.log
