@@ -13,6 +13,12 @@ program_C_SRCS 				:= $(wildcard $(APP_DIR)/$(SRC_DIR)/*.cpp)
 program_C_OBJS 				:= ${program_C_SRCS:.c=.o}
 program_OBJS 					:= $(program_C_OBJS)
 
+# power host libraries
+program_INCLUDE_DIRS 	:= /tools/ppc_64/libcxl
+program_LIBRARY_DIRS 	:= /tools/ppc_64/libcxl
+program_LIBRARIES 		:=
+program_STATIC_LIBS		:= /tools/ppc_64/libcxl/libcxl.a
+
 # compilers
 CPP               = c++
 
@@ -37,3 +43,7 @@ sim-run:
 
 vsim-run:
 	cd Sources/sim && vsim -do vsim.tcl
+
+host: $(program_OBJS)
+	mkdir -p $(APP_DIR)/build
+	$(CPP) $(program_OBJS) -o $(APP_DIR)/build/$(APP) /tools/ppc_64/libcxl/libcxl.a $(CFLAGS) -I/tools/ppc_64/libcxl -I/tools/ppc_64/libcxl/include -lrt -lpthread

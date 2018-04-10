@@ -9,7 +9,13 @@ hd_visual/
 .DS_Store
 posit_add/posit_add.cache/
 work/
-!pairhmm/Sources/cores/FPADD_12/FPADD_12.dcp
+pairhmm/Sources/host/app/build
+pairhmm/Sources/host/app/build-sim
+
+
+
+
+!pairhmm/Sources/cores/FPADD_11/FPADD_11.dcp
 !pairhmm/Sources/cores/FPADD_6/FPADD_6.dcp
 !pairhmm/Sources/cores/FPMULT/FPMULT.dcp
 !pairhmm/Sources/cores/kernel_to_streaming_fifo/kernel_to_streaming_fifo.dcp
