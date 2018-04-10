@@ -7,17 +7,19 @@ PSLSE_COMMON_DIR  = Sources/sim/pslse/common
 PSLSE_LIBCXL_DIR  = Sources/sim/pslse/libcxl
 APP_DIR           = Sources/host/app
 SRC_DIR           = src
+APP_BUILD_DIR     = $(APP_DIR)/build
+APP_SIM_BUILD_DIR     = $(APP_DIR)/sim-build
 
 # files
-program_C_SRCS 				:= $(wildcard $(APP_DIR)/$(SRC_DIR)/*.cpp)
-program_C_OBJS 				:= ${program_C_SRCS:.c=.o}
-program_OBJS 					:= $(program_C_OBJS)
+program_C_SRCS                          := $(wildcard $(APP_DIR)/$(SRC_DIR)/*.cpp)
+program_C_OBJS                          := ${program_C_SRCS:.c=.o}
+program_OBJS                                    := $(program_C_OBJS)
 
 # power host libraries
-program_INCLUDE_DIRS 	:= /tools/ppc_64/libcxl
-program_LIBRARY_DIRS 	:= /tools/ppc_64/libcxl
-program_LIBRARIES 		:=
-program_STATIC_LIBS		:= /tools/ppc_64/libcxl/libcxl.a
+program_INCLUDE_DIRS    := /tools/ppc_64/libcxl
+program_LIBRARY_DIRS    := /tools/ppc_64/libcxl
+program_LIBRARIES               :=
+program_STATIC_LIBS             := /tools/ppc_64/libcxl/libcxl.a
 
 # compilers
 CPP               = c++
@@ -47,3 +49,6 @@ vsim-run:
 host: $(program_OBJS)
 	mkdir -p $(APP_DIR)/build
 	$(CPP) $(program_OBJS) -o $(APP_DIR)/build/$(APP) /tools/ppc_64/libcxl/libcxl.a $(CFLAGS) -I/tools/ppc_64/libcxl -I/tools/ppc_64/libcxl/include -lrt -lpthread
+
+clean:
+	rm -rf $(APP_BUILD_DIR) $(APP_SIM_BUILD_DIR) $(APP_DIR)/src/*.o

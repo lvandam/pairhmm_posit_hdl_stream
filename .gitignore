@@ -3,12 +3,17 @@
 hd_visual/
 .Xil/
 *.cache/
+*.prm
 *.bin
 *.dcp
-*.dcp.bak
+*.bak
+modelsim.ini
 .DS_Store
 posit_add/posit_add.cache/
 work/
+pairhmm/.*
+pairhmm/Implement
+pairhmm/Synth
 pairhmm/Sources/host/app/build
 pairhmm/Sources/host/app/build-sim
 
