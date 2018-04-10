@@ -27,3 +27,5 @@ pairhmm/Sources/host/app/build-sim
 !pairhmm/Sources/cores/probabilities_fifo/probabilities_fifo.dcp
 !pairhmm/Sources/cores/feedback_fifo/feedback_fifo.dcp
 !pairhmm/Checkpoint/b_route_design.dcp
+!pairhmm/Checkpoint/b_route_design_125.dcp
+!pairhmm/Checkpoint/b_route_design_250.dcp
