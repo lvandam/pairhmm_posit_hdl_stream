@@ -50,5 +50,8 @@ host: $(program_OBJS)
 	mkdir -p $(APP_DIR)/build
 	$(CPP) $(program_OBJS) -o $(APP_DIR)/build/$(APP) /tools/ppc_64/libcxl/libcxl.a $(CFLAGS) -I/tools/ppc_64/libcxl -I/tools/ppc_64/libcxl/include -lrt -lpthread
 
+host-run:
+	$(APP_DIR)/build/$(APP) -m 32 2 2 1 1 1 1
+
 clean:
 	rm -rf $(APP_BUILD_DIR) $(APP_SIM_BUILD_DIR) $(APP_DIR)/src/*.o
