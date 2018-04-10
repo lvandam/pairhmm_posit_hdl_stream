@@ -251,7 +251,6 @@ int main(int argc, char *argv[])
     clock_hw = omp_get_wtime();
     clock_gettime(CLOCK_MONOTONIC, &hwstart); /* mark start time */
 
-
     DEBUG_PRINT("Setting up Work Element Descriptor...\n");
     struct wed *wed0 = NULL;
     if (posix_memalign((void **)&(wed0), CACHELINE_BYTES, sizeof(struct wed)))

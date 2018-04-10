@@ -10,12 +10,12 @@ const char XDATA[] = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGAC
 const char YDATA[] = "GTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTAC";
 
 
-void fill_batch(t_batch *b, int x, int y, float initial)
+void fill_batch(t_batch *batch, int x, int y, float initial)
 {
-    t_inits *init = b->init;
-    t_bbase *read = b->read;
-    t_bbase *hapl = b->hapl;
-    t_probs *prob = b->prob;
+    t_inits *init = batch->init;
+    t_bbase *read = batch->read;
+    t_bbase *hapl = batch->hapl;
+    t_probs *prob = batch->prob;
 
     int     xp  = px(x, y);
     int     xbp = pbp(xp);
@@ -45,6 +45,7 @@ void fill_batch(t_batch *b, int x, int y, float initial)
                 read[i].base[k] = 'S';
             }
         }
+
         for (int i = 0; i < ybp; i++)
         {
             if (i < y)
@@ -56,16 +57,17 @@ void fill_batch(t_batch *b, int x, int y, float initial)
                 hapl[i].base[k] = 'S';
             }
         }
+
         for (int i = 0; i < xp; i++)
         {
-            prob[i * PIPE_DEPTH + k].p[0].b = (0x3f000000 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); //zeta
-            prob[i * PIPE_DEPTH + k].p[1].b = (0x3e000001 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); //eta
-            prob[i * PIPE_DEPTH + k].p[2].b = (0x3f000002 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); //upsilon
-            prob[i * PIPE_DEPTH + k].p[3].b = (0x3e000003 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); //delta
-            prob[i * PIPE_DEPTH + k].p[4].b = (0x3f000004 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); //beta
-            prob[i * PIPE_DEPTH + k].p[5].b = (0x3e000005 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); //alpha
-            prob[i * PIPE_DEPTH + k].p[6].b = (0x3f000006 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); //distm_diff
-            prob[i * PIPE_DEPTH + k].p[7].b = (0x3e000007 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); //distm_simi
+            prob[i * PIPE_DEPTH + k].p[0].b = (0x3f000000 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // zeta
+            prob[i * PIPE_DEPTH + k].p[1].b = (0x3e000001 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // eta
+            prob[i * PIPE_DEPTH + k].p[2].b = (0x3f000002 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // upsilon
+            prob[i * PIPE_DEPTH + k].p[3].b = (0x3e000003 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // delta
+            prob[i * PIPE_DEPTH + k].p[4].b = (0x3f000004 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // beta
+            prob[i * PIPE_DEPTH + k].p[5].b = (0x3e000005 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // alpha
+            prob[i * PIPE_DEPTH + k].p[6].b = (0x3f000006 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // distm_diff
+            prob[i * PIPE_DEPTH + k].p[7].b = (0x3e000007 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // distm_simi
         }
     }
 } // fill_batch
@@ -121,24 +123,16 @@ void calculate_mids(t_batch *batch, int pair, int r, int c, float *M, float *I, 
                 distm = distm_diff;
             }
 
-            //printf("read:%d,hapl:%d,read:%c,hapl:%c,distm:%8X,",i,j,r,h,*(uint32_t*)&distm);
-
             M[i * w + j] = distm * (alpha * M[(i - 1) * w + (j - 1)] + beta * I[(i - 1) * w + (j - 1)] + beta * D[(i - 1) * w + (j - 1)]);
             I[i * w + j] = (delta * M[(i - 1) * w + (j)] + upsilon * I[(i - 1) * w + (j)]);
             D[i * w + j] = (eta * M[(i) * w + (j - 1)] + zeta * D[(i) * w + (j - 1)]);
-
-            //printf("m:%8X,i:%8X,d:%8X\n",*(uint32_t*)&M[i*w+j],*(uint32_t*)&I[i*w+j],*(uint32_t*)&D[i*w+j]);
-
-            //printf("i:%2d,j:%2d,%8X %8X %8X\n",i,j,*(uint32_t*)&M[i*w+j],*(uint32_t*)&I[i*w+j],*(uint32_t*)&D[i*w+j]);
         }
-        //printf("\n");
     }
 } // calculate_mids
 
 
 int count_errors(uint32_t *hr, uint32_t *sr, int num_batches)
 {
-    //int value_error = 0;
     int      total_errors = 0;
     uint32_t hw;
     uint32_t sw;
@@ -192,29 +186,18 @@ size_t calc_batch_size(int x, int y, int e)
     int ypadded = py(y);
 
     // Pad X and Y basepairs
-    int ybps = pbp(ypadded);
-    int xbps = pbp(xpadded);
-
-    //DEBUG_PRINT("Pair size                : Y=%3d, X=%3d \n", (int)y, (int)x);
-    //DEBUG_PRINT("Padded size              : Y=%3d, X=%3d \n", (int)ypadded, (int)xpadded);
+    int    ybps = pbp(ypadded);
+    int    xbps = pbp(xpadded);
 
     size_t init_size = CACHELINE_BYTES;
 
     size_t xbases = xbps * sizeof(t_bbase);
     size_t ybases = ybps * sizeof(t_bbase);
 
-    //DEBUG_PRINT("Size of intial values    : %6d / %d\n", (int) init_size, (int) init_size / CACHELINE_BYTES);
-    //DEBUG_PRINT("Size of haplotype string : %6d / %d\n", (int) ybases, (int) ybases / CACHELINE_BYTES);
-    //DEBUG_PRINT("Size of read string      : %6d / %d\n", (int) xbases, (int) xbases / CACHELINE_BYTES);
-
     size_t prob_size = xpadded * PIPE_DEPTH * sizeof(t_probs);
-
-    //DEBUG_PRINT("Size of probabilities    : %6d / %d\n", (int) prob_size, (int) prob_size / CACHELINE_BYTES);
 
     // Determine size of batch in bytes.
     size_t batch_size = init_size + xbases + ybases + prob_size;
-
-    //DEBUG_PRINT("Size of batch            : %6d / %d\n", (int) batch_size, (int) batch_size / CACHELINE_BYTES);
 
     return(batch_size);
 }

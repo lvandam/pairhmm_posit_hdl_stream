@@ -19,7 +19,7 @@ typedef union union_prob
 
 typedef struct struct_probs
 {
-    t_prob p[8];        //lambda_1, lambda_2, alpha, beta, delta, epsilon, zeta eta
+    t_prob p[8];        // lambda_1, lambda_2, alpha, beta, delta, epsilon, zeta, eta
 } t_probs;
 
 typedef struct struct_bbase

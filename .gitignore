@@ -1,17 +1,14 @@
+.*
 *.jou
 *.log
 hd_visual/
-.Xil/
-*.cache/
 *.prm
 *.bin
 *.dcp
 *.bak
 modelsim.ini
-.DS_Store
 posit_add/posit_add.cache/
 work/
-pairhmm/.*
 pairhmm/Implement
 pairhmm/Synth
 pairhmm/Sources/host/app/build
@@ -19,7 +16,7 @@ pairhmm/Sources/host/app/build-sim
 
 
 
-
+!.gitignore
 !pairhmm/Sources/cores/FPADD_11/FPADD_11.dcp
 !pairhmm/Sources/cores/FPADD_6/FPADD_6.dcp
 !pairhmm/Sources/cores/FPMULT/FPMULT.dcp
