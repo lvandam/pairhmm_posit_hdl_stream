@@ -6,6 +6,10 @@ hd_visual/
 *.bin
 *.dcp
 *.bak
+gmon.out
+transcript
+*.wlf
+*.os
 modelsim.ini
 posit_add/posit_add.cache/
 work/

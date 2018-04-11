@@ -61,9 +61,13 @@ architecture rtl of pe is
   signal  mul_theta_sr      :   mul_sr_type           := (others => (others => '0'));
   signal  mul_upsilon_sr    :   mul_sr_type           := (others => (others => '0'));
 
+  type    posit_infs_type   is  array (0 to 13) of std_logic;
+  type    posit_zeros_type   is  array (0 to 13) of std_logic;
   type    fp_readys_type    is  array (0 to 13) of std_logic;
   type    fp_valids_type    is  array (0 to 13) of std_logic;
 
+  signal  posit_infs        :   posit_infs_type;
+  signal  posit_zeros       :   posit_zeros_type;
   signal  fp_areadys        :   fp_readys_type;
   signal  fp_breadys        :   fp_readys_type;
   signal  fp_valids         :   fp_valids_type;
@@ -71,41 +75,75 @@ architecture rtl of pe is
 
   signal tdata_add_delta_epsilon, tdata_add_zeta_eta : prob;
 
-  COMPONENT FPADD_11
-    PORT (
-      aclk : IN STD_LOGIC;
-      s_axis_a_tvalid : IN STD_LOGIC;
-      s_axis_a_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-      s_axis_b_tvalid : IN STD_LOGIC;
-      s_axis_b_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-      m_axis_result_tvalid : OUT STD_LOGIC;
-      m_axis_result_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
-    );
-  END COMPONENT;
+    component posit_adder
+        generic (
+          N: integer := 32;
+          es: integer := 2;
+          stages: integer := 1
+        );
+        port (
+          aclk: in std_logic;
+          in1: in std_logic_vector(31 downto 0);
+          in2: in std_logic_vector(31 downto 0);
+          start: in std_logic;
+          result: out std_logic_vector(31 downto 0);
+          inf: out std_logic;
+          done: out std_logic
+        );
+    end component;
 
-  COMPONENT FPADD_6
-    PORT (
-      aclk : IN STD_LOGIC;
-      s_axis_a_tvalid : IN STD_LOGIC;
-      s_axis_a_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-      s_axis_b_tvalid : IN STD_LOGIC;
-      s_axis_b_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-      m_axis_result_tvalid : OUT STD_LOGIC;
-      m_axis_result_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
-    );
-  END COMPONENT;
+    component posit_mult
+        generic (
+          N: integer := 32;
+          es: integer := 2
+        );
+        port (
+          aclk: in std_logic;
+          in1: in std_logic_vector(31 downto 0);
+          in2: in std_logic_vector(31 downto 0);
+          start: in std_logic;
+          result: out std_logic_vector(31 downto 0);
+          inf: out std_logic;
+          zero: out std_logic;
+          done: out std_logic
+        );
+    end component;
 
-  COMPONENT FPMULT
-    PORT (
-      aclk : IN STD_LOGIC;
-      s_axis_a_tvalid : IN STD_LOGIC;
-      s_axis_a_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-      s_axis_b_tvalid : IN STD_LOGIC;
-      s_axis_b_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-      m_axis_result_tvalid : OUT STD_LOGIC;
-      m_axis_result_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
-    );
-  END COMPONENT;
+  -- COMPONENT FPADD_11
+  --   PORT (
+  --     aclk : IN STD_LOGIC;
+  --     s_axis_a_tvalid : IN STD_LOGIC;
+  --     s_axis_a_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+  --     s_axis_b_tvalid : IN STD_LOGIC;
+  --     s_axis_b_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+  --     m_axis_result_tvalid : OUT STD_LOGIC;
+  --     m_axis_result_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
+  --   );
+  -- END COMPONENT;
+  --
+  -- COMPONENT FPADD_6
+  --   PORT (
+  --     aclk : IN STD_LOGIC;
+  --     s_axis_a_tvalid : IN STD_LOGIC;
+  --     s_axis_a_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+  --     s_axis_b_tvalid : IN STD_LOGIC;
+  --     s_axis_b_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+  --     m_axis_result_tvalid : OUT STD_LOGIC;
+  --     m_axis_result_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
+  --   );
+  -- END COMPONENT;
+  --
+  -- COMPONENT FPMULT
+  --   PORT (
+  --     aclk : IN STD_LOGIC;
+  --     s_axis_a_tvalid : IN STD_LOGIC;
+  --     s_axis_a_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+  --     s_axis_b_tvalid : IN STD_LOGIC;
+  --     s_axis_b_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+  --     m_axis_result_tvalid : OUT STD_LOGIC;
+  --     m_axis_result_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
+  --   );
+  -- END COMPONENT;
 begin
 
 ---------------------------------------------------------------------------------------------------
@@ -192,102 +230,193 @@ begin
 -- Transmission probabilties multiplied with M, D, I
 ---------------------------------------------------------------------------------------------------
 
-  mul_alpha               : FPMULT port map (
-    aclk                  => cr.clk,
-    --aclken                => i.en,
-    --aresetn               => not(cr.rst),
-    s_axis_a_tvalid       => step.init.valid,
-    --s_axis_a_tready       => fp_areadys(0),
-    s_axis_a_tdata        => step.init.tmis.alpha,
-    s_axis_b_tvalid       => step.init.valid,
-    --s_axis_b_tready       => fp_breadys(0),
-    s_axis_b_tdata        => step.init.mids.mtl,
-    m_axis_result_tvalid  => fp_valids(0),
-    m_axis_result_tdata   => step.trans.almtl
+  -- mul_alpha               : FPMULT port map (
+  --   aclk                  => cr.clk,
+  --   --aclken                => i.en,
+  --   --aresetn               => not(cr.rst),
+  --   s_axis_a_tvalid       => step.init.valid,
+  --   --s_axis_a_tready       => fp_areadys(0),
+  --   s_axis_a_tdata        => step.init.tmis.alpha,
+  --   s_axis_b_tvalid       => step.init.valid,
+  --   --s_axis_b_tready       => fp_breadys(0),
+  --   s_axis_b_tdata        => step.init.mids.mtl,
+  --   m_axis_result_tvalid  => fp_valids(0),
+  --   m_axis_result_tdata   => step.trans.almtl
+  -- );
+  mul_alpha : posit_mult generic map (
+    N => 32,
+    es => 2
+  ) port map (
+    aclk => cr.clk,
+    in1 => step.init.tmis.alpha,
+    in2 => step.init.mids.mtl,
+    start => step.init.valid, -- todo create start signal, or just remove it?
+    result => step.trans.almtl,
+    inf => posit_infs(0),
+    zero => posit_zeros(0),
+    done => fp_valids(0)
   );
 
-  mul_beta                : FPMULT port map (
-    aclk                  => cr.clk,
-    --aclken                => i.en,
-    --aresetn               => not(cr.rst),
-    s_axis_a_tvalid       => step.init.valid,
-    --s_axis_a_tready       => fp_areadys(1),
-    s_axis_a_tdata        => step.init.tmis.beta,
-    s_axis_b_tvalid       => step.init.valid,
-    --s_axis_b_tready       => fp_breadys(1),
-    s_axis_b_tdata        => step.init.mids.itl,
-    m_axis_result_tvalid  => fp_valids(1),
-    m_axis_result_tdata   => step.trans.beitl
+  -- mul_beta                : FPMULT port map (
+  --   aclk                  => cr.clk,
+  --   --aclken                => i.en,
+  --   --aresetn               => not(cr.rst),
+  --   s_axis_a_tvalid       => step.init.valid,
+  --   --s_axis_a_tready       => fp_areadys(1),
+  --   s_axis_a_tdata        => step.init.tmis.beta,
+  --   s_axis_b_tvalid       => step.init.valid,
+  --   --s_axis_b_tready       => fp_breadys(1),
+  --   s_axis_b_tdata        => step.init.mids.itl,
+  --   m_axis_result_tvalid  => fp_valids(1),
+  --   m_axis_result_tdata   => step.trans.beitl
+  -- );
+  mul_beta : posit_mult generic map (
+    N => 32,
+    es => 2
+  ) port map (
+    aclk => cr.clk,
+    in1 => step.init.tmis.beta,
+    in2 => step.init.mids.itl,
+    start => step.init.valid, -- todo create start signal, or just remove it?
+    result => step.trans.beitl,
+    inf => posit_infs(1),
+    zero => posit_zeros(1),
+    done => fp_valids(1)
   );
 
-  mul_gamma               : FPMULT port map (
-    aclk                  => cr.clk,
-    --aclken                => i.en,
-    --aresetn               => not(cr.rst),
-    s_axis_a_tvalid       => step.init.valid,
-    --s_axis_a_tready       => fp_areadys(2),
-    s_axis_a_tdata        => step.init.tmis.beta,
-    s_axis_b_tvalid       => step.init.valid,
-    --s_axis_b_tready       => fp_breadys(2),
-    s_axis_b_tdata        => step.init.mids.dtl,
-    m_axis_result_tvalid  => fp_valids(2),
-    m_axis_result_tdata   => step.trans.gadtl
+  -- mul_gamma               : FPMULT port map (
+  --   aclk                  => cr.clk,
+  --   --aclken                => i.en,
+  --   --aresetn               => not(cr.rst),
+  --   s_axis_a_tvalid       => step.init.valid,
+  --   --s_axis_a_tready       => fp_areadys(2),
+  --   s_axis_a_tdata        => step.init.tmis.beta,
+  --   s_axis_b_tvalid       => step.init.valid,
+  --   --s_axis_b_tready       => fp_breadys(2),
+  --   s_axis_b_tdata        => step.init.mids.dtl,
+  --   m_axis_result_tvalid  => fp_valids(2),
+  --   m_axis_result_tdata   => step.trans.gadtl
+  -- );
+  mul_gamma : posit_mult generic map (
+    N => 32,
+    es => 2
+  ) port map (
+    aclk => cr.clk,
+    in1 => step.init.tmis.beta,
+    in2 => step.init.mids.dtl,
+    start => step.init.valid, -- todo create start signal, or just remove it?
+    result => step.trans.gadtl,
+    inf => posit_infs(2),
+    zero => posit_zeros(2),
+    done => fp_valids(2)
   );
 
-  mul_delta               : FPMULT port map (
-    aclk                  => cr.clk,
-    --aclken                => i.en,
-    --aresetn               => not(cr.rst),
-    s_axis_a_tvalid       => step.init.valid,
-    --s_axis_a_tready       => fp_areadys(3),
-    s_axis_a_tdata        => step.init.tmis.delta,
-    s_axis_b_tvalid       => step.init.valid,
-    --s_axis_b_tready       => fp_breadys(3),
-    s_axis_b_tdata        => step.init.mids.mt,
-    m_axis_result_tvalid  => fp_valids(3),
-    m_axis_result_tdata   => step.trans.demt
+  -- mul_delta               : FPMULT port map (
+  --   aclk                  => cr.clk,
+  --   --aclken                => i.en,
+  --   --aresetn               => not(cr.rst),
+  --   s_axis_a_tvalid       => step.init.valid,
+  --   --s_axis_a_tready       => fp_areadys(3),
+  --   s_axis_a_tdata        => step.init.tmis.delta,
+  --   s_axis_b_tvalid       => step.init.valid,
+  --   --s_axis_b_tready       => fp_breadys(3),
+  --   s_axis_b_tdata        => step.init.mids.mt,
+  --   m_axis_result_tvalid  => fp_valids(3),
+  --   m_axis_result_tdata   => step.trans.demt
+  -- );
+  mul_delta : posit_mult generic map (
+    N => 32,
+    es => 2
+  ) port map (
+    aclk => cr.clk,
+    in1 => step.init.tmis.delta,
+    in2 => step.init.mids.mt,
+    start => step.init.valid, -- todo create start signal, or just remove it?
+    result => step.trans.demt,
+    inf => posit_infs(3),
+    zero => posit_zeros(3),
+    done => fp_valids(3)
   );
 
-  mul_epsilon             : FPMULT port map (
-    aclk                  => cr.clk,
-    --aclken                => i.en,
-    --aresetn               => not(cr.rst),
-    s_axis_a_tvalid       => step.init.valid,
-    --s_axis_a_tready       => fp_areadys(4),
-    s_axis_a_tdata        => step.init.tmis.epsilon,
-    s_axis_b_tvalid       => step.init.valid,
-    --s_axis_b_tready       => fp_breadys(4),
-    s_axis_b_tdata        => step.init.mids.it,
-    m_axis_result_tvalid  => fp_valids(4),
-    m_axis_result_tdata   => step.trans.epit
+  -- mul_epsilon             : FPMULT port map (
+  --   aclk                  => cr.clk,
+  --   --aclken                => i.en,
+  --   --aresetn               => not(cr.rst),
+  --   s_axis_a_tvalid       => step.init.valid,
+  --   --s_axis_a_tready       => fp_areadys(4),
+  --   s_axis_a_tdata        => step.init.tmis.epsilon,
+  --   s_axis_b_tvalid       => step.init.valid,
+  --   --s_axis_b_tready       => fp_breadys(4),
+  --   s_axis_b_tdata        => step.init.mids.it,
+  --   m_axis_result_tvalid  => fp_valids(4),
+  --   m_axis_result_tdata   => step.trans.epit
+  -- );
+  mul_epsilon : posit_mult generic map (
+    N => 32,
+    es => 2
+  ) port map (
+    aclk => cr.clk,
+    in1 => step.init.tmis.epsilon,
+    in2 => step.init.mids.it,
+    start => step.init.valid, -- todo create start signal, or just remove it?
+    result => step.trans.epit,
+    inf => posit_infs(4),
+    zero => posit_zeros(4),
+    done => fp_valids(4)
   );
 
-  mul_zeta                : FPMULT port map (
-    aclk                  => cr.clk,
-    --aclken                => i.en,
-    --aresetn               => not(cr.rst),
-    s_axis_a_tvalid       => step.init.valid,
-    --s_axis_a_tready       => fp_areadys(5),
-    s_axis_a_tdata        => step.init.tmis.zeta,
-    s_axis_b_tvalid       => step.init.valid,
-    --s_axis_b_tready       => fp_breadys(5),
-    s_axis_b_tdata        => step.init.mids.ml,
-    m_axis_result_tvalid  => fp_valids(5),
-    m_axis_result_tdata   => step.trans.zeml
+  -- mul_zeta                : FPMULT port map (
+  --   aclk                  => cr.clk,
+  --   --aclken                => i.en,
+  --   --aresetn               => not(cr.rst),
+  --   s_axis_a_tvalid       => step.init.valid,
+  --   --s_axis_a_tready       => fp_areadys(5),
+  --   s_axis_a_tdata        => step.init.tmis.zeta,
+  --   s_axis_b_tvalid       => step.init.valid,
+  --   --s_axis_b_tready       => fp_breadys(5),
+  --   s_axis_b_tdata        => step.init.mids.ml,
+  --   m_axis_result_tvalid  => fp_valids(5),
+  --   m_axis_result_tdata   => step.trans.zeml
+  -- );
+  mul_zeta : posit_mult generic map (
+    N => 32,
+    es => 2
+  ) port map (
+    aclk => cr.clk,
+    in1 => step.init.tmis.zeta,
+    in2 => step.init.mids.ml,
+    start => step.init.valid, -- todo create start signal, or just remove it?
+    result => step.trans.zeml,
+    inf => posit_infs(5),
+    zero => posit_zeros(5),
+    done => fp_valids(5)
   );
 
-  mul_eta                 : FPMULT port map (
-    aclk                  => cr.clk,
-    --aclken                => i.en,
-    --aresetn               => not(cr.rst),
-    s_axis_a_tvalid       => step.init.valid,
-    --s_axis_a_tready       => fp_areadys(6),
-    s_axis_a_tdata        => step.init.tmis.eta,
-    s_axis_b_tvalid       => step.init.valid,
-    --s_axis_b_tready       => fp_breadys(6),
-    s_axis_b_tdata        => step.init.mids.dl,
-    m_axis_result_tvalid  => fp_valids(6),
-    m_axis_result_tdata   => step.trans.etdl
+  -- mul_eta                 : FPMULT port map (
+  --   aclk                  => cr.clk,
+  --   --aclken                => i.en,
+  --   --aresetn               => not(cr.rst),
+  --   s_axis_a_tvalid       => step.init.valid,
+  --   --s_axis_a_tready       => fp_areadys(6),
+  --   s_axis_a_tdata        => step.init.tmis.eta,
+  --   s_axis_b_tvalid       => step.init.valid,
+  --   --s_axis_b_tready       => fp_breadys(6),
+  --   s_axis_b_tdata        => step.init.mids.dl,
+  --   m_axis_result_tvalid  => fp_valids(6),
+  --   m_axis_result_tdata   => step.trans.etdl
+  -- );
+  mul_eta : posit_mult generic map (
+    N => 32,
+    es => 2
+  ) port map (
+    aclk => cr.clk,
+    in1 => step.init.tmis.eta,
+    in2 => step.init.mids.dl,
+    start => step.init.valid, -- todo create start signal, or just remove it?
+    result => step.trans.etdl,
+    inf => posit_infs(6),
+    zero => posit_zeros(6),
+    done => fp_valids(6)
   );
 
 ---------------------------------------------------------------------------------------------------
@@ -304,61 +433,113 @@ begin
 ---------------------------------------------------------------------------------------------------
 
   -- Substep adding alpha + beta
-  add_alpha_beta          : FPADD_6 port map (
-    aclk                  => cr.clk,
-    --aclken                => i.en,
-    --aresetn               => not(cr.rst),
-    s_axis_a_tvalid       => step.init.valid,
-    --s_axis_a_tready       => fp_areadys(7),
-    s_axis_a_tdata        => step.trans.almtl,
-    s_axis_b_tvalid       => step.init.valid,
-    --s_axis_b_tready       => fp_breadys(7),
-    s_axis_b_tdata        => step.trans.beitl,
-    m_axis_result_tvalid  => fp_valids(7),
-    m_axis_result_tdata   => step.add.albetl
+  -- add_alpha_beta          : FPADD_6 port map (
+  --   aclk                  => cr.clk,
+  --   --aclken                => i.en,
+  --   --aresetn               => not(cr.rst),
+  --   s_axis_a_tvalid       => step.init.valid,
+  --   --s_axis_a_tready       => fp_areadys(7),
+  --   s_axis_a_tdata        => step.trans.almtl,
+  --   s_axis_b_tvalid       => step.init.valid,
+  --   --s_axis_b_tready       => fp_breadys(7),
+  --   s_axis_b_tdata        => step.trans.beitl,
+  --   m_axis_result_tvalid  => fp_valids(7),
+  --   m_axis_result_tdata   => step.add.albetl
+  -- );
+  add_alpha_beta : posit_adder generic map (
+    N => 32,
+    es => 2,
+    stages => 6
+  ) port map (
+    aclk => cr.clk,
+    in1 => step.trans.almtl,
+    in2 => step.trans.beitl,
+    start => step.init.valid, -- todo create start signal, or just remove it?
+    result => step.add.albetl,
+    inf => posit_infs(7),
+    done => fp_valids(7)
   );
 
   -- Substep adding alpha + beta + delayed gamma
-  add_alpha_beta_gamma    : FPADD_6 port map (
-    aclk                  => cr.clk,
-    --aclken                => i.en,
-    --aresetn               => not(cr.rst),
-    s_axis_a_tvalid       => step.init.valid,
-    --s_axis_a_tready       => fp_areadys(8),
-    s_axis_a_tdata        => step.add.albetl,
-    s_axis_b_tvalid       => step.init.valid,
-    --s_axis_b_tready       => fp_breadys(8),
-    s_axis_b_tdata        => add_gamma_sr(PE_ADD_CYCLES-1),
-    m_axis_result_tvalid  => fp_valids(8),
-    m_axis_result_tdata   => step.add.albegatl
+  -- add_alpha_beta_gamma    : FPADD_6 port map (
+  --   aclk                  => cr.clk,
+  --   --aclken                => i.en,
+  --   --aresetn               => not(cr.rst),
+  --   s_axis_a_tvalid       => step.init.valid,
+  --   --s_axis_a_tready       => fp_areadys(8),
+  --   s_axis_a_tdata        => step.add.albetl,
+  --   s_axis_b_tvalid       => step.init.valid,
+  --   --s_axis_b_tready       => fp_breadys(8),
+  --   s_axis_b_tdata        => add_gamma_sr(PE_ADD_CYCLES-1),
+  --   m_axis_result_tvalid  => fp_valids(8),
+  --   m_axis_result_tdata   => step.add.albegatl
+  -- );
+  add_alpha_beta_gamma : posit_adder generic map (
+    N => 32,
+    es => 2,
+    stages => 6
+  ) port map (
+    aclk => cr.clk,
+    in1 => step.add.albetl,
+    in2 => add_gamma_sr(PE_ADD_CYCLES-1),
+    start => step.init.valid, -- todo create start signal, or just remove it?
+    result => step.add.albegatl,
+    inf => posit_infs(8),
+    done => fp_valids(8)
   );
 
-  add_delta_epsilon       : FPADD_11 port map (
-    aclk                  => cr.clk,
-    --aclken                => i.en,
-    --aresetn               => not(cr.rst),
-    s_axis_a_tvalid       => step.init.valid,
-    --s_axis_a_tready       => fp_areadys(9),
-    s_axis_a_tdata        => step.trans.demt,
-    s_axis_b_tvalid       => step.init.valid,
-    --s_axis_b_tready       => fp_breadys(9),
-    s_axis_b_tdata        => step.trans.epit,
-    m_axis_result_tvalid  => fp_valid_add_delta_epsilon,
-    m_axis_result_tdata   => tdata_add_delta_epsilon
+  -- add_delta_epsilon       : FPADD_11 port map (
+  --   aclk                  => cr.clk,
+  --   --aclken                => i.en,
+  --   --aresetn               => not(cr.rst),
+  --   s_axis_a_tvalid       => step.init.valid,
+  --   --s_axis_a_tready       => fp_areadys(9),
+  --   s_axis_a_tdata        => step.trans.demt,
+  --   s_axis_b_tvalid       => step.init.valid,
+  --   --s_axis_b_tready       => fp_breadys(9),
+  --   s_axis_b_tdata        => step.trans.epit,
+  --   m_axis_result_tvalid  => fp_valid_add_delta_epsilon,
+  --   m_axis_result_tdata   => tdata_add_delta_epsilon
+  -- );
+  add_delta_epsilon : posit_adder generic map (
+    N => 32,
+    es => 2,
+    stages => 11
+  ) port map (
+    aclk => cr.clk,
+    in1 => step.trans.demt,
+    in2 => step.trans.epit,
+    start => step.init.valid, -- todo create start signal, or just remove it?
+    result => tdata_add_delta_epsilon,
+    inf => posit_infs(9),
+    done => fp_valid_add_delta_epsilon
   );
 
-  add_zeta_eta            : FPADD_11 port map (
-    aclk                  => cr.clk,
-    --aclken                => i.en,
-    --aresetn               => not(cr.rst),
-    s_axis_a_tvalid       => step.init.valid,
-    --s_axis_a_tready       => fp_areadys(10),
-    s_axis_a_tdata        => step.trans.zeml,
-    s_axis_b_tvalid       => step.init.valid,
-    --s_axis_b_tready       => fp_breadys(10),
-    s_axis_b_tdata        => step.trans.etdl,
-    m_axis_result_tvalid  => fp_valid_add_zeta_eta,
-    m_axis_result_tdata   => tdata_add_zeta_eta
+  -- add_zeta_eta            : FPADD_11 port map (
+  --   aclk                  => cr.clk,
+  --   --aclken                => i.en,
+  --   --aresetn               => not(cr.rst),
+  --   s_axis_a_tvalid       => step.init.valid,
+  --   --s_axis_a_tready       => fp_areadys(10),
+  --   s_axis_a_tdata        => step.trans.zeml,
+  --   s_axis_b_tvalid       => step.init.valid,
+  --   --s_axis_b_tready       => fp_breadys(10),
+  --   s_axis_b_tdata        => step.trans.etdl,
+  --   m_axis_result_tvalid  => fp_valid_add_zeta_eta,
+  --   m_axis_result_tdata   => tdata_add_zeta_eta
+  -- );
+  add_zeta_eta : posit_adder generic map (
+    N => 32,
+    es => 2,
+    stages => 11
+  ) port map (
+    aclk => cr.clk,
+    in1 => step.trans.zeml,
+    in2 => step.trans.etdl,
+    start => step.init.valid, -- todo create start signal, or just remove it?
+    result => tdata_add_zeta_eta,
+    inf => posit_infs(10),
+    done => fp_valid_add_zeta_eta
   );
 
   -- Laurens: add extra buffer since FPADD11 should be 12 (11 is max to be generated)
@@ -404,19 +585,31 @@ begin
     end if;
   end process;
 
-  mul_lambda              : FPMULT port map (
-    aclk                  => cr.clk,
-    --aclken                => i.en,
-    --aresetn               => not(cr.rst),
-    s_axis_a_tvalid       => step.init.valid,
-    --s_axis_a_tready       => fp_areadys(11),
-    s_axis_a_tdata        => step.add.albegatl,
-    s_axis_b_tvalid       => step.init.valid,
-    --s_axis_b_tready       => fp_breadys(11),
-    s_axis_b_tdata        => distm,
-    m_axis_result_tvalid  => fp_valids(11),
-    m_axis_result_tdata   => step.emult.m
-
+  -- mul_lambda              : FPMULT port map (
+  --   aclk                  => cr.clk,
+  --   --aclken                => i.en,
+  --   --aresetn               => not(cr.rst),
+  --   s_axis_a_tvalid       => step.init.valid,
+  --   --s_axis_a_tready       => fp_areadys(11),
+  --   s_axis_a_tdata        => step.add.albegatl,
+  --   s_axis_b_tvalid       => step.init.valid,
+  --   --s_axis_b_tready       => fp_breadys(11),
+  --   s_axis_b_tdata        => distm,
+  --   m_axis_result_tvalid  => fp_valids(11),
+  --   m_axis_result_tdata   => step.emult.m
+  -- );
+  mul_lambda : posit_mult generic map (
+    N => 32,
+    es => 2
+  ) port map (
+    aclk => cr.clk,
+    in1 => step.add.albegatl,
+    in2 => distm,
+    start => step.init.valid, -- todo create start signal, or just remove it?
+    result => step.emult.m,
+    inf => posit_infs(11),
+    zero => posit_zeros(11),
+    done => fp_valids(11)
   );
 
   THETA_OFF: if DISABLE_THETA = '1' generate
@@ -426,18 +619,31 @@ begin
   end generate;
 
   THETA_MULT: if DISABLE_THETA /= '1' generate
-    mul_theta               : FPMULT port map (
-      aclk                  => cr.clk,
-      --aclken                => i.en,
-      --aresetn               => not(cr.rst),
-      s_axis_a_tvalid       => step.init.valid,
-      --s_axis_a_tready       => fp_areadys(12),
-      s_axis_a_tdata        => step.add.deept,
-      s_axis_b_tvalid       => step.init.valid,
-      --s_axis_b_tready       => fp_breadys(12),
-      s_axis_b_tdata        => step.add.emis.theta,
-      m_axis_result_tvalid  => fp_valids(12),
-      m_axis_result_tdata   => step.emult.i
+    -- mul_theta               : FPMULT port map (
+    --   aclk                  => cr.clk,
+    --   --aclken                => i.en,
+    --   --aresetn               => not(cr.rst),
+    --   s_axis_a_tvalid       => step.init.valid,
+    --   --s_axis_a_tready       => fp_areadys(12),
+    --   s_axis_a_tdata        => step.add.deept,
+    --   s_axis_b_tvalid       => step.init.valid,
+    --   --s_axis_b_tready       => fp_breadys(12),
+    --   s_axis_b_tdata        => step.add.emis.theta,
+    --   m_axis_result_tvalid  => fp_valids(12),
+    --   m_axis_result_tdata   => step.emult.i
+    -- );
+    mul_theta : posit_mult generic map (
+      N => 32,
+      es => 2
+    ) port map (
+      aclk => cr.clk,
+      in1 => step.add.deept,
+      in2 => step.add.emis.theta,
+      start => step.init.valid, -- todo create start signal, or just remove it?
+      result => step.emult.i,
+      inf => posit_infs(12),
+      zero => posit_zeros(12),
+      done => fp_valids(12)
     );
   end generate;
 
@@ -448,18 +654,31 @@ begin
   end generate;
 
   UPSILON_MULT: if DISABLE_UPSILON /= '1' generate
-    mul_upsilon             : FPMULT port map (
-      aclk                  => cr.clk,
-      --aclken                => i.en,
-      --aresetn               => not(cr.rst),
-      s_axis_a_tvalid       => step.init.valid,
-      --s_axis_a_tready       => fp_areadys(13),
-      s_axis_a_tdata        => step.add.zeett,
-      s_axis_b_tvalid       => step.init.valid,
-      --s_axis_b_tready       => fp_breadys(13),
-      s_axis_b_tdata        => step.add.emis.upsilon,
-      m_axis_result_tvalid  => fp_valids(13),
-      m_axis_result_tdata   => step.emult.d
+    -- mul_upsilon             : FPMULT port map (
+    --   aclk                  => cr.clk,
+    --   --aclken                => i.en,
+    --   --aresetn               => not(cr.rst),
+    --   s_axis_a_tvalid       => step.init.valid,
+    --   --s_axis_a_tready       => fp_areadys(13),
+    --   s_axis_a_tdata        => step.add.zeett,
+    --   s_axis_b_tvalid       => step.init.valid,
+    --   --s_axis_b_tready       => fp_breadys(13),
+    --   s_axis_b_tdata        => step.add.emis.upsilon,
+    --   m_axis_result_tvalid  => fp_valids(13),
+    --   m_axis_result_tdata   => step.emult.d
+    -- );
+    mul_upsilon : posit_mult generic map (
+      N => 32,
+      es => 2
+    ) port map (
+      aclk => cr.clk,
+      in1 => step.add.zeett,
+      in2 => step.add.emis.upsilon,
+      start => step.init.valid, -- todo create start signal, or just remove it?
+      result => step.emult.d,
+      inf => posit_infs(13),
+      zero => posit_zeros(13),
+      done => fp_valids(13)
     );
   end generate;
 

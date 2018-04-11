@@ -67,18 +67,18 @@ source $tclDir/hd_floorplan_utils.tcl
 ###############################################################
 ### Top Definition
 ###############################################################
+                                                    #$coreDir/FPADD_11/FPADD_11.xci
+                                                    #$coreDir/FPADD_6/FPADD_6.xci
+                                                    #$coreDir/FPMULT/FPMULT.xci
 set top "psl_fpga"
 add_module $top
 set_attribute module $top    top_level     1
 set_attribute module $top    prj           $prjDir/$top.prj
 set_attribute module $top    synth         ${run.topSynth}
 set_attribute module $top    synth_options "-flatten_hierarchy rebuilt -fanout_limit 60 -fsm_extraction one_hot -keep_equivalent_registers -resource_sharing off -no_lc -shreg_min_size 5 -no_iobuf"
-set_attribute module $top    ip            [list  $coreDir/FPADD_11/FPADD_11.xci       \
-                                                  $coreDir/FPADD_6/FPADD_6.xci         \
-                                                  $coreDir/FPMULT/FPMULT.xci         \
-                                                  $coreDir/feedback_fifo/feedback_fifo.xci         \
-                                                  $coreDir/kernel_to_streaming_fifo/kernel_to_streaming_fifo.xci \
-                                                  $coreDir/probabilities_fifo/probabilities_fifo.xci        \
+set_attribute module $top    ip            [list    $coreDir/feedback_fifo/feedback_fifo.xci                        \
+                                                    $coreDir/kernel_to_streaming_fifo/kernel_to_streaming_fifo.xci  \
+                                                    $coreDir/probabilities_fifo/probabilities_fifo.xci              \
                                            ]
 add_implementation $top
 set_attribute impl $top      top           $top

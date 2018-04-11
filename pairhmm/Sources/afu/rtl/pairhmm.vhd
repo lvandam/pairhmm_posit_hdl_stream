@@ -55,6 +55,7 @@ architecture logic of pairhmm is
   signal    result_rst      : std_logic := '0';
 
 
+  signal    posit_infs      : std_logic_vector(1 downto 0);
 
   signal    addm_ina        : prob;
   signal    addm_ina_valid  : std_logic;
@@ -89,17 +90,34 @@ architecture logic of pairhmm is
   signal    lastlast        : std_logic;
   signal    lastlast1       : std_logic;
 
-    COMPONENT FPADD_11
-      PORT (
-        aclk : IN STD_LOGIC;
-        s_axis_a_tvalid : IN STD_LOGIC;
-        s_axis_a_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-        s_axis_b_tvalid : IN STD_LOGIC;
-        s_axis_b_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-        m_axis_result_tvalid : OUT STD_LOGIC;
-        m_axis_result_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
+  component posit_adder
+      generic (
+        N: integer := 32;
+        es: integer := 2;
+        stages: integer := 1
       );
-    END COMPONENT;
+      port (
+        aclk: in std_logic;
+        in1: in std_logic_vector(31 downto 0);
+        in2: in std_logic_vector(31 downto 0);
+        start: in std_logic;
+        result: out std_logic_vector(31 downto 0);
+        inf: out std_logic;
+        done: out std_logic
+      );
+  end component;
+
+    -- COMPONENT FPADD_11
+    --   PORT (
+    --     aclk : IN STD_LOGIC;
+    --     s_axis_a_tvalid : IN STD_LOGIC;
+    --     s_axis_a_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    --     s_axis_b_tvalid : IN STD_LOGIC;
+    --     s_axis_b_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    --     m_axis_result_tvalid : OUT STD_LOGIC;
+    --     m_axis_result_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
+    --   );
+    -- END COMPONENT;
 begin
 
   -- Connect input to the input register before the first PE
@@ -219,25 +237,52 @@ begin
     end if;
   end process;
 
-  add_m : FPADD_11 port map (
-    aclk                    => cr.clk,
-    s_axis_a_tvalid         => addm_ina_valid,
-    s_axis_a_tdata          => addm_ina,
-    s_axis_b_tvalid         => addm_inb_valid,
-    s_axis_b_tdata          => addm_inb,
-    m_axis_result_tvalid    => addm_out_valid,
-    m_axis_result_tdata     => addm_out
+  -- add_m : FPADD_11 port map (
+  --   aclk                    => cr.clk,
+  --   s_axis_a_tvalid         => addm_ina_valid,
+  --   s_axis_a_tdata          => addm_ina,
+  --   s_axis_b_tvalid         => addm_inb_valid,
+  --   s_axis_b_tdata          => addm_inb,
+  --   m_axis_result_tvalid    => addm_out_valid,
+  --   m_axis_result_tdata     => addm_out
+  -- );
+  add_m : posit_adder generic map (
+    N => 32,
+    es => 2,
+    stages => 11
+  ) port map (
+    aclk => cr.clk,
+    in1 => addm_ina,
+    in2 => addm_inb,
+    start => addm_ina_valid and addm_inb_valid, -- todo create start signal, or just remove it?
+    result => addm_out,
+    inf => posit_infs(0),
+    done => addm_out_valid
   );
 
-  add_i : FPADD_11 port map (
-    aclk                    => cr.clk,
-    s_axis_a_tvalid         => addi_ina_valid,
-    s_axis_a_tdata          => addi_ina,
-    s_axis_b_tvalid         => addi_inb_valid,
-    s_axis_b_tdata          => addi_inb,
-    m_axis_result_tvalid    => addi_out_valid,
-    m_axis_result_tdata     => addi_out
+-- add_i : FPADD_11 port map (
+--   aclk                    => cr.clk,
+--   s_axis_a_tvalid         => addi_ina_valid,
+--   s_axis_a_tdata          => addi_ina,
+--   s_axis_b_tvalid         => addi_inb_valid,
+--   s_axis_b_tdata          => addi_inb,
+--   m_axis_result_tvalid    => addi_out_valid,
+--   m_axis_result_tdata     => addi_out
+-- );
+  add_i : posit_adder generic map (
+    N => 32,
+    es => 2,
+    stages => 11
+  ) port map (
+    aclk => cr.clk,
+    in1 => addi_ina,
+    in2 => addi_inb,
+    start => addi_ina_valid and addi_inb_valid, -- todo create start signal, or just remove it?
+    result => addi_out,
+    inf => posit_infs(1),
+    done => addi_out_valid
   );
+
 
   process(cr.clk)
     variable rescounter : integer range 0 to PE_DEPTH := 0;

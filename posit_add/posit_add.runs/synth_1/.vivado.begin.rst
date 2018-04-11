@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="laurensvandam" Host="ce-xportal.et.tudelft.nl" Pid="32702">
-    </Process>
-</ProcessHandle>
