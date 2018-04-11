@@ -14,7 +14,7 @@ module posit_adder_8bit_tb_v;
     endfunction
 
     // Enter latency here
-    integer latency = 3;
+    integer latency = 6;
 
     parameter N = 8;
     parameter Bs = log2(N);

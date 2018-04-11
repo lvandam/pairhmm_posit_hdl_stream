@@ -7,13 +7,13 @@ module DSR_right_N_S(a, b, c);
     output [N-1:0] c;
 
     wire [N-1:0] tmp [S-1:0];
-    assign tmp[0] = b[0] ? a >> 7'd1 : a;
+    assign tmp[0] = b[0] ? (a >> 7'd1) : a;
 
     genvar i;
     generate
     	for (i = 1; i < S; i = i + 1)
         begin: loop_blk
-    		assign tmp[i] = b[i] ? tmp[i-1] >> 2**i : tmp[i-1];
+    		assign tmp[i] = b[i] ? (tmp[i-1] >> 2**i) : tmp[i-1];
     	end
     endgenerate
 

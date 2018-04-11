@@ -47,6 +47,7 @@ module LOD (in, out, vld);
     output [S-1:0] out;
     output vld;
 
+    /* verilator lint_off WIDTH */
     generate
         if (N == 2)
         begin
@@ -82,4 +83,5 @@ module LOD (in, out, vld);
             assign out = out_vh ? {1'b0, out_h} : {out_vl, out_l};
         end
     endgenerate
+    /* verilator lint_on WIDTH */
 endmodule
