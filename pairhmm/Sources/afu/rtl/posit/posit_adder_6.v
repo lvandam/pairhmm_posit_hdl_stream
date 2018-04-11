@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype wire
 
-module posit_adder (aclk, in1, in2, start, result, inf, zero, done);
+module posit_adder_6 (aclk, in1, in2, start, result, inf, zero, done);
 
     function [31:0] log2;
         input reg [31:0] value;
@@ -127,12 +127,10 @@ module posit_adder (aclk, in1, in2, start, result, inf, zero, done);
     	.Lshift(r1_Lshift2)
     );
 
-    // TODO Laurens: assign might break things?
     assign r1_m1 = {r1_zero_tmp1, r1_mant1};
     assign r1_m2 = {r1_zero_tmp2, r1_mant2};
 
     // Large Checking and Assignment
-    // TODO Laurens: assign might break things?
     assign r1_in1_gt_in2 = r1_xin1[N-2:0] >= r1_xin2[N-2:0] ? '1 : '0;
 
     //  ___          __  __                   _     _                                        _       _   _   _     _
