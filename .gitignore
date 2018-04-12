@@ -10,13 +10,19 @@ gmon.out
 transcript
 *.wlf
 *.os
+*.o
+*.opt
+*.vstf
 modelsim.ini
 posit_add/posit_add.cache/
 work/
+cmake-build-debug/
 pairhmm/Implement
 pairhmm/Synth
 pairhmm/Sources/host/app/build
-pairhmm/Sources/host/app/build-sim
+pairhmm/Sources/host/app/sim-build
+pairhmm/Sources/host/app_posit/build
+pairhmm/Sources/host/app_posit/sim-build
 
 
 
