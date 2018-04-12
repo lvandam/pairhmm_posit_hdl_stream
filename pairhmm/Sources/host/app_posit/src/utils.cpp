@@ -6,10 +6,14 @@
 #include <time.h>
 #include <sys/time.h>
 #include <omp.h>
+#include <posit/posit>
 
-#include "defines.h"
-#include "batch.h"
-#include "utils.h"
+#include "config.hpp"
+#include "defines.hpp"
+#include "batch.hpp"
+#include "utils.hpp"
+
+using namespace sw::unum;
 
 
 const char *binstr(uint8_t x)
@@ -41,14 +45,14 @@ void print_omp_info(void)
 }
 
 
-void print_mid_table(t_batch *batch, int pair, int r, int c, float *M, float *I, float *D)
+void print_mid_table(t_batch *batch, int pair, int r, int c, posit<NBITS,ES> *M, posit<NBITS,ES> *I, posit<NBITS,ES> *D)
 {
     int      w     = c + 1;
     t_bbase  *read = batch->read;
     t_bbase  *hapl = batch->hapl;
-    t_result res;
+    posit<NBITS,ES> res[3];
 
-    res.values[0] = (float)0.0;
+    res[0] = static_cast<posit<NBITS,ES>>(0.0);
 
     printf("════╦");
     for (uint32_t i = 0; i < c + 1; i++)
@@ -102,9 +106,9 @@ void print_mid_table(t_batch *batch, int pair, int r, int c, float *M, float *I,
     printf("res:║");
     for (uint32_t i = 0; i < c + 1; i++)
     {
-        res.values[0] += M[r * w + i];
-        res.values[0] += I[r * w + i];
-        printf("                  %08X║", res.b[0]);
+        res[0] += M[r * w + i];
+        res[0] += I[r * w + i];
+//        printf("                  %08X║", res.b[0]); // TODO wat do?
     }
     printf("\n");
     printf("═════");
@@ -119,7 +123,7 @@ void print_mid_table(t_batch *batch, int pair, int r, int c, float *M, float *I,
 } // print_mid_table
 
 
-void print_results(t_result *results, int num_batches)
+void print_results(std::vector<t_result_sw> *results, int num_batches)
 {
     DEBUG_PRINT("╔═══════════════════════════════╗\n");
     for (int q = 0; q < num_batches; q++)
@@ -128,12 +132,13 @@ void print_results(t_result *results, int num_batches)
         DEBUG_PRINT("╠═══════════════════════════════╣\n");
         for (int p = 0; p < PIPE_DEPTH; p++)
         {
-            DEBUG_PRINT("║%2d: %08X %08X %08X ║\n",
-                        p,
-                        results[q * PIPE_DEPTH + p].b[0],
-                        results[q * PIPE_DEPTH + p].b[1],
-                        results[q * PIPE_DEPTH + p].b[2]
-                        );
+            // TODO wat do?
+//            DEBUG_PRINT("║%2d: %08X %08X %08X ║\n",
+//                        p,
+//                        results[q * PIPE_DEPTH + p].b[0],
+//                        results[q * PIPE_DEPTH + p].b[1],
+//                        results[q * PIPE_DEPTH + p].b[2]
+//                        );
         }
         DEBUG_PRINT("╚═══════════════════════════════╝\n");
     }

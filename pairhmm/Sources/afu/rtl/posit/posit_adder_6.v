@@ -48,23 +48,40 @@ module posit_adder_6 (aclk, in1, in2, start, result, inf, zero, done);
 
     always @(posedge aclk)
     begin
-        r0_in1 <= in1;
-        r0_in2 <= in2;
-        r0_start <= start;
+        if(in1 === 'x)
+        begin
+            r0_in1 <= '0;
+            r0_s1 <= 0;
+            r0_zero_tmp1 <= 0;
+        end
+        else
+        begin
+            r0_in1 <= in1;
+            r0_s1 <= in1[N-1];
+            r0_zero_tmp1 <= |in1[N-2:0];
+        end
 
-        r0_s1 <= in1[N-1];
-        r0_s2 <= in2[N-1];
+        if(in2 === 'x)
+        begin
+            r0_in2 <= '0;
+            r0_s2 <= 0;
+            r0_zero_tmp2 <= 0;
+        end
+        else
+        begin
+            r0_in2 <= in2;
+            r0_s2 <= in2[N-1];
+            r0_zero_tmp2 <= |in2[N-2:0];
+        end
 
-        r0_zero_tmp1 <= |in1[N-2:0];
-        r0_zero_tmp2 <= |in2[N-2:0];
+        r0_start <= (start === 'x) ? '0 : start;
     end
 
+    assign r0_inf1 = (in1[N-1] === 'x) ? '0 : in1[N-1] & (~r0_zero_tmp1);
+    assign r0_inf2 = (in2[N-1] === 'x) ? '0 : in2[N-1] & (~r0_zero_tmp2);
 
-    assign r0_inf1 = in1[N-1] & (~r0_zero_tmp1);
-    assign r0_inf2 = in2[N-1] & (~r0_zero_tmp2);
-
-    assign r0_zero1 = ~(in1[N-1] | r0_zero_tmp1);
-    assign r0_zero2 = ~(in2[N-1] | r0_zero_tmp2);
+    assign r0_zero1 = (in1[N-1] === 'x) ? '0 : ~(in1[N-1] | r0_zero_tmp1);
+    assign r0_zero2 = (in2[N-1] === 'x) ? '0 : ~(in2[N-1] | r0_zero_tmp2);
 
     assign r0_inf = r0_inf1 | r0_inf2;
     assign r0_zero = r0_zero1 & r0_zero2;

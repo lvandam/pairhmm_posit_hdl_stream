@@ -8,18 +8,22 @@
 #include <time.h>
 #include <sys/time.h>
 #include <omp.h>
+#include <posit/posit>
 
 // libcxl
 extern "C" {
 #include "libcxl.h"
 }
 
-#include "defines.h"
-#include "batch.h"
-#include "utils.h"
-#include "psl.h"
+#include "config.hpp"
+#include "defines.hpp"
+#include "batch.hpp"
+#include "utils.hpp"
+#include "psl.hpp"
 
 #define BILLION    1000000000L
+
+using namespace sw::unum;
 
 
 int main(int argc, char *argv[])
@@ -29,7 +33,11 @@ int main(int argc, char *argv[])
     struct cxl_afu_h *afu;
     void             *batch;
     t_result         *result_hw;
-    t_result         *result_sw;
+//    t_result         *result_sw;
+
+    std::vector<t_result_sw> result_sw;//, result_hw;
+
+
     t_workload       *workload;
     t_batch          *batches;
 
@@ -141,15 +149,24 @@ int main(int argc, char *argv[])
         return(-1);
     }
 
-    if (posix_memalign((void **)&result_sw, CACHELINE_BYTES, sizeof(t_result) * workload->batches * PIPE_DEPTH))
-    {
-        perror("Could not allocate memory to store software results.\n");
-        return(-1);
+//    if (posix_memalign((void **)&result_sw, CACHELINE_BYTES, sizeof(t_result) * workload->batches * PIPE_DEPTH))
+//    {
+//        perror("Could not allocate memory to store software results.\n");
+//        return(-1);
+//    }
+
+    result_sw.reserve(workload->batches * PIPE_DEPTH);
+//    result_hw.reserve(workload->batches * PIPE_DEPTH);
+    for(int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
+        result_sw[i].reserve(3);
+//        result_hw[i].reserve(3);
     }
 
-    DEBUG_PRINT("Clearing batch and host result memory ...\n");
-    memset(result_sw, 0xFF, sizeof(t_result) * workload->batches * PIPE_DEPTH);
-    memset(batch, 0x00, workload->bytes);
+
+//    DEBUG_PRINT("Clearing batch and host result memory ...\n");
+//    memset(result_sw, 0xFF, sizeof(t_result) * workload->batches * PIPE_DEPTH);
+//    memset(result_sw, 0xFF, sizeof(posit<NBITS,ES>[3]) * workload->batches * PIPE_DEPTH);
+//    memset(batch, 0x00, workload->bytes);
 
 
     DEBUG_PRINT("Filling batches...\n");
@@ -163,7 +180,7 @@ int main(int argc, char *argv[])
     for (int q = 0; q < workload->batches; q++)
     {
         init_batch_address(&batches[q], batch_cur, workload->bx[q], workload->by[q]);
-        fill_batch(&batches[q], workload->bx[q], workload->by[q], 1.0);
+        fill_batch(&batches[q], workload->bx[q], workload->by[q], static_cast<posit<NBITS,ES>>(1.0));
         print_batch_info(&batches[q]);
         batch_cur = (void *)((uint64_t)batch_cur + (uint64_t)workload->bbytes[q]);
     }
@@ -185,21 +202,24 @@ int main(int argc, char *argv[])
             int   x = workload->bx[q];
             int   y = workload->by[q];
 
-            float *M = (float *)malloc(sizeof(float) * (y + 1) * (x + 1));
-            float *I = (float *)malloc(sizeof(float) * (y + 1) * (x + 1));
-            float *D = (float *)malloc(sizeof(float) * (y + 1) * (x + 1));
+            posit<NBITS,ES> *M = (posit<NBITS,ES> *)malloc(sizeof(posit<NBITS,ES>) * (y + 1) * (x + 1));
+            posit<NBITS,ES> *I = (posit<NBITS,ES> *)malloc(sizeof(posit<NBITS,ES>) * (y + 1) * (x + 1));
+            posit<NBITS,ES> *D = (posit<NBITS,ES> *)malloc(sizeof(posit<NBITS,ES>) * (y + 1) * (x + 1));
 
             // Calculate results
             for (int p = 0; p < PIPE_DEPTH; p++)
             {
                 calculate_mids(&batches[q], p, x, y, M, I, D);
 
-                result_sw[q * PIPE_DEPTH + p].values[0] = 0.0;
+//                result_sw[q * PIPE_DEPTH + p].values[0] = 0.0;
+                result_sw[q * PIPE_DEPTH + p][0] = 0.0;
                 for (int c = 0; c < y + 1; c++)
                 {
                     // WARNING: THIS IS BECAUSE FLOATING POINT ADDITION IS NOT ASSOCIATIVE
-                    result_sw[q * PIPE_DEPTH + p].values[0] += M[(y + 1) * x + c];
-                    result_sw[q * PIPE_DEPTH + p].values[0] += I[(y + 1) * x + c];
+//                    result_sw[q * PIPE_DEPTH + p].values[0] += M[(y + 1) * x + c];
+                    result_sw[q * PIPE_DEPTH + p][0] += M[(y + 1) * x + c];
+//                    result_sw[q * PIPE_DEPTH + p].values[0] += I[(y + 1) * x + c];
+                    result_sw[q * PIPE_DEPTH + p][0] += I[(y + 1) * x + c];
                 }
 
                 if (show_table != 0)
@@ -233,10 +253,11 @@ int main(int argc, char *argv[])
 
     if (calculate_sw && (show_results > 0))
     {
-        print_results(result_sw, workload->batches);
+        print_results(&result_sw, workload->batches);
     }
 
     DEBUG_PRINT("Clearing result memory\n");
+//    result_hw.clear();
     memset(result_hw, 0xFF, sizeof(t_result) * workload->batches * PIPE_DEPTH);
 
     DEBUG_PRINT("Opening device: %s ...\n", DEVICE);
@@ -291,10 +312,11 @@ int main(int argc, char *argv[])
         sleep(5);
         for (int i = 0; i < workload->batches * PIPE_DEPTH; i++)
         {
-            DEBUG_PRINT("%4d: %X", i, result_hw[i].b[0]);
-            DEBUG_PRINT(" %X", result_hw[i].b[1]);
-            DEBUG_PRINT(" %X", result_hw[i].b[2]);
-            DEBUG_PRINT(" %X\n", result_hw[i].b[3]);
+            // TODO wat do?
+//            DEBUG_PRINT("%4d: %X", i, result_hw[i].b[0]);
+//            DEBUG_PRINT(" %X", result_hw[i].b[1]);
+//            DEBUG_PRINT(" %X", result_hw[i].b[2]);
+//            DEBUG_PRINT(" %X\n", result_hw[i].b[3]);
         }
 #endif
     }
@@ -307,10 +329,11 @@ int main(int argc, char *argv[])
     // Check for errors
     int errs = 0;
 
-    if (calculate_sw)
-    {
-        errs = count_errors((uint32_t *)result_hw, (uint32_t *)result_sw, workload->batches);
-    }
+    // TODO put this back
+//    if (calculate_sw)
+//    {
+//        errs = count_errors((uint32_t *)result_hw, (uint32_t *)result_sw, workload->batches);
+//    }
 
     DEBUG_PRINT("Errors: %d\n", errs);
 
@@ -337,7 +360,7 @@ int main(int argc, char *argv[])
     BENCH_PRINT("\n");
 
     free(workload);
-    free(result_sw);
+//    free(result_sw);
     free(result_hw);
     free(batch);
     free(wed0);

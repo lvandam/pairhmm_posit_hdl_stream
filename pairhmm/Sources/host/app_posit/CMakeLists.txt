@@ -26,7 +26,7 @@ ExternalProject_Add(universal
 include_directories(${EXTERNAL_INSTALL_LOCATION}/src/universal)
 
 file(GLOB pairhmm_SRC
-        "src/*.h"
+        "src/*.hpp"
         "src/*.cpp"
         )
 

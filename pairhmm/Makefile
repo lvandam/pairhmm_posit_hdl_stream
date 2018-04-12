@@ -1,5 +1,6 @@
 # globals
 APP               = pairhmm
+APP_SIM           = pairhmm_sim
 
 # dirs
 PSLSE_DIR         = Sources/sim/pslse
@@ -67,12 +68,12 @@ host-run:
 
 
 # Posit
-sim-build-posit: $(program_posit_OBJS)
+sim-build-posit:
 	mkdir -p $(APP_POSIT_DIR)/sim-build
-	$(CPP) $(program_posit_OBJS) -o $(APP_POSIT_DIR)/sim-build/$(APP) $(PSLSE_LIBCXL_DIR)/libcxl.a $(CFLAGS) -I$(PSLSE_COMMON_DIR) -I$(PSLSE_LIBCXL_DIR) -lrt -lpthread -D SIM
+	cd $(APP_POSIT_DIR)/sim-build && cmake .. && make pairhmm_sim
 
 sim-run-posit:
-	cd Sources/sim && ../../$(APP_POSIT_DIR)/sim-build/$(APP) $(ARGS)
+	cd Sources/sim && ../../$(APP_POSIT_DIR)/sim-build/$(APP_SIM) $(ARGS)
 
 vsim-run-posit:
 	cd Sources/sim && vsim -do vsim.tcl

@@ -9,9 +9,13 @@
 #include <time.h>
 #include <sys/time.h>
 #include <omp.h>
+#include <posit/posit>
 
-#include "defines.h"
-#include "batch.h"
+#include "config.hpp"
+#include "defines.hpp"
+#include "batch.hpp"
+
+using namespace sw::unum;
 
 typedef struct struct_workload
 {
@@ -31,8 +35,9 @@ typedef struct struct_workload
 
 const char *binstr(uint8_t x);
 void print_omp_info(void);
-void print_mid_table(t_batch *batch, int pair, int r, int c, float *M, float *I, float *D);
-void print_results(t_result *results, int num_batches);
+void print_mid_table(t_batch *batch, int pair, int r, int c, posit<NBITS,ES> *M, posit<NBITS,ES> *I, posit<NBITS,ES> *D);
+//void print_results(t_result *results, int num_batches);
+void print_results(std::vector<t_result_sw> *results, int num_batches);
 void print_batch_memory(void *batch, size_t batch_size);
 void print_batch_info(t_batch *batch);
 int px(int x, int y);

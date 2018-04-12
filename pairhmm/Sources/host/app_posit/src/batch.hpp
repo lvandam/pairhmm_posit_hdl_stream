@@ -8,13 +8,17 @@
 #include <time.h>
 #include <sys/time.h>
 #include <omp.h>
+#include <posit/posit>
 
-#include "defines.h"
+#include "config.hpp"
+#include "defines.hpp"
+
+using namespace sw::unum;
 
 typedef union union_prob
 {
-    float    f;    // as float
-    uint32_t b;    // as binary
+//    posit<NBITS,ES> f;    // as posit
+    uint32_t        b;    // as binary
 } t_prob;
 
 typedef struct struct_probs
@@ -36,7 +40,7 @@ typedef struct struct_sizes
 // Initial values and batch configuration
 typedef struct struct_init
 {
-    float    initials[PIPE_DEPTH];      //   0 ...  511
+    posit<NBITS,ES>    initials[PIPE_DEPTH];      //   0 ...  511
     uint32_t batch_bytes;               // 512 ...  543
     uint32_t x_size;                    // 544 ...  575
     uint32_t x_padded;                  // 576 ...  607
@@ -54,15 +58,18 @@ typedef struct struct_batch
     t_probs *prob;
 } t_batch;
 
+
 typedef union union_result
 {
     float    values[3];
-    uint32_t b[4];        // integer image and padding
+    uint32_t           b[4];        // integer image and padding
 } t_result;
 
-void fill_batch(t_batch *b, int pair_size, int padded_size, float initial);
+typedef std::vector<posit<NBITS,ES>> t_result_sw;
 
-void calculate_mids(t_batch *batch, int pair, int r, int c, float *M, float *I, float *D);
+void fill_batch(t_batch *b, int pair_size, int padded_size, posit<NBITS,ES> initial);
+
+void calculate_mids(t_batch *batch, int pair, int r, int c, posit<NBITS,ES> *M, posit<NBITS,ES> *I, posit<NBITS,ES> *D);
 
 int count_errors(uint32_t *hr, uint32_t *sr, int num_batches);
 

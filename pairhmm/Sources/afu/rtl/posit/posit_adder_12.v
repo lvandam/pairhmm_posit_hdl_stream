@@ -49,21 +49,40 @@ module posit_adder_12 (aclk, in1, in2, start, result, inf, zero, done);
 
     always @(posedge aclk)
     begin
-        r0_in1 <= in1;
-        r0_in2 <= in2;
-        r0_start <= start;
-        r0_s1 <= in1[N-1];
-        r0_s2 <= in2[N-1];
-        r0_zero_tmp1 <= |in1[N-2:0];
-        r0_zero_tmp2 <= |in2[N-2:0];
+        if(in1 === 'x)
+        begin
+            r0_in1 <= '0;
+            r0_s1 <= 0;
+            r0_zero_tmp1 <= 0;
+        end
+        else
+        begin
+            r0_in1 <= in1;
+            r0_s1 <= in1[N-1];
+            r0_zero_tmp1 <= |in1[N-2:0];
+        end
+
+        if(in2 === 'x)
+        begin
+            r0_in2 <= '0;
+            r0_s2 <= 0;
+            r0_zero_tmp2 <= 0;
+        end
+        else
+        begin
+            r0_in2 <= in2;
+            r0_s2 <= in2[N-1];
+            r0_zero_tmp2 <= |in2[N-2:0];
+        end
+
+        r0_start <= (start === 'x) ? '0 : start;
     end
 
+    assign r0_inf1 = (in1[N-1] === 'x) ? '0 : in1[N-1] & (~r0_zero_tmp1);
+    assign r0_inf2 = (in2[N-1] === 'x) ? '0 : in2[N-1] & (~r0_zero_tmp2);
 
-    assign r0_inf1 = in1[N-1] & (~r0_zero_tmp1);
-    assign r0_inf2 = in2[N-1] & (~r0_zero_tmp2);
-
-    assign r0_zero1 = ~(in1[N-1] | r0_zero_tmp1);
-    assign r0_zero2 = ~(in2[N-1] | r0_zero_tmp2);
+    assign r0_zero1 = (in1[N-1] === 'x) ? '0 : ~(in1[N-1] | r0_zero_tmp1);
+    assign r0_zero2 = (in2[N-1] === 'x) ? '0 : ~(in2[N-1] | r0_zero_tmp2);
 
     assign r0_inf = r0_inf1 | r0_inf2;
     assign r0_zero = r0_zero1 & r0_zero2;
@@ -654,6 +673,8 @@ module posit_adder_12 (aclk, in1, in2, start, result, inf, zero, done);
     //  | |  | |  _    | | \ \  |  __/ \__ \ | |_| | | | | |_
     //  |_|  |_| (_)   |_|  \_\  \___| |___/  \__,_| |_|  \__|
 
+    // TODO Laurens: temporarily removed this pipeline stage
+
     // Global pipeline signals
     logic r11_start, r11_inf, r11_zero;
 
@@ -680,7 +701,7 @@ module posit_adder_12 (aclk, in1, in2, start, result, inf, zero, done);
     // Final Output
     assign zero = r11_zero;
     assign inf = r11_inf;
-    assign result = r11_inf | r11_zero | (~r11_DSR_left_out[N-1]) ? {r11_inf, {N-1{1'b0}}} : {r11_ls, r11_tmp1_oN[N-1:1]};
+    assign result = (r11_inf | r11_zero | (~r11_DSR_left_out[N-1])) ? {r11_inf, {N-1{1'b0}}} : {r11_ls, r11_tmp1_oN[N-1:1]};
     assign done = r11_start;
 
 endmodule

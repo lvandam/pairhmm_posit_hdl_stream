@@ -2,15 +2,20 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
+#include <posit/posit>
 
-#include "batch.h"
-#include "utils.h"
+#include "batch.hpp"
+#include "utils.hpp"
+#include "config.hpp"
+
+using namespace sw::unum;
+
 
 const char XDATA[] = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGAC";
 const char YDATA[] = "GTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTAC";
 
 
-void fill_batch(t_batch *batch, int x, int y, float initial)
+void fill_batch(t_batch *batch, int x, int y, posit<NBITS,ES> initial)
 {
     t_inits *init = batch->init;
     t_bbase *read = batch->read;
@@ -32,7 +37,7 @@ void fill_batch(t_batch *batch, int x, int y, float initial)
 
     for (int k = 0; k < PIPE_DEPTH; k++)
     {
-        init->initials[k] = initial + (float)k / 1;
+        init->initials[k] = initial + static_cast<posit<NBITS,ES>>(k) / 1;
 
         for (int i = 0; i < xbp; i++)
         {
@@ -73,7 +78,7 @@ void fill_batch(t_batch *batch, int x, int y, float initial)
 } // fill_batch
 
 
-void calculate_mids(t_batch *batch, int pair, int r, int c, float *M, float *I, float *D)
+void calculate_mids(t_batch *batch, int pair, int r, int c, posit<NBITS, ES> *M, posit<NBITS, ES> *I, posit<NBITS, ES> *D)
 {
     int     w     = c + 1;
     t_inits *init = batch->init;
@@ -101,16 +106,25 @@ void calculate_mids(t_batch *batch, int pair, int r, int c, float *M, float *I, 
     {
         for (int j = 1; j < c + 1; j++)
         {
-            float         distm_simi = prob[(i - 1) * PIPE_DEPTH + pair].p[7].f;
-            float         distm_diff = prob[(i - 1) * PIPE_DEPTH + pair].p[6].f;
-            float         alpha      = prob[(i - 1) * PIPE_DEPTH + pair].p[5].f;
-            float         beta       = prob[(i - 1) * PIPE_DEPTH + pair].p[4].f;
-            float         delta      = prob[(i - 1) * PIPE_DEPTH + pair].p[3].f;
-            float         upsilon    = prob[(i - 1) * PIPE_DEPTH + pair].p[2].f;
-            float         eta        = prob[(i - 1) * PIPE_DEPTH + pair].p[1].f;
-            float         zeta       = prob[(i - 1) * PIPE_DEPTH + pair].p[0].f;
+            posit<NBITS,ES>         distm_simi;
+            posit<NBITS,ES>         distm_diff;
+            posit<NBITS,ES>         alpha;
+            posit<NBITS,ES>         beta;
+            posit<NBITS,ES>         delta;
+            posit<NBITS,ES>         upsilon;
+            posit<NBITS,ES>         eta;
+            posit<NBITS,ES>         zeta;
 
-            float         distm;
+            distm_simi.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[7].b);
+            distm_diff.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[6].b);
+            alpha.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[5].b);
+            beta.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[4].b);
+            delta.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[3].b);
+            upsilon.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[2].b);
+            eta.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[1].b);
+            zeta.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[0].b);
+
+            posit<NBITS,ES> distm;
             unsigned char rb = read[i - 1].base[pair];
             unsigned char hb = hapl[j - 1].base[pair];
 
