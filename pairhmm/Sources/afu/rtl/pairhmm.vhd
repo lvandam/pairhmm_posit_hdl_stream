@@ -90,11 +90,10 @@ architecture logic of pairhmm is
   signal    lastlast        : std_logic;
   signal    lastlast1       : std_logic;
 
-  component posit_adder
+    component posit_adder_6
       generic (
         N: integer := 32;
-        es: integer := 2;
-        stages: integer := 1
+        es: integer := 2
       );
       port (
         aclk: in std_logic;
@@ -105,7 +104,23 @@ architecture logic of pairhmm is
         inf: out std_logic;
         done: out std_logic
       );
-  end component;
+    end component;
+
+    component posit_adder_12
+        generic (
+          N: integer := 32;
+          es: integer := 2
+        );
+        port (
+          aclk: in std_logic;
+          in1: in std_logic_vector(31 downto 0);
+          in2: in std_logic_vector(31 downto 0);
+          start: in std_logic;
+          result: out std_logic_vector(31 downto 0);
+          inf: out std_logic;
+          done: out std_logic
+        );
+    end component;
 
     -- COMPONENT FPADD_11
     --   PORT (
@@ -246,10 +261,8 @@ begin
   --   m_axis_result_tvalid    => addm_out_valid,
   --   m_axis_result_tdata     => addm_out
   -- );
-  add_m : posit_adder generic map (
-    N => 32,
-    es => 2,
-    stages => 11
+  add_m : posit_adder_12 generic map (
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => addm_ina,
@@ -269,10 +282,8 @@ begin
 --   m_axis_result_tvalid    => addi_out_valid,
 --   m_axis_result_tdata     => addi_out
 -- );
-  add_i : posit_adder generic map (
-    N => 32,
-    es => 2,
-    stages => 11
+  add_i : posit_adder_12 generic map (
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => addi_ina,
@@ -297,11 +308,13 @@ begin
         i_valid_delay(0)    <= lastlast1;
         rm                  <= resbusm;
         i_delay(0)          <= resbusi;
+
+        -- FP ONLY:
         -- Laurens: 1 extra delay (11 -> 12 cycles latency)
-        addm_out_buf <= addm_out;
-        addm_out_valid_buf <= addm_out_valid;
-        addi_out_buf <= addi_out;
-        addi_out_valid_buf <= addi_out_valid;
+        -- addm_out_buf <= addm_out;
+        -- addm_out_valid_buf <= addm_out_valid;
+        -- addi_out_buf <= addi_out;
+        -- addi_out_valid_buf <= addi_out_valid;
 
         for K in 1 to 2*PE_ADD_CYCLES - 1 loop
           i_delay(K)        <= i_delay(K-1);
@@ -328,13 +341,13 @@ begin
 
         prevlast := lastlast1;
 
-        o.score       <= addi_out_buf;
-        o.score_valid <= addi_out_valid_buf;
+        o.score       <= addi_out;  -- For FP: addi_out_buf
+        o.score_valid <= addi_out_valid; -- For FP: addi_out_valid_buf
       end if;
     end if;
   end process;
 
-  res_acc                   <= addi_out_buf        when res_rst = '0' else
+  res_acc                   <= addi_out        when res_rst = '0' else -- For FP: addi_out_buf
                                (others => '0');
 
   addm_ina                  <= res_acc;
@@ -343,8 +356,8 @@ begin
   addm_inb                  <= resbusm;
   addm_inb_valid            <= '1';
 
-  addi_ina                  <= addm_out_buf;
-  addi_ina_valid            <= addm_out_valid_buf;
+  addi_ina                  <= addm_out; -- For FP: addm_out_buf
+  addi_ina_valid            <= addm_out_valid; -- For FP: addm_out_valid_buf
 
   addi_inb                  <= i_delay(2*PE_ADD_CYCLES-1);
   addi_inb_valid            <= i_valid_delay(2*PE_ADD_CYCLES-1);

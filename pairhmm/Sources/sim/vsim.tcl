@@ -36,7 +36,8 @@ proc r  {} {
   vlog -quiet ../afu/rtl/posit/LOD_N.v
   vlog -quiet ../afu/rtl/posit/LZD_N.v
   vlog -quiet ../afu/rtl/posit/data_extract.v
-  vlog -quiet ../afu/rtl/posit/posit_adder.v
+  vlog -quiet ../afu/rtl/posit/posit_adder_6.v
+  vlog -quiet ../afu/rtl/posit/posit_adder_12.v
   vlog -quiet ../afu/rtl/posit/posit_mult.v
 
   # compile rtl

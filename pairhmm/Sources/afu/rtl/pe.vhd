@@ -75,11 +75,26 @@ architecture rtl of pe is
 
   signal tdata_add_delta_epsilon, tdata_add_zeta_eta : prob;
 
-    component posit_adder
+    component posit_adder_6
         generic (
           N: integer := 32;
-          es: integer := 2;
-          stages: integer := 1
+          es: integer := 2
+        );
+        port (
+          aclk: in std_logic;
+          in1: in std_logic_vector(31 downto 0);
+          in2: in std_logic_vector(31 downto 0);
+          start: in std_logic;
+          result: out std_logic_vector(31 downto 0);
+          inf: out std_logic;
+          done: out std_logic
+        );
+    end component;
+
+    component posit_adder_12
+        generic (
+          N: integer := 32;
+          es: integer := 2
         );
         port (
           aclk: in std_logic;
@@ -244,8 +259,7 @@ begin
   --   m_axis_result_tdata   => step.trans.almtl
   -- );
   mul_alpha : posit_mult generic map (
-    N => 32,
-    es => 2
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => step.init.tmis.alpha,
@@ -271,8 +285,7 @@ begin
   --   m_axis_result_tdata   => step.trans.beitl
   -- );
   mul_beta : posit_mult generic map (
-    N => 32,
-    es => 2
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => step.init.tmis.beta,
@@ -298,8 +311,7 @@ begin
   --   m_axis_result_tdata   => step.trans.gadtl
   -- );
   mul_gamma : posit_mult generic map (
-    N => 32,
-    es => 2
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => step.init.tmis.beta,
@@ -325,8 +337,7 @@ begin
   --   m_axis_result_tdata   => step.trans.demt
   -- );
   mul_delta : posit_mult generic map (
-    N => 32,
-    es => 2
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => step.init.tmis.delta,
@@ -352,8 +363,7 @@ begin
   --   m_axis_result_tdata   => step.trans.epit
   -- );
   mul_epsilon : posit_mult generic map (
-    N => 32,
-    es => 2
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => step.init.tmis.epsilon,
@@ -379,8 +389,7 @@ begin
   --   m_axis_result_tdata   => step.trans.zeml
   -- );
   mul_zeta : posit_mult generic map (
-    N => 32,
-    es => 2
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => step.init.tmis.zeta,
@@ -406,8 +415,7 @@ begin
   --   m_axis_result_tdata   => step.trans.etdl
   -- );
   mul_eta : posit_mult generic map (
-    N => 32,
-    es => 2
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => step.init.tmis.eta,
@@ -446,10 +454,8 @@ begin
   --   m_axis_result_tvalid  => fp_valids(7),
   --   m_axis_result_tdata   => step.add.albetl
   -- );
-  add_alpha_beta : posit_adder generic map (
-    N => 32,
-    es => 2,
-    stages => 6
+  add_alpha_beta : posit_adder_6 generic map (
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => step.trans.almtl,
@@ -474,10 +480,8 @@ begin
   --   m_axis_result_tvalid  => fp_valids(8),
   --   m_axis_result_tdata   => step.add.albegatl
   -- );
-  add_alpha_beta_gamma : posit_adder generic map (
-    N => 32,
-    es => 2,
-    stages => 6
+  add_alpha_beta_gamma : posit_adder_6 generic map (
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => step.add.albetl,
@@ -501,18 +505,16 @@ begin
   --   m_axis_result_tvalid  => fp_valid_add_delta_epsilon,
   --   m_axis_result_tdata   => tdata_add_delta_epsilon
   -- );
-  add_delta_epsilon : posit_adder generic map (
-    N => 32,
-    es => 2,
-    stages => 11
+  add_delta_epsilon : posit_adder_12 generic map (
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => step.trans.demt,
     in2 => step.trans.epit,
     start => step.init.valid, -- todo create start signal, or just remove it?
-    result => tdata_add_delta_epsilon,
+    result => step.add.deept,
     inf => posit_infs(9),
-    done => fp_valid_add_delta_epsilon
+    done => fp_valids(9)
   );
 
   -- add_zeta_eta            : FPADD_11 port map (
@@ -528,35 +530,34 @@ begin
   --   m_axis_result_tvalid  => fp_valid_add_zeta_eta,
   --   m_axis_result_tdata   => tdata_add_zeta_eta
   -- );
-  add_zeta_eta : posit_adder generic map (
-    N => 32,
-    es => 2,
-    stages => 11
+  add_zeta_eta : posit_adder_12 generic map (
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => step.trans.zeml,
     in2 => step.trans.etdl,
     start => step.init.valid, -- todo create start signal, or just remove it?
-    result => tdata_add_zeta_eta,
+    result => step.add.zeett,
     inf => posit_infs(10),
-    done => fp_valid_add_zeta_eta
+    done => fp_valids(10)
   );
 
+  -- For FP ONLY:
   -- Laurens: add extra buffer since FPADD11 should be 12 (11 is max to be generated)
-  process(cr.clk)
-  begin
-      if(rising_edge(cr.clk)) then
-          -- if cr.rst = '1' then
-
-          -- else
-          fp_valids(9) <= fp_valid_add_delta_epsilon;
-          fp_valids(10) <= fp_valid_add_zeta_eta;
-
-          step.add.deept <= tdata_add_delta_epsilon;
-          step.add.zeett <= tdata_add_zeta_eta;
-          -- end
-      end if;
-  end process;
+  -- process(cr.clk)
+  -- begin
+  --     if(rising_edge(cr.clk)) then
+  --         -- if cr.rst = '1' then
+  --
+  --         -- else
+  --         fp_valids(9) <= fp_valid_add_delta_epsilon;
+  --         fp_valids(10) <= fp_valid_add_zeta_eta;
+  --
+  --         step.add.deept <= tdata_add_delta_epsilon;
+  --         step.add.zeett <= tdata_add_zeta_eta;
+  --         -- end
+  --     end if;
+  -- end process;
 
 
 ---------------------------------------------------------------------------------------------------
@@ -599,8 +600,7 @@ begin
   --   m_axis_result_tdata   => step.emult.m
   -- );
   mul_lambda : posit_mult generic map (
-    N => 32,
-    es => 2
+    N => 32, es => 2
   ) port map (
     aclk => cr.clk,
     in1 => step.add.albegatl,
@@ -633,8 +633,7 @@ begin
     --   m_axis_result_tdata   => step.emult.i
     -- );
     mul_theta : posit_mult generic map (
-      N => 32,
-      es => 2
+      N => 32, es => 2
     ) port map (
       aclk => cr.clk,
       in1 => step.add.deept,
@@ -668,8 +667,7 @@ begin
     --   m_axis_result_tdata   => step.emult.d
     -- );
     mul_upsilon : posit_mult generic map (
-      N => 32,
-      es => 2
+      N => 32, es => 2
     ) port map (
       aclk => cr.clk,
       in1 => step.add.zeett,
