@@ -1,13 +1,13 @@
 
 // file: psl_to_kernel.v
-//
+// 
 // (c) Copyright 2008 - 2013 Xilinx, Inc. All rights reserved.
-//
+// 
 // This file contains confidential and proprietary information
 // of Xilinx, Inc. and is protected under U.S. and
 // international copyright and other intellectual property
 // laws.
-//
+// 
 // DISCLAIMER
 // This disclaimer is not a license and does not grant any
 // rights to the materials distributed herewith. Except as
@@ -29,7 +29,7 @@
 // by a third party) even if such damage or loss was
 // reasonably foreseeable or Xilinx had been advised of the
 // possibility of the same.
-//
+// 
 // CRITICAL APPLICATIONS
 // Xilinx products are not designed or intended to be fail-
 // safe, or for use in any application requiring fail-safe
@@ -43,10 +43,10 @@
 // liability of any use of Xilinx products in Critical
 // Applications, subject only to applicable laws and
 // regulations governing limitations on product liability.
-//
+// 
 // THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
 // PART OF THIS FILE AT ALL TIMES.
-//
+// 
 //----------------------------------------------------------------------------
 // User entered comments
 //----------------------------------------------------------------------------
@@ -56,18 +56,18 @@
 //  Output     Output      Phase    Duty Cycle   Pk-to-Pk     Phase
 //   Clock     Freq (MHz)  (degrees)    (%)     Jitter (ps)  Error (ps)
 //----------------------------------------------------------------------------
-// clk_kernel___125.000______0.000______50.0______124.489____104.065
+// clk_kernel___125.000______0.000______50.0______102.531_____85.928
 //
 //----------------------------------------------------------------------------
 // Input Clock   Freq (MHz)    Input Jitter (UI)
 //----------------------------------------------------------------------------
 // __primary_____________250____________0.010
 
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
-(* CORE_GENERATION_INFO = "psl_to_kernel,clk_wiz_v5_4_3_0,{component_name=psl_to_kernel,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,enable_axi=0,feedback_source=FDBK_AUTO,PRIMITIVE=PLL,num_out_clk=1,clkin1_period=4.000,clkin2_period=10.0,use_power_down=false,use_reset=false,use_locked=false,use_inclk_stopped=false,feedback_type=SINGLE,CLOCK_MGR_TYPE=NA,manual_override=false}" *)
+(* CORE_GENERATION_INFO = "psl_to_kernel,clk_wiz_v5_4_3_0,{component_name=psl_to_kernel,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,enable_axi=0,feedback_source=FDBK_AUTO,PRIMITIVE=MMCM,num_out_clk=1,clkin1_period=4.000,clkin2_period=10.0,use_power_down=false,use_reset=false,use_locked=false,use_inclk_stopped=false,feedback_type=SINGLE,CLOCK_MGR_TYPE=NA,manual_override=false}" *)
 
-module psl_to_kernel
+module psl_to_kernel 
  (
   // Clock out ports
   output        clk_kernel,
@@ -77,7 +77,7 @@ module psl_to_kernel
 
   psl_to_kernel_clk_wiz inst
   (
-  // Clock out ports
+  // Clock out ports  
   .clk_kernel(clk_kernel),
  // Clock in ports
   .clk_psl(clk_psl)
