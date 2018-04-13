@@ -160,14 +160,12 @@ int count_errors(uint32_t *hr, uint32_t *sr, int num_batches)
             sw  = sr[i * 4 * PIPE_DEPTH + j * 4];
             hw  = hr[i * 4 * PIPE_DEPTH + j * 4];
             swf = *(float *)&sr[i * 4 * PIPE_DEPTH + j * 4];
-            hwf = *(float *)&sr[i * 4 * PIPE_DEPTH + j * 4];
+            hwf = *(float *)&hr[i * 4 * PIPE_DEPTH + j * 4];
             float err = fabs(swf / hwf);
 
             if ((err < ERR_LOWER) || (err > ERR_UPPER))
             {
                 total_errors++;
-                printf("Error in batch %d pair %d:\nSW: %8X\nHW: %8X DIFF:%16f\n", i, j, sw, hw, err);
-                exit(-1);
                 DEBUG_PRINT("B%3d, P%3d, SW: %8X, HW: %8X, SW:%f, HW:%f\n",
                             i,
                             j,
@@ -176,6 +174,7 @@ int count_errors(uint32_t *hr, uint32_t *sr, int num_batches)
                             *(float *)&sr[i * 4 * PIPE_DEPTH + j * 4],
                             *(float *)&hr[i * 4 * PIPE_DEPTH + j * 4]
                             );
+		exit(-1);
             }
         }
     }

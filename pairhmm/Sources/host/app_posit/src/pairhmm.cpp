@@ -308,7 +308,6 @@ int main(int argc, char *argv[])
     while (!wed0->status)
     {
         temp++;
-#ifdef DEBUG
         sleep(5);
         for (int i = 0; i < workload->batches * PIPE_DEPTH; i++)
         {
@@ -318,7 +317,6 @@ int main(int argc, char *argv[])
 //            DEBUG_PRINT(" %X", result_hw[i].b[2]);
 //            DEBUG_PRINT(" %X\n", result_hw[i].b[3]);
         }
-#endif
     }
 
     clock_gettime(CLOCK_MONOTONIC, &hwend); /* mark the end time */

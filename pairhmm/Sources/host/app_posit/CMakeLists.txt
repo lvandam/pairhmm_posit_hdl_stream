@@ -8,7 +8,7 @@ set(PSLSE_COMMON_DIR ${SOURCES_DIR}/sim/pslse/common)
 set(PSLSE_LIBCXL_DIR ${SOURCES_DIR}/sim/pslse/libcxl)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "-O3 -Wall -m64 -fopenmp -DPOSIT_VERBOSE_OUTPUT")# -DDEBUG_VALUES -DDEBUG_VERBOSE #-DPOSIT_TRACE_DECODE -DPOSIT_TRACE_CONVERSION -DPOSIT_TRACE_ROUNDING")
+set(CMAKE_CXX_FLAGS "-std=c++11 -O3 -Wall -m64 -fopenmp -DPOSIT_VERBOSE_OUTPUT")# -DDEBUG_VALUES -DDEBUG_VERBOSE #-DPOSIT_TRACE_DECODE -DPOSIT_TRACE_CONVERSION -DPOSIT_TRACE_ROUNDING")
 
 set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
 
@@ -29,6 +29,8 @@ file(GLOB pairhmm_SRC
         "src/*.hpp"
         "src/*.cpp"
         )
+
+#set_source_files_properties(${pairhmm_SRC} PROPERTIES LANGUAGE CXX)
 
 # Host (CAPI)
 add_executable(pairhmm_host ${pairhmm_SRC})
