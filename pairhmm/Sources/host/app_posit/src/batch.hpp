@@ -40,7 +40,7 @@ typedef struct struct_sizes
 // Initial values and batch configuration
 typedef struct struct_init
 {
-    posit<NBITS,ES>    initials[PIPE_DEPTH];      //   0 ...  511
+    float    initials[PIPE_DEPTH];      //   0 ...  511 //float initials[PIPE_DEPTH];      //   0 ...  511 //posit<NBITS,ES>    
     uint32_t batch_bytes;               // 512 ...  543
     uint32_t x_size;                    // 544 ...  575
     uint32_t x_padded;                  // 576 ...  607
@@ -67,7 +67,7 @@ typedef union union_result
 
 typedef std::vector<posit<NBITS,ES>> t_result_sw;
 
-void fill_batch(t_batch *b, int pair_size, int padded_size, posit<NBITS,ES> initial);
+void fill_batch(t_batch *b, int pair_size, int padded_size, float initial);
 
 void calculate_mids(t_batch *batch, int pair, int r, int c, posit<NBITS,ES> *M, posit<NBITS,ES> *I, posit<NBITS,ES> *D);
 

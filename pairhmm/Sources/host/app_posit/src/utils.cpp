@@ -7,12 +7,14 @@
 #include <sys/time.h>
 #include <omp.h>
 #include <posit/posit>
+#include <iostream>
 
 #include "config.hpp"
 #include "defines.hpp"
 #include "batch.hpp"
 #include "utils.hpp"
 
+using namespace std;
 using namespace sw::unum;
 
 
@@ -123,7 +125,7 @@ void print_mid_table(t_batch *batch, int pair, int r, int c, posit<NBITS,ES> *M,
 } // print_mid_table
 
 
-void print_results(std::vector<t_result_sw> *results, int num_batches)
+void print_results(std::vector<t_result_sw>& results, int num_batches)
 {
     DEBUG_PRINT("╔═══════════════════════════════╗\n");
     for (int q = 0; q < num_batches; q++)
@@ -132,7 +134,14 @@ void print_results(std::vector<t_result_sw> *results, int num_batches)
         DEBUG_PRINT("╠═══════════════════════════════╣\n");
         for (int p = 0; p < PIPE_DEPTH; p++)
         {
-            // TODO wat do?
+//		posit<32,2> res0, res1, res2;
+//		res0.set_raw_bits(results[q*PIPE_DEPTH+p].b[0]);
+//		res1.set_raw_bits(results[q*PIPE_DEPTH+p].b[1]);
+//		res2.set_raw_bits results[q*PIPE_DEPTH+p].b[2]);
+//		cout << "║" << p <<": "<< res0 <<" "<< res1 <<" "<< res2 <<" ║" << endl;
+
+		cout << "║ " << results[q*PIPE_DEPTH+p][0] <<" "<< results[q*PIPE_DEPTH+p][1] <<" "<< results[q*PIPE_DEPTH+p][2] <<" ║" << endl;
+
 //            DEBUG_PRINT("║%2d: %08X %08X %08X ║\n",
 //                        p,
 //                        results[q * PIPE_DEPTH + p].b[0],

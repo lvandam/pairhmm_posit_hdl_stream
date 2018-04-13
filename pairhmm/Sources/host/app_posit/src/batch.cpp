@@ -3,11 +3,13 @@
 #include <stdint.h>
 #include <math.h>
 #include <posit/posit>
+#include <iostream>
 
 #include "batch.hpp"
 #include "utils.hpp"
 #include "config.hpp"
 
+using namespace std;
 using namespace sw::unum;
 
 
@@ -15,7 +17,7 @@ const char XDATA[] = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGAC
 const char YDATA[] = "GTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTAC";
 
 
-void fill_batch(t_batch *batch, int x, int y, posit<NBITS,ES> initial)
+void fill_batch(t_batch *batch, int x, int y, float initial)
 {
     t_inits *init = batch->init;
     t_bbase *read = batch->read;
@@ -24,7 +26,6 @@ void fill_batch(t_batch *batch, int x, int y, posit<NBITS,ES> initial)
 
     int     xp  = px(x, y);
     int     xbp = pbp(xp);
-
     int     yp  = py(y);
     int     ybp = pbp(yp);
 
@@ -37,7 +38,7 @@ void fill_batch(t_batch *batch, int x, int y, posit<NBITS,ES> initial)
 
     for (int k = 0; k < PIPE_DEPTH; k++)
     {
-        init->initials[k] = initial + static_cast<posit<NBITS,ES>>(k) / 1;
+        init->initials[k] = initial + float(k) / 1;
 
         for (int i = 0; i < xbp; i++)
         {

@@ -10,6 +10,8 @@
 #include <omp.h>
 #include <posit/posit>
 
+#include <iostream>
+
 // libcxl
 extern "C" {
 #include "libcxl.h"
@@ -23,6 +25,7 @@ extern "C" {
 
 #define BILLION    1000000000L
 
+using namespace std;
 using namespace sw::unum;
 
 
@@ -180,7 +183,7 @@ int main(int argc, char *argv[])
     for (int q = 0; q < workload->batches; q++)
     {
         init_batch_address(&batches[q], batch_cur, workload->bx[q], workload->by[q]);
-        fill_batch(&batches[q], workload->bx[q], workload->by[q], static_cast<posit<NBITS,ES>>(1.0));
+        fill_batch(&batches[q], workload->bx[q], workload->by[q], 1.0);
         print_batch_info(&batches[q]);
         batch_cur = (void *)((uint64_t)batch_cur + (uint64_t)workload->bbytes[q]);
     }
@@ -251,9 +254,11 @@ int main(int argc, char *argv[])
 
     DEBUG_PRINT("%d %d\n", calculate_sw, show_results);
 
+	cout << result_sw[0][2] << endl;
+
     if (calculate_sw && (show_results > 0))
     {
-        print_results(&result_sw, workload->batches);
+        print_results(result_sw, workload->batches);
     }
 
     DEBUG_PRINT("Clearing result memory\n");
@@ -311,6 +316,16 @@ int main(int argc, char *argv[])
         sleep(5);
         for (int i = 0; i < workload->batches * PIPE_DEPTH; i++)
         {
+		posit<32,2> res0, res1, res2, res3;
+		res0.set_raw_bits(result_hw[i].b[0]);
+		res1.set_raw_bits(result_hw[i].b[1]);
+		res2.set_raw_bits(result_hw[i].b[2]);
+		res3.set_raw_bits(result_hw[i].b[3]);
+
+		cout << i <<": "<< res0 <<" "<< res1 <<" "<< res2 <<" "<< res3 << endl;
+
+
+
             // TODO wat do?
 //            DEBUG_PRINT("%4d: %X", i, result_hw[i].b[0]);
 //            DEBUG_PRINT(" %X", result_hw[i].b[1]);
