@@ -76,13 +76,15 @@ set_attribute module $top    top_level     1
 set_attribute module $top    prj           $prjDir/$top.prj
 set_attribute module $top    synth         ${run.topSynth}
 set_attribute module $top    synth_options "-flatten_hierarchy rebuilt -fanout_limit 60 -fsm_extraction one_hot -keep_equivalent_registers -resource_sharing off -no_lc -shreg_min_size 5 -no_iobuf"
-set_attribute module $top    ip            [list    $coreDir/feedback_fifo/feedback_fifo.xci                        \
+set_attribute module $top    ip            [list    $coreDir/psl_to_kernel/psl_to_kernel.xci                        \
+                                                    $coreDir/feedback_fifo/feedback_fifo.xci                        \
                                                     $coreDir/kernel_to_streaming_fifo/kernel_to_streaming_fifo.xci  \
                                                     $coreDir/probabilities_fifo/probabilities_fifo.xci              \
                                            ]
 add_implementation $top
 set_attribute impl $top      top           $top
-set_attribute impl $top      linkXDC       [list $xdcDir/b_xilinx_capi_pcie_gen3_alphadata_brd.xdc  \             ]
+set_attribute impl $top      linkXDC       [list $xdcDir/b_xilinx_capi_pcie_gen3_alphadata_brd.xdc  \
+                                                 $xdcDir/pairhmm.xdc \ ]
 set_attribute impl $top      impl          ${run.topImpl}
 set_attribute impl $top      hd.impl       1
 set_attribute impl $top      opt_directive Explore

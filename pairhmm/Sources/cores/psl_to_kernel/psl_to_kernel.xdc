@@ -1,6 +1,7 @@
-################################################################################
-#
-# (c) Copyright 2002 - 2013 Xilinx, Inc. All rights reserved.
+
+# file: psl_to_kernel.xdc
+# 
+# (c) Copyright 2008 - 2013 Xilinx, Inc. All rights reserved.
 # 
 # This file contains confidential and proprietary information
 # of Xilinx, Inc. and is protected under U.S. and
@@ -45,14 +46,15 @@
 # 
 # THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
 # PART OF THIS FILE AT ALL TIMES.
-#
-################################################################################
+# 
 
-# Core Period Constraint. This constraint can be modified, and is
-# valid as long as it is met after place and route.
-create_clock -name "TS_CLKA" -period 20.0 [ get_ports clka ]
-    set_property HD.CLK_SRC BUFGCTRL_X0Y0 [ get_ports clka ]
-  
-create_clock -name "TS_CLKB" -period 20.0 [ get_ports clkb ]
-    set_property HD.CLK_SRC BUFGCTRL_X0Y1 [ get_ports clkb ]
-################################################################################
+# Input clock periods. These duplicate the values entered for the
+# input clocks. You can use these to time your system. If required
+# commented constraints can be used in the top level xdc 
+#----------------------------------------------------------------
+# Connect to input port when clock capable pin is selected for input
+create_clock -period 4.000 [get_ports clk_psl]
+set_input_jitter [get_clocks -of_objects [get_ports clk_psl]] 0.04
+
+
+set_property PHASESHIFT_MODE WAVEFORM [get_cells -hierarchical *adv*]

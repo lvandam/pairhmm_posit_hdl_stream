@@ -77,6 +77,15 @@ architecture logic of cu is
       underflow : OUT STD_LOGIC
     );
   END COMPONENT;
+
+    component psl_to_kernel
+    port
+    (
+        clk_kernel        : out    std_logic;
+        clk_psl           : in     std_logic
+    );
+    end component;
+
 begin
 
 ---------------------------------------------------------------------------------------------------
@@ -324,13 +333,13 @@ begin
 --------------------------------------------------------------------------------------------------- Clock generator
 
   -- In case the kernel has to run slower due to timing constraints not being met, use this to lower the clock frequency
---  kernel_clock_gen : entity xil_defaultlib.psl_to_kernel port map (
---    clk_psl            => i.cr.clk,
---    clk_kernel         => re.clk_kernel
---  );
+ kernel_clock_gen : psl_to_kernel port map (
+   clk_psl            => i.cr.clk,
+   clk_kernel         => re.clk_kernel
+ );
 
   -- Use this to keep everything in the same clock domain:
-re.clk_kernel <= i.cr.clk;
+-- re.clk_kernel <= i.cr.clk;
 
 ---------------------------------------------------------------------------------------------------
 --    ____                        _____            __  __

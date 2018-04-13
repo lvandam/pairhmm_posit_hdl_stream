@@ -18,6 +18,8 @@ proc r  {} {
   vcom -2008 -quiet ../afu/pkg/control_package.vhd
 
   # compile ip
+  # clk
+  vcom -2008 -quiet ../afu/rtl/psl_to_kernel_pll.vhd
   # fifo
   vlog -quiet ../cores/feedback_fifo/sim/feedback_fifo.v
   vlog -quiet ../cores/kernel_to_streaming_fifo/sim/kernel_to_streaming_fifo.v
@@ -65,7 +67,7 @@ proc r  {} {
 
 # simulate
 proc s  {} {
-  vsim -L fifo_generator_v13_2_1 -t ns -novopt -c -pli pslse/afu_driver/src/veriuser.sl +nowarnTSCALE work.top
+  vsim -L fifo_generator_v13_2_1 -L unisim -t ns -novopt -c -pli pslse/afu_driver/src/veriuser.sl +nowarnTSCALE work.top
   view wave
   radix h
   log * -r
