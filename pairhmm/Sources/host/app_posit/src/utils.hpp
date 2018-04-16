@@ -15,6 +15,7 @@
 #include "defines.hpp"
 #include "batch.hpp"
 
+using namespace std;
 using namespace sw::unum;
 
 typedef struct struct_workload
@@ -35,8 +36,7 @@ typedef struct struct_workload
 
 const char *binstr(uint8_t x);
 void print_omp_info(void);
-void print_mid_table(t_batch *batch, int pair, int r, int c, posit<NBITS,ES> *M, posit<NBITS,ES> *I, posit<NBITS,ES> *D);
-//void print_results(t_result *results, int num_batches);
+void print_mid_table(t_batch *batch, int pair, int r, int c, t_posit_matrix& M, t_posit_matrix& I, t_posit_matrix& D);
 void print_results(std::vector<t_result_sw>& results, int num_batches);
 void print_batch_memory(void *batch, size_t batch_size);
 void print_batch_info(t_batch *batch);
@@ -46,6 +46,19 @@ int py(int y);
 
 t_workload *load_workload(char *fname);
 t_workload *gen_workload(unsigned long pairs, unsigned long fixedX, unsigned long fixedY);
+
+template<size_t nbits>
+std::string hexstring(bitblock<nbits> bits) {
+    char str[8];   // plenty of room
+    const char* hexits = "0123456789ABCDEF";
+    unsigned int max = 8;
+    for (unsigned int i = 0; i < max; i++) {
+        unsigned int hexit = (bits[3] << 3) + (bits[2] << 2) + (bits[1] << 1) + bits[0];
+        str[max - 1 - i] = hexits[hexit];
+        bits >>= 4;
+    }
+    return std::string(str);
+}
 
 
 #endif //__UTILS_H

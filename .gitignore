@@ -17,6 +17,7 @@ modelsim.ini
 posit_add/posit_add.cache/
 work/
 cmake-build-debug/
+pairhmm/Sources/sim/error*.txt
 pairhmm/Implement
 pairhmm/Synth
 pairhmm/Sources/host/app/build

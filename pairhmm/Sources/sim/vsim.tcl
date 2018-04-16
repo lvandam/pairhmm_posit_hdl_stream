@@ -24,10 +24,6 @@ proc r  {} {
   vlog -quiet ../cores/feedback_fifo/sim/feedback_fifo.v
   vlog -quiet ../cores/kernel_to_streaming_fifo/sim/kernel_to_streaming_fifo.v
   vlog -quiet ../cores/probabilities_fifo/sim/probabilities_fifo.v
-  # FP units
-#  vcom -2008 -quiet ../cores/FPADD_6/sim/FPADD_6.vhd
-#  vcom -2008 -quiet ../cores/FPADD_11/sim/FPADD_11.vhd
-#  vcom -2008 -quiet ../cores/FPMULT/sim/FPMULT.vhd
 
   # compile posit units
   vlog -quiet ../afu/rtl/posit/add_mantovf.v
@@ -38,9 +34,9 @@ proc r  {} {
   vlog -quiet ../afu/rtl/posit/LOD_N.v
   vlog -quiet ../afu/rtl/posit/LZD_N.v
   vlog -quiet ../afu/rtl/posit/data_extract.v
-  vlog -quiet ../afu/rtl/posit/posit_adder_6.v
-  vlog -quiet ../afu/rtl/posit/posit_adder_12.v
-  vlog -quiet ../afu/rtl/posit/posit_mult.v
+  vlog -quiet ../afu/rtl/posit/posit_adder_4.v
+  vlog -quiet ../afu/rtl/posit/posit_adder_8.v
+  vlog -quiet ../afu/rtl/posit/posit_mult_4.v
 
   # compile rtl
   echo "Compiling rtl"

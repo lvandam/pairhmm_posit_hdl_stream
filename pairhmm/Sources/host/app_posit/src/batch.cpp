@@ -79,7 +79,7 @@ void fill_batch(t_batch *batch, int x, int y, float initial)
 } // fill_batch
 
 
-void calculate_mids(t_batch *batch, int pair, int r, int c, posit<NBITS, ES> *M, posit<NBITS, ES> *I, posit<NBITS, ES> *D)
+void calculate_mids(t_batch *batch, int pair, int r, int c, t_posit_matrix &M, t_posit_matrix &I, t_posit_matrix &D)
 {
     int     w     = c + 1;
     t_inits *init = batch->init;
@@ -90,31 +90,31 @@ void calculate_mids(t_batch *batch, int pair, int r, int c, posit<NBITS, ES> *M,
     // Set to zero and intial value in the X direction
     for (int j = 0; j < c + 1; j++)
     {
-        M[j] = 0.0;
-        I[j] = 0.0;
-        D[j] = init->initials[pair];
+        M[0][j] = 0.0;
+        I[0][j] = 0.0;
+        D[0][j] = init->initials[pair];
     }
 
     // Set to zero in Y direction
     for (int i = 1; i < r + 1; i++)
     {
-        M[i * w] = 0.0;
-        I[i * w] = 0.0;
-        D[i * w] = 0.0;
+        M[i][0] = 0.0;
+        I[i][0] = 0.0;
+        D[i][0] = 0.0;
     }
 
     for (int i = 1; i < r + 1; i++)
     {
         for (int j = 1; j < c + 1; j++)
         {
-            posit<NBITS,ES>         distm_simi;
-            posit<NBITS,ES>         distm_diff;
-            posit<NBITS,ES>         alpha;
-            posit<NBITS,ES>         beta;
-            posit<NBITS,ES>         delta;
-            posit<NBITS,ES>         upsilon;
-            posit<NBITS,ES>         eta;
-            posit<NBITS,ES>         zeta;
+            posit<NBITS, ES> distm_simi;
+            posit<NBITS, ES> distm_diff;
+            posit<NBITS, ES> alpha;
+            posit<NBITS, ES> beta;
+            posit<NBITS, ES> delta;
+            posit<NBITS, ES> upsilon;
+            posit<NBITS, ES> eta;
+            posit<NBITS, ES> zeta;
 
             distm_simi.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[7].b);
             distm_diff.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[6].b);
@@ -125,10 +125,10 @@ void calculate_mids(t_batch *batch, int pair, int r, int c, posit<NBITS, ES> *M,
             eta.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[1].b);
             zeta.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[0].b);
 
-            posit<NBITS,ES> distm;
-            unsigned char rb = read[i - 1].base[pair];
-            unsigned char hb = hapl[j - 1].base[pair];
+            unsigned char    rb = read[i - 1].base[pair];
+            unsigned char    hb = hapl[j - 1].base[pair];
 
+            posit<NBITS, ES> distm;
             if (rb == hb || rb == 'N' || hb == 'N')
             {
                 distm = distm_simi;
@@ -138,44 +138,42 @@ void calculate_mids(t_batch *batch, int pair, int r, int c, posit<NBITS, ES> *M,
                 distm = distm_diff;
             }
 
-            M[i * w + j] = distm * (alpha * M[(i - 1) * w + (j - 1)] + beta * I[(i - 1) * w + (j - 1)] + beta * D[(i - 1) * w + (j - 1)]);
-            I[i * w + j] = (delta * M[(i - 1) * w + (j)] + upsilon * I[(i - 1) * w + (j)]);
-            D[i * w + j] = (eta * M[(i) * w + (j - 1)] + zeta * D[(i) * w + (j - 1)]);
+            M[i][j] = distm * (alpha * M[i - 1][j - 1] + beta * I[i - 1][j - 1] + beta * D[i - 1][j - 1]);
+            I[i][j] = delta * M[i - 1][j] + upsilon * I[i - 1][j];
+            D[i][j] = eta * M[i][j - 1] + zeta * D[i][j - 1];
         }
     }
 } // calculate_mids
 
 
-int count_errors(uint32_t *hr, uint32_t *sr, int num_batches)
+int count_errors(uint32_t *hr, std::vector<t_result_sw> &sr, int num_batches)
 {
-    int      total_errors = 0;
-    uint32_t hw;
-    uint32_t sw;
-    float    hwf;
-    float    swf;
+    int              total_errors = 0;
+    // uint32_t         hw;
+    // uint32_t         sw;
+    // float            hwf;
+    // float            swf;
+
+    posit<NBITS, ES> hwp, swp;
 
     for (int i = 0; i < num_batches; i++)
     {
         for (int j = 0; j < PIPE_DEPTH; j++)
         {
-            sw  = sr[i * 4 * PIPE_DEPTH + j * 4];
-            hw  = hr[i * 4 * PIPE_DEPTH + j * 4];
-            swf = *(float *)&sr[i * 4 * PIPE_DEPTH + j * 4];
-            hwf = *(float *)&hr[i * 4 * PIPE_DEPTH + j * 4];
-            float err = fabs(swf / hwf);
+            swp = sr[i * PIPE_DEPTH + j][0];
+            hwp.set_raw_bits(hr[i * 4 * PIPE_DEPTH + j * 4]);
+
+            // hw  = hr[i * 4 * PIPE_DEPTH + j * 4];
+            // hwf = *(float *)&hr[i * 4 * PIPE_DEPTH + j * 4];
+
+            // float err = fabs(swf / hwf);
+            posit<NBITS,ES> err = swp / hwp;
 
             if ((err < ERR_LOWER) || (err > ERR_UPPER))
             {
                 total_errors++;
-                DEBUG_PRINT("B%3d, P%3d, SW: %8X, HW: %8X, SW:%f, HW:%f\n",
-                            i,
-                            j,
-                            sr[i * 4 * PIPE_DEPTH + j * 4],
-                            hr[i * 4 * PIPE_DEPTH + j * 4],
-                            *(float *)&sr[i * 4 * PIPE_DEPTH + j * 4],
-                            *(float *)&hr[i * 4 * PIPE_DEPTH + j * 4]
-                            );
-		exit(-1);
+                cout << "SW: " << hexstring(swp.collect()) << ", HW: " << hexstring(hwp.collect()) << endl;
+                exit(-1);
             }
         }
     }

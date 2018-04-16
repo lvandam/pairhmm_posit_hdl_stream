@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module posit_adder_6_8bit_tb_v;
+module posit_adder_4_8bit_tb_v;
 
     function [31:0] log2;
         input reg [31:0] value;
@@ -14,7 +14,7 @@ module posit_adder_6_8bit_tb_v;
     endfunction
 
     // Enter latency here
-    integer latency = 6;
+    integer latency = 4;
 
     parameter N = 8;
     parameter Bs = log2(N);
@@ -30,7 +30,7 @@ module posit_adder_6_8bit_tb_v;
 
 
     // Instantiate the Unit Under Test (UUT)
-    posit_adder_6 #(
+    posit_adder_4 #(
         .N(N),
         .es(es)
     ) uut (

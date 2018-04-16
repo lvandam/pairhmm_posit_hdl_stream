@@ -7,6 +7,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <vector>
 #include <omp.h>
 #include <posit/posit>
 
@@ -41,16 +42,16 @@ int main(int argc, char *argv[])
     std::vector<t_result_sw> result_sw;//, result_hw;
 
 
-    t_workload       *workload;
-    t_batch          *batches;
+    t_workload    *workload;
+    t_batch       *batches;
 
-    unsigned char    show_table   = 0;
-    unsigned char    show_results = 0;
-    unsigned char    calculate_sw = 1;
-    double           clock_sw;
-    double           clock_hw;
+    bool show_table   = false;
+    bool show_results = false;
+    bool calculate_sw = true;
+    double        clock_sw;
+    double        clock_hw;
 
-    uint64_t         threads = 1;
+    uint64_t      threads = 1;
 
     DEBUG_PRINT("Parsing input arguments...\n");
     if (argc < 5)
@@ -160,7 +161,8 @@ int main(int argc, char *argv[])
 
     result_sw.reserve(workload->batches * PIPE_DEPTH);
 //    result_hw.reserve(workload->batches * PIPE_DEPTH);
-    for(int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
+    for (int i = 0; i < workload->batches * PIPE_DEPTH; i++)
+    {
         result_sw[i].reserve(3);
 //        result_hw[i].reserve(3);
     }
@@ -202,12 +204,12 @@ int main(int argc, char *argv[])
 #pragma omp parallel for
         for (int q = 0; q < workload->batches; q++)
         {
-            int   x = workload->bx[q];
-            int   y = workload->by[q];
+            int              x = workload->bx[q];
+            int              y = workload->by[q];
 
-            posit<NBITS,ES> *M = (posit<NBITS,ES> *)malloc(sizeof(posit<NBITS,ES>) * (y + 1) * (x + 1));
-            posit<NBITS,ES> *I = (posit<NBITS,ES> *)malloc(sizeof(posit<NBITS,ES>) * (y + 1) * (x + 1));
-            posit<NBITS,ES> *D = (posit<NBITS,ES> *)malloc(sizeof(posit<NBITS,ES>) * (y + 1) * (x + 1));
+            vector< vector< posit<NBITS, ES> > > M(x+1, vector< posit<NBITS,ES> >(y+1));
+            vector< vector< posit<NBITS, ES> > > I(x+1, vector< posit<NBITS,ES> >(y+1));
+            vector< vector< posit<NBITS, ES> > > D(x+1, vector< posit<NBITS,ES> >(y+1));
 
             // Calculate results
             for (int p = 0; p < PIPE_DEPTH; p++)
@@ -220,9 +222,9 @@ int main(int argc, char *argv[])
                 {
                     // WARNING: THIS IS BECAUSE FLOATING POINT ADDITION IS NOT ASSOCIATIVE
 //                    result_sw[q * PIPE_DEPTH + p].values[0] += M[(y + 1) * x + c];
-                    result_sw[q * PIPE_DEPTH + p][0] += M[(y + 1) * x + c];
+                    result_sw[q * PIPE_DEPTH + p][0] += M[x][c];
 //                    result_sw[q * PIPE_DEPTH + p].values[0] += I[(y + 1) * x + c];
-                    result_sw[q * PIPE_DEPTH + p][0] += I[(y + 1) * x + c];
+                    result_sw[q * PIPE_DEPTH + p][0] += I[x][c];
                 }
 
                 if (show_table != 0)
@@ -231,10 +233,6 @@ int main(int argc, char *argv[])
                     fflush(stdout);
                 }
             }
-
-            free(M);
-            free(I);
-            free(D);
         }
     }
 
@@ -251,12 +249,7 @@ int main(int argc, char *argv[])
         BENCH_PRINT("%16f,", 0.0);
     }
 
-
-    DEBUG_PRINT("%d %d\n", calculate_sw, show_results);
-
-	cout << result_sw[0][2] << endl;
-
-    if (calculate_sw && (show_results > 0))
+    if (calculate_sw && show_results)
     {
         print_results(result_sw, workload->batches);
     }
@@ -316,21 +309,14 @@ int main(int argc, char *argv[])
         sleep(5);
         for (int i = 0; i < workload->batches * PIPE_DEPTH; i++)
         {
-		posit<32,2> res0, res1, res2, res3;
-		res0.set_raw_bits(result_hw[i].b[0]);
-		res1.set_raw_bits(result_hw[i].b[1]);
-		res2.set_raw_bits(result_hw[i].b[2]);
-		res3.set_raw_bits(result_hw[i].b[3]);
+            // Interpret 32-bit value from HW as posits and print
+            posit<NBITS,ES> res0, res1, res2, res3;
+            res0.set_raw_bits(result_hw[i].b[0]);
+            res1.set_raw_bits(result_hw[i].b[1]);
+            res2.set_raw_bits(result_hw[i].b[2]);
+            res3.set_raw_bits(result_hw[i].b[3]);
 
-		cout << i <<": "<< res0 <<" "<< res1 <<" "<< res2 <<" "<< res3 << endl;
-
-
-
-            // TODO wat do?
-//            DEBUG_PRINT("%4d: %X", i, result_hw[i].b[0]);
-//            DEBUG_PRINT(" %X", result_hw[i].b[1]);
-//            DEBUG_PRINT(" %X", result_hw[i].b[2]);
-//            DEBUG_PRINT(" %X\n", result_hw[i].b[3]);
+            cout << i << ": " << hexstring(res0.collect()) << " " << hexstring(res1.collect()) << " " << hexstring(res2.collect()) << " " << hexstring(res3.collect()) << endl;
         }
     }
 
@@ -340,15 +326,13 @@ int main(int argc, char *argv[])
     uint64_t diff = BILLION * (hwend.tv_sec - hwstart.tv_sec) + hwend.tv_nsec - hwstart.tv_nsec;
 
     // Check for errors
-    int errs = 0;
+    if (calculate_sw)
+    {
+        int errs = 0;
+        errs = count_errors((uint32_t *)result_hw, result_sw, workload->batches);
+        DEBUG_PRINT("Errors: %d\n", errs);
+    }
 
-    // TODO put this back
-//    if (calculate_sw)
-//    {
-//        errs = count_errors((uint32_t *)result_hw, (uint32_t *)result_sw, workload->batches);
-//    }
-
-    DEBUG_PRINT("Errors: %d\n", errs);
 
     // Release the afu
     cxl_mmio_unmap(afu);

@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module posit_adder_6_8bit_tb_v;
+module posit_mult_4_8bit_tb_v;
 
     function [31:0] log2;
         input reg [31:0] value;
@@ -14,7 +14,7 @@ module posit_adder_6_8bit_tb_v;
     endfunction
 
     // Enter latency here
-    integer latency = 6;
+    integer latency = 4;
 
     parameter N = 8;
     parameter Bs = log2(N);
@@ -30,7 +30,7 @@ module posit_adder_6_8bit_tb_v;
 
 
     // Instantiate the Unit Under Test (UUT)
-    posit_adder_6 #(
+    posit_mult_4 #(
         .N(N),
         .es(es)
     ) uut (
@@ -44,10 +44,10 @@ module posit_adder_6_8bit_tb_v;
         .done(done)
     );
 
-    reg [N-1:0] data1 [1:65536];
-    reg [N-1:0] data2 [1:65536];
-    initial $readmemb("Pin1_8bit.txt", data1);
-    initial $readmemb("Pin2_8bit.txt", data2);
+    reg [N-1:0] data1 [1:65534];
+    reg [N-1:0] data2 [1:65534];
+    initial $readmemb("Pin1_mult_8bit.txt", data1);
+    initial $readmemb("Pin2_mult_8bit.txt", data2);
 
     reg [15:0] i;
 
@@ -62,7 +62,7 @@ module posit_adder_6_8bit_tb_v;
 		// Wait 100 ns for global reset to finish
 		#100 i = 0;
 		#20 start = 1;
-        #655500 start = 0;
+        #652790 start = 0;
 		#100;
 
 		$fclose(outfile);
@@ -94,11 +94,11 @@ module posit_adder_6_8bit_tb_v;
         outfile = $fopen("error_8bit.txt", "wb");
     end
 
-    reg [N-1:0] result [1:65536];
+    reg [N-1:0] result [1:65534];
 
     initial
     begin
-        $readmemb("Pout_8bit_ES4.txt", result);
+        $readmemb("Pout_mult_8bit_ES4.txt", result);
     end
 
     reg [N-1:0] diff;

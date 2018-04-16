@@ -47,14 +47,15 @@ void print_omp_info(void)
 }
 
 
-void print_mid_table(t_batch *batch, int pair, int r, int c, posit<NBITS,ES> *M, posit<NBITS,ES> *I, posit<NBITS,ES> *D)
+void print_mid_table(t_batch *batch, int pair, int r, int c, t_posit_matrix &M, t_posit_matrix &I, t_posit_matrix &D)
 {
-    int      w     = c + 1;
-    t_bbase  *read = batch->read;
-    t_bbase  *hapl = batch->hapl;
-    posit<NBITS,ES> res[3];
+    int              w     = c + 1;
+    t_bbase          *read = batch->read;
+    t_bbase          *hapl = batch->hapl;
 
-    res[0] = static_cast<posit<NBITS,ES>>(0.0);
+    posit<NBITS, ES> res[3];
+
+    res[0] = static_cast<posit<NBITS, ES> >(0.0);
 
     printf("════╦");
     for (uint32_t i = 0; i < c + 1; i++)
@@ -94,7 +95,7 @@ void print_mid_table(t_batch *batch, int pair, int r, int c, posit<NBITS,ES> *M,
         // loop over columns
         for (uint32_t i = 0; i < c + 1; i++)
         {
-            printf("%08X %08X %08X║", *(uint32_t *)&M[j * w + i], *(uint32_t *)&I[j * w + i], *(uint32_t *)&D[j * w + i]);
+            printf("%08X %08X %08X║", (float)M[j][i], (float)I[j][i], (float)D[j][i]);
         }
         printf("\n");
     }
@@ -108,9 +109,11 @@ void print_mid_table(t_batch *batch, int pair, int r, int c, posit<NBITS,ES> *M,
     printf("res:║");
     for (uint32_t i = 0; i < c + 1; i++)
     {
-        res[0] += M[r * w + i];
-        res[0] += I[r * w + i];
-//        printf("                  %08X║", res.b[0]); // TODO wat do?
+        res[0] += M[r][i];
+        res[0] += I[r][i];
+
+        bitblock<NBITS> resblock = res[0].collect();
+        cout << "                  " << hexstring(resblock) << "║";
     }
     printf("\n");
     printf("═════");
@@ -125,29 +128,24 @@ void print_mid_table(t_batch *batch, int pair, int r, int c, posit<NBITS,ES> *M,
 } // print_mid_table
 
 
-void print_results(std::vector<t_result_sw>& results, int num_batches)
+void print_results(std::vector<t_result_sw> &results, int num_batches)
 {
     DEBUG_PRINT("╔═══════════════════════════════╗\n");
     for (int q = 0; q < num_batches; q++)
     {
-        DEBUG_PRINT("║ RESULT FOR BATCH %3d:         ║\n", q);
+        DEBUG_PRINT("║ RESULT FOR BATCH %3d:         ║ DECIMAL\n", q);
         DEBUG_PRINT("╠═══════════════════════════════╣\n");
         for (int p = 0; p < PIPE_DEPTH; p++)
         {
-//		posit<32,2> res0, res1, res2;
-//		res0.set_raw_bits(results[q*PIPE_DEPTH+p].b[0]);
-//		res1.set_raw_bits(results[q*PIPE_DEPTH+p].b[1]);
-//		res2.set_raw_bits results[q*PIPE_DEPTH+p].b[2]);
-//		cout << "║" << p <<": "<< res0 <<" "<< res1 <<" "<< res2 <<" ║" << endl;
-
-		cout << "║ " << results[q*PIPE_DEPTH+p][0] <<" "<< results[q*PIPE_DEPTH+p][1] <<" "<< results[q*PIPE_DEPTH+p][2] <<" ║" << endl;
-
-//            DEBUG_PRINT("║%2d: %08X %08X %08X ║\n",
-//                        p,
-//                        results[q * PIPE_DEPTH + p].b[0],
-//                        results[q * PIPE_DEPTH + p].b[1],
-//                        results[q * PIPE_DEPTH + p].b[2]
-//                        );
+            printf("║%2d: ", p);
+            cout << hexstring(results[q * PIPE_DEPTH + p][0].collect());
+            cout << " ";
+            cout << hexstring(results[q * PIPE_DEPTH + p][1].collect());
+            cout << " ";
+            cout << hexstring(results[q * PIPE_DEPTH + p][2].collect());
+            cout << " ║ ";
+            cout << results[q * PIPE_DEPTH + p][0];
+            cout << endl;
         }
         DEBUG_PRINT("╚═══════════════════════════════╝\n");
     }
@@ -295,8 +293,8 @@ t_workload *load_workload(char *fname)
             }
             if (y < x)
             {
-//				fprintf(stderr,"%s line %d: haplotype must be larger than read.\n",fname, i);
-//				exit(EXIT_FAILURE);
+				fprintf(stderr,"%s line %d: haplotype must be larger than read.\n", fname, i);
+				exit(EXIT_FAILURE);
             }
 
             workload->hapl[i]   = y;

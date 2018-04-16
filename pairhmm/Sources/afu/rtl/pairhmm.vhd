@@ -90,23 +90,7 @@ architecture logic of pairhmm is
   signal    lastlast        : std_logic;
   signal    lastlast1       : std_logic;
 
-    component posit_adder_6
-      generic (
-        N: integer := 32;
-        es: integer := 2
-      );
-      port (
-        aclk: in std_logic;
-        in1: in std_logic_vector(31 downto 0);
-        in2: in std_logic_vector(31 downto 0);
-        start: in std_logic;
-        result: out std_logic_vector(31 downto 0);
-        inf: out std_logic;
-        done: out std_logic
-      );
-    end component;
-
-    component posit_adder_12
+    component posit_adder_8
         generic (
           N: integer := 32;
           es: integer := 2
@@ -122,17 +106,6 @@ architecture logic of pairhmm is
         );
     end component;
 
-    -- COMPONENT FPADD_11
-    --   PORT (
-    --     aclk : IN STD_LOGIC;
-    --     s_axis_a_tvalid : IN STD_LOGIC;
-    --     s_axis_a_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-    --     s_axis_b_tvalid : IN STD_LOGIC;
-    --     s_axis_b_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-    --     m_axis_result_tvalid : OUT STD_LOGIC;
-    --     m_axis_result_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
-    --   );
-    -- END COMPONENT;
 begin
 
   -- Connect input to the input register before the first PE
@@ -252,16 +225,7 @@ begin
     end if;
   end process;
 
-  -- add_m : FPADD_11 port map (
-  --   aclk                    => cr.clk,
-  --   s_axis_a_tvalid         => addm_ina_valid,
-  --   s_axis_a_tdata          => addm_ina,
-  --   s_axis_b_tvalid         => addm_inb_valid,
-  --   s_axis_b_tdata          => addm_inb,
-  --   m_axis_result_tvalid    => addm_out_valid,
-  --   m_axis_result_tdata     => addm_out
-  -- );
-  add_m : posit_adder_12 generic map (
+  add_m : posit_adder_8 generic map (
     N => 32, es => 2
   ) port map (
     aclk => cr.clk,
@@ -273,16 +237,7 @@ begin
     done => addm_out_valid
   );
 
--- add_i : FPADD_11 port map (
---   aclk                    => cr.clk,
---   s_axis_a_tvalid         => addi_ina_valid,
---   s_axis_a_tdata          => addi_ina,
---   s_axis_b_tvalid         => addi_inb_valid,
---   s_axis_b_tdata          => addi_inb,
---   m_axis_result_tvalid    => addi_out_valid,
---   m_axis_result_tdata     => addi_out
--- );
-  add_i : posit_adder_12 generic map (
+  add_i : posit_adder_8 generic map (
     N => 32, es => 2
   ) port map (
     aclk => cr.clk,
@@ -308,13 +263,6 @@ begin
         i_valid_delay(0)    <= lastlast1;
         rm                  <= resbusm;
         i_delay(0)          <= resbusi;
-
-        -- FP ONLY:
-        -- Laurens: 1 extra delay (11 -> 12 cycles latency)
-        -- addm_out_buf <= addm_out;
-        -- addm_out_valid_buf <= addm_out_valid;
-        -- addi_out_buf <= addi_out;
-        -- addi_out_valid_buf <= addi_out_valid;
 
         for K in 1 to 2*PE_ADD_CYCLES - 1 loop
           i_delay(K)        <= i_delay(K-1);
