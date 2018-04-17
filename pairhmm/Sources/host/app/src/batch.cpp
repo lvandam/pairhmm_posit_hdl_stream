@@ -63,8 +63,8 @@ void fill_batch(t_batch *batch, int x, int y, float initial)
 
         for (int i = 0; i < xp; i++)
         {
-            prob[i * PIPE_DEPTH + k].p[0].b = 0x3f000000; // zeta 0.5
-            prob[i * PIPE_DEPTH + k].p[1].b = 0x3e000000;// eta 0.125
+            prob[i * PIPE_DEPTH + k].p[0].b = 0x3f000000; // eta 0.5
+            prob[i * PIPE_DEPTH + k].p[1].b = 0x3e000000; // zeta 0.125
             prob[i * PIPE_DEPTH + k].p[2].b = 0x3f000000; // upsilon 0.5
             prob[i * PIPE_DEPTH + k].p[3].b = 0x3e400000; // delta 0.1875
             prob[i * PIPE_DEPTH + k].p[4].b = 0x3f000000; // beta 0.5
@@ -119,18 +119,8 @@ void calculate_mids(t_batch *batch, int pair, int r, int c, float *M, float *I, 
             float         beta       = prob[(i - 1) * PIPE_DEPTH + pair].p[4].f;
             float         delta      = prob[(i - 1) * PIPE_DEPTH + pair].p[3].f;
             float         upsilon    = prob[(i - 1) * PIPE_DEPTH + pair].p[2].f;
-            float         eta        = prob[(i - 1) * PIPE_DEPTH + pair].p[1].f;
-            float         zeta       = prob[(i - 1) * PIPE_DEPTH + pair].p[0].f;
-
-            cout << zeta << endl;
-            cout << eta << endl;
-            cout << upsilon << endl;
-            cout << delta << endl;
-            cout << beta << endl;
-            cout << alpha << endl;
-            cout << distm_diff << endl;
-            cout << distm_simi << endl;
-            cout << "-----------------------" << endl;
+            float         zeta       = prob[(i - 1) * PIPE_DEPTH + pair].p[1].f;
+            float         eta        = prob[(i - 1) * PIPE_DEPTH + pair].p[0].f;
 
             float         distm;
             unsigned char rb = read[i - 1].base[pair];

@@ -40,7 +40,7 @@ typedef struct struct_sizes
 // Initial values and batch configuration
 typedef struct struct_init
 {
-    float    initials[PIPE_DEPTH];      //   0 ...  511 //float initials[PIPE_DEPTH];      //   0 ...  511 //posit<NBITS,ES>
+    uint32_t initials[PIPE_DEPTH];      //   0 ...  511
     uint32_t batch_bytes;               // 512 ...  543
     uint32_t x_size;                    // 544 ...  575
     uint32_t x_padded;                  // 576 ...  607

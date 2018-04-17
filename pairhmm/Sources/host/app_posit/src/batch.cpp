@@ -36,7 +36,11 @@ void fill_batch(t_batch *batch, int x, int y, float initial)
 
     for (int k = 0; k < PIPE_DEPTH; k++)
     {
-        init->initials[k] = initial + float(k) / 1;
+        posit<NBITS,ES> initial_posit(initial);
+        initial_posit += k;
+
+        // Get raw bits to send to HW
+        init->initials[k] = to_uint(initial_posit);
 
         for (int i = 0; i < xbp; i++)
         {
@@ -64,8 +68,8 @@ void fill_batch(t_batch *batch, int x, int y, float initial)
 
         for (int i = 0; i < xp; i++)
         {
-            prob[i * PIPE_DEPTH + k].p[0].b = 0x38000000; // zeta 0.5
-            prob[i * PIPE_DEPTH + k].p[1].b = 0x28000000; // eta 0.125
+            prob[i * PIPE_DEPTH + k].p[0].b = 0x38000000; // eta 0.5
+            prob[i * PIPE_DEPTH + k].p[1].b = 0x28000000; // zeta 0.125
             prob[i * PIPE_DEPTH + k].p[2].b = 0x38000000; // upsilon 0.5
             prob[i * PIPE_DEPTH + k].p[3].b = 0x2C000000; // delta 0.1875
             prob[i * PIPE_DEPTH + k].p[4].b = 0x38000000; // beta 0.5
@@ -99,7 +103,7 @@ void calculate_mids(t_batch *batch, int pair, int r, int c, t_posit_matrix &M, t
     {
         M[0][j] = 0.0;
         I[0][j] = 0.0;
-        D[0][j] = init->initials[pair];
+        D[0][j].set_raw_bits(init->initials[pair]);
     }
 
     // Set to zero in Y direction
@@ -120,8 +124,8 @@ void calculate_mids(t_batch *batch, int pair, int r, int c, t_posit_matrix &M, t
             posit<NBITS, ES> beta;
             posit<NBITS, ES> delta;
             posit<NBITS, ES> upsilon;
-            posit<NBITS, ES> eta;
             posit<NBITS, ES> zeta;
+            posit<NBITS, ES> eta;
 
             posit<NBITS, ES> distm;
 
@@ -131,18 +135,8 @@ void calculate_mids(t_batch *batch, int pair, int r, int c, t_posit_matrix &M, t
             beta.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[4].b);
             delta.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[3].b);
             upsilon.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[2].b);
-            eta.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[1].b);
-            zeta.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[0].b);
-
-            cout << zeta << endl;
-            cout << eta << endl;
-            cout << upsilon << endl;
-            cout << delta << endl;
-            cout << beta << endl;
-            cout << alpha << endl;
-            cout << distm_diff << endl;
-            cout << distm_simi << endl;
-            cout << "-----------------------" << endl;
+            zeta.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[1].b);
+            eta.set_raw_bits(prob[(i - 1) * PIPE_DEPTH + pair].p[0].b);
 
             unsigned char    rb = read[i - 1].base[pair];
             unsigned char    hb = hapl[j - 1].base[pair];

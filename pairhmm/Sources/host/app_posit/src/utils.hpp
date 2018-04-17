@@ -60,5 +60,10 @@ std::string hexstring(bitblock<nbits> bits) {
     return std::string(str);
 }
 
+template<size_t nbits, size_t es>
+uint32_t to_uint(posit<nbits, es> number) {
+    return (uint32_t)number.collect().to_ulong();
+}
+
 
 #endif //__UTILS_H
