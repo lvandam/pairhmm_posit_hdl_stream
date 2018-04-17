@@ -151,12 +151,7 @@ void calculate_mids(t_batch *batch, int pair, int r, int c, t_posit_matrix &M, t
 
 int count_errors(uint32_t *hr, std::vector<t_result_sw> &sr, int num_batches)
 {
-    int              total_errors = 0;
-    // uint32_t         hw;
-    // uint32_t         sw;
-    // float            hwf;
-    // float            swf;
-
+    int total_errors = 0;
     posit<NBITS, ES> hwp, swp;
 
     for (int i = 0; i < num_batches; i++)
@@ -166,10 +161,6 @@ int count_errors(uint32_t *hr, std::vector<t_result_sw> &sr, int num_batches)
             swp = sr[i * PIPE_DEPTH + j][0];
             hwp.set_raw_bits(hr[i * 4 * PIPE_DEPTH + j * 4]);
 
-            // hw  = hr[i * 4 * PIPE_DEPTH + j * 4];
-            // hwf = *(float *)&hr[i * 4 * PIPE_DEPTH + j * 4];
-
-            // float err = fabs(swf / hwf);
             posit<NBITS,ES> err = swp / hwp;
 
             if ((err < ERR_LOWER) || (err > ERR_UPPER))
