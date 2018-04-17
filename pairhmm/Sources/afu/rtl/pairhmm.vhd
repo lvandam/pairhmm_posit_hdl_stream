@@ -231,7 +231,7 @@ begin
     aclk => cr.clk,
     in1 => addm_ina,
     in2 => addm_inb,
-    start => addm_ina_valid and addm_inb_valid, -- todo create start signal, or just remove it?
+    start => addm_ina_valid and addm_inb_valid,
     result => addm_out,
     inf => posit_infs(0),
     done => addm_out_valid
@@ -243,7 +243,7 @@ begin
     aclk => cr.clk,
     in1 => addi_ina,
     in2 => addi_inb,
-    start => addi_ina_valid and addi_inb_valid, -- todo create start signal, or just remove it?
+    start => addi_ina_valid and addi_inb_valid,
     result => addi_out,
     inf => posit_infs(1),
     done => addi_out_valid
@@ -289,13 +289,13 @@ begin
 
         prevlast := lastlast1;
 
-        o.score       <= addi_out;  -- For FP: addi_out_buf
-        o.score_valid <= addi_out_valid; -- For FP: addi_out_valid_buf
+        o.score       <= addi_out;
+        o.score_valid <= addi_out_valid;
       end if;
     end if;
   end process;
 
-  res_acc                   <= addi_out        when res_rst = '0' else -- For FP: addi_out_buf
+  res_acc                   <= addi_out        when res_rst = '0' else
                                (others => '0');
 
   addm_ina                  <= res_acc;

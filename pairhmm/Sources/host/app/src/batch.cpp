@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
+#include <iomanip>
 
 #include <iostream>
 #include "batch.h"
@@ -62,14 +63,23 @@ void fill_batch(t_batch *batch, int x, int y, float initial)
 
         for (int i = 0; i < xp; i++)
         {
-            prob[i * PIPE_DEPTH + k].p[0].b = (0x3f000000 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // zeta
-            prob[i * PIPE_DEPTH + k].p[1].b = (0x3e000001 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // eta
-            prob[i * PIPE_DEPTH + k].p[2].b = (0x3f000002 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // upsilon
-            prob[i * PIPE_DEPTH + k].p[3].b = (0x3e000003 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // delta
-            prob[i * PIPE_DEPTH + k].p[4].b = (0x3f000004 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // beta
-            prob[i * PIPE_DEPTH + k].p[5].b = (0x3e000005 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // alpha
-            prob[i * PIPE_DEPTH + k].p[6].b = (0x3f000006 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // distm_diff
-            prob[i * PIPE_DEPTH + k].p[7].b = (0x3e000007 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // distm_simi
+            prob[i * PIPE_DEPTH + k].p[0].b = 0x3f000000; // zeta 0.5
+            prob[i * PIPE_DEPTH + k].p[1].b = 0x3e000000;// eta 0.125
+            prob[i * PIPE_DEPTH + k].p[2].b = 0x3f000000; // upsilon 0.5
+            prob[i * PIPE_DEPTH + k].p[3].b = 0x3e400000; // delta 0.1875
+            prob[i * PIPE_DEPTH + k].p[4].b = 0x3f000000; // beta 0.5
+            prob[i * PIPE_DEPTH + k].p[5].b = 0x3e800000; // alpha 0.25
+            prob[i * PIPE_DEPTH + k].p[6].b = 0x3f000000; // distm_diff 0.5
+            prob[i * PIPE_DEPTH + k].p[7].b = 0x3ec00000; // distm_simi 0.375
+
+            // prob[i * PIPE_DEPTH + k].p[0].b = (0x3f000000 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // zeta
+            // prob[i * PIPE_DEPTH + k].p[1].b = (0x3e000001 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // eta
+            // prob[i * PIPE_DEPTH + k].p[2].b = (0x3f000002 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // upsilon
+            // prob[i * PIPE_DEPTH + k].p[3].b = (0x3e000003 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // delta
+            // prob[i * PIPE_DEPTH + k].p[4].b = (0x3f000004 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // beta
+            // prob[i * PIPE_DEPTH + k].p[5].b = (0x3e000005 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // alpha
+            // prob[i * PIPE_DEPTH + k].p[6].b = (0x3f000006 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // distm_diff
+            // prob[i * PIPE_DEPTH + k].p[7].b = (0x3e000007 | (k << 4) | (i << 8) | ((rand() / (RAND_MAX / 256)) << 8)); // distm_simi
         }
     }
 } // fill_batch
@@ -111,6 +121,16 @@ void calculate_mids(t_batch *batch, int pair, int r, int c, float *M, float *I, 
             float         upsilon    = prob[(i - 1) * PIPE_DEPTH + pair].p[2].f;
             float         eta        = prob[(i - 1) * PIPE_DEPTH + pair].p[1].f;
             float         zeta       = prob[(i - 1) * PIPE_DEPTH + pair].p[0].f;
+
+            cout << zeta << endl;
+            cout << eta << endl;
+            cout << upsilon << endl;
+            cout << delta << endl;
+            cout << beta << endl;
+            cout << alpha << endl;
+            cout << distm_diff << endl;
+            cout << distm_simi << endl;
+            cout << "-----------------------" << endl;
 
             float         distm;
             unsigned char rb = read[i - 1].base[pair];

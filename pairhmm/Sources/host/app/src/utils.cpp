@@ -124,15 +124,16 @@ void print_results(t_result *results, int num_batches)
     DEBUG_PRINT("╔═══════════════════════════════╗\n");
     for (int q = 0; q < num_batches; q++)
     {
-        DEBUG_PRINT("║ RESULT FOR BATCH %3d:         ║\n", q);
+        DEBUG_PRINT("║ RESULT FOR BATCH %3d:         ║ DECIMAL\n", q);
         DEBUG_PRINT("╠═══════════════════════════════╣\n");
         for (int p = 0; p < PIPE_DEPTH; p++)
         {
-            DEBUG_PRINT("║%2d: %08X %08X %08X ║\n",
+            DEBUG_PRINT("║%2d: %08X %08X %08X ║ %f\n",
                         p,
                         results[q * PIPE_DEPTH + p].b[0],
                         results[q * PIPE_DEPTH + p].b[1],
-                        results[q * PIPE_DEPTH + p].b[2]
+                        results[q * PIPE_DEPTH + p].b[2],
+                        results[q * PIPE_DEPTH + p].values[0]
                         );
         }
         DEBUG_PRINT("╚═══════════════════════════════╝\n");

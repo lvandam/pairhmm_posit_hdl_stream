@@ -153,26 +153,15 @@ int main(int argc, char *argv[])
         return(-1);
     }
 
-//    if (posix_memalign((void **)&result_sw, CACHELINE_BYTES, sizeof(t_result) * workload->batches * PIPE_DEPTH))
-//    {
-//        perror("Could not allocate memory to store software results.\n");
-//        return(-1);
-//    }
-
     result_sw.reserve(workload->batches * PIPE_DEPTH);
-//    result_hw.reserve(workload->batches * PIPE_DEPTH);
     for (int i = 0; i < workload->batches * PIPE_DEPTH; i++)
     {
         result_sw[i].reserve(3);
-//        result_hw[i].reserve(3);
     }
 
-
-//    DEBUG_PRINT("Clearing batch and host result memory ...\n");
-//    memset(result_sw, 0xFF, sizeof(t_result) * workload->batches * PIPE_DEPTH);
-//    memset(result_sw, 0xFF, sizeof(posit<NBITS,ES>[3]) * workload->batches * PIPE_DEPTH);
-//    memset(batch, 0x00, workload->bytes);
-
+    DEBUG_PRINT("Clearing batch and host result memory ...\n");
+    result_sw.clear();
+    memset(batch, 0x00, workload->bytes);
 
     DEBUG_PRINT("Filling batches...\n");
 
@@ -195,8 +184,6 @@ int main(int argc, char *argv[])
     DEBUG_PRINT("Calculating on host...\n");
 
     clock_sw = omp_get_wtime();
-
-    //print_batch_memory(batch, workload->bbytes[0] + workload->bbytes[1]);
 
     if (calculate_sw)
     {
@@ -223,10 +210,9 @@ int main(int argc, char *argv[])
                     result_sw[q * PIPE_DEPTH + p][0] += I[x][c];
                 }
 
-                if (show_table != 0)
+                if (show_table)
                 {
                     print_mid_table(&batches[q], p, x, y, M, I, D);
-                    fflush(stdout);
                 }
             }
         }
@@ -251,7 +237,6 @@ int main(int argc, char *argv[])
     }
 
     DEBUG_PRINT("Clearing result memory\n");
-//    result_hw.clear();
     memset(result_hw, 0xFF, sizeof(t_result) * workload->batches * PIPE_DEPTH);
 
     DEBUG_PRINT("Opening device: %s ...\n", DEVICE);
@@ -298,10 +283,8 @@ int main(int argc, char *argv[])
 
     DEBUG_PRINT("Waiting for last result...\n");
 
-    volatile int temp;
     while (!wed0->status)
     {
-        temp++;
         sleep(5);
         for (int i = 0; i < workload->batches * PIPE_DEPTH; i++)
         {
@@ -329,7 +312,6 @@ int main(int argc, char *argv[])
         DEBUG_PRINT("Errors: %d\n", errs);
     }
 
-
     // Release the afu
     cxl_mmio_unmap(afu);
     cxl_afu_free(afu);
@@ -338,7 +320,7 @@ int main(int argc, char *argv[])
     BENCH_PRINT("%16llu,", (long long unsigned int)diff);
 
     BENCH_PRINT("%16f,", ((double)workload->cups_req / (double)clock_hw) / 1000000);
-    BENCH_PRINT("%16f,", 1.0 / (MAX_CUPS / ((double)workload->cups_req / (double)clock_hw))); // what the crap is this why cant i just hwcups / MAX_CUPS ?
+    BENCH_PRINT("%16f,", 1.0 / (MAX_CUPS / ((double)workload->cups_req / (double)clock_hw)));
 
     if (calculate_sw)
     {
@@ -353,10 +335,10 @@ int main(int argc, char *argv[])
     BENCH_PRINT("\n");
 
     free(workload);
-//    free(result_sw);
     free(result_hw);
     free(batch);
     free(wed0);
 
     return(0);
+
 } // main
