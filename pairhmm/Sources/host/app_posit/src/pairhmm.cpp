@@ -216,14 +216,10 @@ int main(int argc, char *argv[])
             {
                 calculate_mids(&batches[q], p, x, y, M, I, D);
 
-//                result_sw[q * PIPE_DEPTH + p].values[0] = 0.0;
                 result_sw[q * PIPE_DEPTH + p][0] = 0.0;
-                for (int c = 0; c < y + 1; c++)
+                for (int c = 1; c < y + 1; c++)
                 {
-                    // WARNING: THIS IS BECAUSE FLOATING POINT ADDITION IS NOT ASSOCIATIVE
-//                    result_sw[q * PIPE_DEPTH + p].values[0] += M[(y + 1) * x + c];
                     result_sw[q * PIPE_DEPTH + p][0] += M[x][c];
-//                    result_sw[q * PIPE_DEPTH + p].values[0] += I[(y + 1) * x + c];
                     result_sw[q * PIPE_DEPTH + p][0] += I[x][c];
                 }
 
