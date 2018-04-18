@@ -32,7 +32,7 @@
 #define BASE_STEPS               8
 
 // The error margin allowed
-#define ERROR_MARGIN             0.000000000001
+#define ERROR_MARGIN             0.0000001
 #define ERR_LOWER                1.0f - ERROR_MARGIN
 #define ERR_UPPER                1.0f + ERROR_MARGIN
 
