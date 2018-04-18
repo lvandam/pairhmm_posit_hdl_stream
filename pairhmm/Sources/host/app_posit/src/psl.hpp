@@ -1,11 +1,10 @@
 #ifndef __PSL_H
 #define __PSL_H
 
-struct wed
-{
+struct wed {
     //C TYPE:   NAME:         VHDL TYPE:                        Description
-    __u8  status;           //std_logic_vector(7 downto 0);
-    __u8  wed00_a;          //std_logic_vector(7 downto 0);
+    __u8 status;           //std_logic_vector(7 downto 0);
+    __u8 wed00_a;          //std_logic_vector(7 downto 0);
     __u16 wed00_b;          //std_logic_vector(15 downto 0);
     __u32 wed00_c;          //std_logic_vector(31 downto 0);
 

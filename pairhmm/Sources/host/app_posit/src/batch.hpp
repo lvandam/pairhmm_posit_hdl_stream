@@ -10,36 +10,29 @@
 #include <omp.h>
 #include <posit/posit>
 
-#include "config.hpp"
 #include "defines.hpp"
 
 using namespace sw::unum;
 
-typedef union union_prob
-{
-//    posit<NBITS,ES> f;    // as posit
-    uint32_t        b;    // as binary
+typedef union union_prob {
+    uint32_t b;    // as binary
 } t_prob;
 
-typedef struct struct_probs
-{
-    t_prob p[8];        // lambda_1, lambda_2, alpha, beta, delta, epsilon, zeta, eta
+typedef struct struct_probs {
+    t_prob p[8];        // lambda_1, lambda_2, alpha, beta, delta, upsilon, zeta, eta
 } t_probs;
 
-typedef struct struct_bbase
-{
+typedef struct struct_bbase {
     unsigned char base[PIPE_DEPTH];
 } t_bbase;
 
-typedef struct struct_sizes
-{
+typedef struct struct_sizes {
     uint32_t pairsize[PIPE_DEPTH];
-    uint8_t  padding[CACHELINE_BYTES - sizeof(uint32_t) * PIPE_DEPTH];
+    uint8_t padding[CACHELINE_BYTES - sizeof(uint32_t) * PIPE_DEPTH];
 } t_sizes;
 
 // Initial values and batch configuration
-typedef struct struct_init
-{
+typedef struct struct_init {
     uint32_t initials[PIPE_DEPTH];      //   0 ...  511
     uint32_t batch_bytes;               // 512 ...  543
     uint32_t x_size;                    // 544 ...  575
@@ -47,11 +40,10 @@ typedef struct struct_init
     uint32_t y_size;                    // 608 ...  639
     uint32_t y_padded;                  // 640 ...  671
     uint32_t x_bppadded;                // 672 ...  704
-    uint8_t  padding[40];               //
+    uint8_t padding[40];               //
 } t_inits;
 
-typedef struct struct_batch
-{
+typedef struct struct_batch {
     t_inits *init;
     t_bbase *read;
     t_bbase *hapl;
@@ -59,21 +51,12 @@ typedef struct struct_batch
 } t_batch;
 
 
-typedef union union_result
-{
-    float    values[3];
-    uint32_t           b[4];        // integer image and padding
+typedef union union_result {
+    float values[3];
+    uint32_t b[4];        // integer image and padding
 } t_result;
 
-typedef std::vector<posit<NBITS,ES>> t_result_sw;
-
-typedef std::vector< std::vector< posit<NBITS, ES> > > t_posit_matrix;
-
 void fill_batch(t_batch *b, int pair_size, int padded_size, float initial);
-
-void calculate_mids(t_batch *batch, int pair, int r, int c, t_posit_matrix& M, t_posit_matrix& I, t_posit_matrix& D);
-
-int count_errors(uint32_t *hr, std::vector<t_result_sw>& sr, int num_batches);
 
 void init_batch_address(t_batch *b, void *batch, int x, int y);
 

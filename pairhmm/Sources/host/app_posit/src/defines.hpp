@@ -1,6 +1,10 @@
 #ifndef __DEFINES_H
 #define __DEFINES_H
 
+// POSIT
+#define NBITS 32
+#define ES 2
+
 #define DEBUG              1
 
 #define MAX_POLLS          32000
