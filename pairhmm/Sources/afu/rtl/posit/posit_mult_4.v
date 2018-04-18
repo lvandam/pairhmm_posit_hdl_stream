@@ -101,7 +101,7 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
     assign r0_mult_s = r0_s1 ^ r0_s2;
 
     // TODO maybe remove Lshift output?
-    data_extract #(.N(N), .es(es)) uut_de1 (
+    data_extract #(.N(N), .es(es)) data_extract_1 (
         .in(r0_xin1),
         .rc(r0_rc1),
         .regime(r0_regime1),
@@ -110,7 +110,7 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
         .Lshift(r0_Lshift1)
     );
 
-    data_extract #(.N(N), .es(es)) uut_de2 (
+    data_extract #(.N(N), .es(es)) data_extract_2 (
         .in(r0_xin2),
         .rc(r0_rc2),
         .regime(r0_regime2),
@@ -152,7 +152,7 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
         r1_mult_s <= r0_mult_s;
     end
 
-    // Mantissa Computation
+    // Mantissa multiplication
     assign r1_mult_m = r1_m1 * r1_m2;
 
 
@@ -168,14 +168,14 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
     logic [es-1:0] r2_e1, r2_e2;
     logic [2*(N-es)+1:0] r2_mult_m;
 
-    logic r2_mult_m_ovf;
+    logic r2_mult_m_overflow;
     logic [2*(N-es)+1:0] r2_mult_mN;
     logic [Bs+1:0] r2_r1, r2_r2;
-    logic [Bs+es+1:0] r2_mult_e;
+    logic [es+Bs+1:0] r2_mult_e;
     logic [es+Bs:0] r2_mult_eN;
     logic [es-1:0] r2_e_o;
     logic [Bs:0] r2_r_o;
-    logic [2*N-1:0] r2_tmp_o;
+    logic [2*N-1:0] r2_exp_fraction;
 
     always @(posedge aclk)
     begin
@@ -196,20 +196,33 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
         r2_mult_m <= r1_mult_m;
     end
 
-    assign r2_mult_m_ovf = r2_mult_m[2*(N-es)+1];
-    assign r2_mult_mN = ~r2_mult_m_ovf ? r2_mult_m << 1'b1 : r2_mult_m;
+    assign r2_mult_m_overflow = r2_mult_m[2*(N-es)+1];
+
+    assign r2_mult_mN = ~r2_mult_m_overflow ? r2_mult_m << 1'b1 : r2_mult_m; // ?
 
     assign r2_r1 = r2_rc1 ? {2'b0, r2_regime1} : -r2_regime1;
     assign r2_r2 = r2_rc2 ? {2'b0, r2_regime2} : -r2_regime2;
-    assign r2_mult_e  =  {r2_r1, r2_e1} + {r2_r2, r2_e2} + r2_mult_m_ovf;
 
-    // Exponent and Regime Computation
+    // SIGNED REGIME + EXPONENT (taking into account mantissa multiplication overflow)
+    assign r2_mult_e  =  {r2_r1, r2_e1} + {r2_r2, r2_e2} + r2_mult_m_overflow;
+
+    // ABSOLUTE REGIME + EXPONENT
     assign r2_mult_eN = r2_mult_e[es+Bs+1] ? -r2_mult_e : r2_mult_e;
+
+    // UNSIGNED EXPONENT
+    // (Regime + Exponent) negative, ES of absolute (Regime + Exponent) nonzero? -> Unsigned Exponent = 2's complement
     assign r2_e_o = (r2_mult_e[es+Bs+1] & |r2_mult_eN[es-1:0]) ? r2_mult_e[es-1:0] : r2_mult_eN[es-1:0];
+
+    // UNSIGNED REGIME
     assign r2_r_o = (~r2_mult_e[es+Bs+1] || (r2_mult_e[es+Bs+1] & |r2_mult_eN[es-1:0])) ? (r2_mult_eN[es+Bs:es] + 1'b1) : r2_mult_eN[es+Bs:es];
 
-    // Exponent and Mantissa Packing
-    assign r2_tmp_o = { { N{~r2_mult_e[es+Bs+1]} }, r2_mult_e[es+Bs+1], r2_e_o, r2_mult_mN[2*(N-es):N-es+2] };
+    // Exponent and Mantissa/Fraction Packing
+    assign r2_exp_fraction = {
+        { N{~r2_mult_e[es+Bs+1]} }, // Repeat negated sign bit of (Regime + Exponent)
+        r2_mult_e[es+Bs+1], // Sign bit of (Regime + Exponent)
+        r2_e_o, // Unsigned exponent field
+        r2_mult_mN[2*(N-es):N-es+2] // Mantissa/Fraction field (cut off)
+    };
 
 
     //  ____
@@ -223,7 +236,7 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
 
     logic [2*(N-es)+1:0] r3_mult_mN;
     logic [Bs:0] r3_r_o;
-    logic [2*N-1:0] r3_tmp_o, r3_tmp1_o, r3_tmp1_oN;
+    logic [2*N-1:0] r3_exp_fraction, r3_out_unsigned, r3_out_signed;
 
     always @(posedge aclk)
     begin
@@ -235,25 +248,26 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
 
     always @(posedge aclk)
     begin
-        r3_tmp_o <= r2_tmp_o;
+        r3_exp_fraction <= r2_exp_fraction;
         r3_r_o <= r2_r_o;
         r3_mult_mN <= r2_mult_mN;
     end
 
-    // Including Regime bits in Exponent-Mantissa Packing
+    // Including Regime bits in Exponent + Fraction package
     DSR_right_N_S #(
         .N(2*N),
         .S(Bs+1)
     ) dsr2 (
-        .a(r3_tmp_o),
-        .b(r3_r_o[Bs] ? {Bs{1'b1}} : r3_r_o),
-        .c(r3_tmp1_o)
+        .a(r3_exp_fraction), // our exponent + fraction bits
+        .b(r3_r_o[Bs] ? {Bs{1'b1}} : r3_r_o), // Right shift amount: negative fraction? Shift by all 1's. Positive? Shift by regime value.
+        .c(r3_out_unsigned)
     );
 
-    // Final Output
-    assign r3_tmp1_oN = r3_mult_s ? -r3_tmp1_o : r3_tmp1_o;
+    // Signed output (2*N wide)
+    assign r3_out_signed = r3_mult_s ? -r3_out_unsigned : r3_out_unsigned;
 
-    assign result = r3_inf | r3_zero | (~r3_mult_mN[2*(N-es)+1]) ? {r3_inf, {N-1{1'b0}}} : {r3_mult_s, r3_tmp1_oN[N-1:1]};
+    // Output infinite, zero or overflow? Set this as output. Otherwise, pack sign bit and signed output
+    assign result = (r3_inf | r3_zero | (~r3_mult_mN[2*(N-es)+1])) ? {r3_inf, {N-1{1'b0}}} : {r3_mult_s, r3_out_signed[N-1:1]};
     assign done = r3_start;
 
 endmodule

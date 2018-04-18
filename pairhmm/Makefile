@@ -49,7 +49,7 @@ pslse-run:
 	cd Sources/sim && ./pslse/pslse/pslse
 
 # Float
-sim-build: $(program_OBJS)
+sim: $(program_OBJS)
 	mkdir -p $(APP_DIR)/sim-build
 	$(CPP) $(program_OBJS) -o $(APP_DIR)/sim-build/$(APP) $(PSLSE_LIBCXL_DIR)/libcxl.a $(CFLAGS) -I$(PSLSE_COMMON_DIR) -I$(PSLSE_LIBCXL_DIR) -lrt -lpthread -D SIM
 
@@ -68,7 +68,7 @@ host-run:
 
 
 # Posit
-sim-build-posit:
+sim-posit:
 	mkdir -p $(APP_POSIT_DIR)/sim-build
 	cd $(APP_POSIT_DIR)/sim-build && cmake .. && make pairhmm_sim
 

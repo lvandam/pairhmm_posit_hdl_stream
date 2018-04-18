@@ -1,7 +1,8 @@
+// Right shift unit
 module DSR_right_N_S(a, b, c);
-
     parameter N = 16;
     parameter S = 4;
+    
     input [N-1:0] a;
     input [S-1:0] b;
     output [N-1:0] c;

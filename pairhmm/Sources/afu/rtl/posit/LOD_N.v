@@ -1,3 +1,4 @@
+// Leading-One-Detector with configurable number of bits
 module LOD_N (in, out);
     function [31:0] log2;
         input reg [31:0] value;
@@ -12,10 +13,10 @@ module LOD_N (in, out);
 
     parameter N = 64;
     parameter S = log2(N);
+
     input [N-1:0] in;
     output [S-1:0] out;
-
-    wire vld;
+    logic vld;
 
     LOD #(.N(N)) l1 (
         .in(in),
@@ -24,9 +25,8 @@ module LOD_N (in, out);
     );
 endmodule
 
-
+// Leading-One-Detector
 module LOD (in, out, vld);
-
     function [31:0] log2;
         input reg [31:0] value;
         begin
