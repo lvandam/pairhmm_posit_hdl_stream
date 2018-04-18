@@ -26,10 +26,7 @@ private:
     bool show_results, show_table;
 
 public:
-    PairHMMPosit(t_workload *workload, bool show_results, bool show_table) {
-        workload = workload;
-        show_results = show_results;
-        show_table = show_table;
+    PairHMMPosit(t_workload *wl, bool show_results, bool show_table) : workload(wl), show_results(show_results), show_table(show_table) {
         result_sw.reserve(workload->batches * PIPE_DEPTH);
         for (int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
             result_sw[i].reserve(3);
@@ -41,9 +38,9 @@ public:
             int x = workload->bx[q];
             int y = workload->by[q];
 
-            vector<vector<posit<NBITS, ES>>> M(x + 1, vector<posit<NBITS, ES>>(y + 1));
-            vector<vector<posit<NBITS, ES>>> I(x + 1, vector<posit<NBITS, ES>>(y + 1));
-            vector<vector<posit<NBITS, ES>>> D(x + 1, vector<posit<NBITS, ES>>(y + 1));
+            t_matrix M(x + 1, vector<posit<NBITS, ES>>(y + 1));
+            t_matrix I(x + 1, vector<posit<NBITS, ES>>(y + 1));
+            t_matrix D(x + 1, vector<posit<NBITS, ES>>(y + 1));
 
             // Calculate results
             for (int p = 0; p < PIPE_DEPTH; p++) {

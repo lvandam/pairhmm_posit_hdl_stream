@@ -144,6 +144,21 @@ int main(int argc, char *argv[]) {
         batch_cur = (void *) ((uint64_t) batch_cur + (uint64_t) workload->bbytes[q]);
     }
 
+    // Check for errors
+    if (calculate_sw) {
+        DEBUG_PRINT("Calculating on host...\n");
+
+        PairHMMPosit pairhmm_posit(workload, show_results, show_table);
+        // PairHMMFloat<float> pairhmm_float(workload, show_results, show_table);
+
+        pairhmm_posit.calculate(batches);
+        // pairhmm_float.calculate(batches);
+
+        // int errs_posit = 0;
+        // errs_posit = pairhmm_posit.count_errors((uint32_t *) result_hw);
+        // DEBUG_PRINT("Errors Posit: %d\n", errs_posit);
+    }
+
     DEBUG_PRINT("Clearing HW result memory\n");
     memset(result_hw, 0xFF, sizeof(t_result) * workload->batches * PIPE_DEPTH);
 
@@ -198,19 +213,16 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Check for errors
-    if (calculate_sw) {
-        DEBUG_PRINT("Calculating on host...\n");
+    for (int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
+        // Interpret 32-bit value from HW as posits and print
+        posit<NBITS, ES> res0, res1, res2, res3;
+        res0.set_raw_bits(result_hw[i].b[0]);
+        res1.set_raw_bits(result_hw[i].b[1]);
+        res2.set_raw_bits(result_hw[i].b[2]);
+        res3.set_raw_bits(result_hw[i].b[3]);
 
-        PairHMMPosit pairhmm_posit(workload, show_results, show_table);
-        PairHMMFloat<float> pairhmm_float(workload, show_results, show_table);
-
-        pairhmm_posit.calculate(batches);
-        pairhmm_float.calculate(batches);
-
-        int errs_posit = 0;
-        errs_posit = pairhmm_posit.count_errors((uint32_t *) result_hw);
-        DEBUG_PRINT("Errors Posit: %d\n", errs_posit);
+        cout << i << ": " << hexstring(res0.collect()) << " " << hexstring(res1.collect()) << " "
+             << hexstring(res2.collect()) << " " << hexstring(res3.collect()) << endl;
     }
 
     // Release the afu
