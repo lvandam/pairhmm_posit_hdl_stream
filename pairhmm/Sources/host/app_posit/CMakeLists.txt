@@ -7,7 +7,7 @@ set(PSLSE_LIBCXL_DIR ${SOURCES_DIR}/sim/pslse/libcxl)
 set(PSLSE_COMMON_DIR ${SOURCES_DIR}/sim/pslse/common)
 set(PSLSE_LIBCXL_DIR ${SOURCES_DIR}/sim/pslse/libcxl)
 
-set(CMAKE_CXX_STANDARD 11)#-std=c++11
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-O3 -Wall -m64 -fopenmp -DPOSIT_VERBOSE_OUTPUT")# -DDEBUG_VALUES -DDEBUG_VERBOSE #-DPOSIT_TRACE_DECODE -DPOSIT_TRACE_CONVERSION -DPOSIT_TRACE_ROUNDING")
 
 set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
@@ -38,7 +38,7 @@ add_dependencies(pairhmm_host universal)
 target_link_libraries(pairhmm_host /tools/ppc_64/libcxl/libcxl.a)
 target_include_directories(pairhmm_host PRIVATE /tools/ppc_64/libcxl)
 target_include_directories(pairhmm_host PRIVATE /tools/ppc_64/libcxl/include)
-target_compile_options(pairhmm_host PRIVATE -lrt -lpthread)
+target_compile_options(pairhmm_host PRIVATE -lrt -lpthread -std=c++11)
 
 # Sim (local)
 add_executable(pairhmm_sim ${pairhmm_SRC})
