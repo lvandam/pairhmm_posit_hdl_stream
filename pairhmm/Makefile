@@ -64,7 +64,7 @@ host: $(program_OBJS)
 	$(CPP) $(program_OBJS) -o $(APP_DIR)/build/$(APP) /tools/ppc_64/libcxl/libcxl.a $(CFLAGS) -I/tools/ppc_64/libcxl -I/tools/ppc_64/libcxl/include -lrt -lpthread
 
 host-run:
-	$(APP_DIR)/build/$(APP) -m 32 2 2 1 1 1 1
+	$(APP_DIR)/build/$(APP) $(ARGS)
 
 
 # Posit
@@ -83,7 +83,7 @@ host-posit: $(program_posit_OBJS)
 	cd $(APP_POSIT_DIR)/build && cmake .. && make pairhmm_host
 
 host-run-posit:
-	$(APP_POSIT_DIR)/build/$(APP)_host -m 32 2 2 1
+	$(APP_POSIT_DIR)/build/$(APP)_host $(ARGS)
 
 
 # Clean targets
