@@ -10,6 +10,7 @@
 #include <vector>
 #include <omp.h>
 #include <posit/posit>
+#include <boost/multiprecision/cpp_dec_float.hpp>
 
 #include <iostream>
 
@@ -29,6 +30,7 @@ extern "C" {
 
 using namespace std;
 using namespace sw::unum;
+using boost::multiprecision::cpp_dec_float_50;
 
 
 int main(int argc, char *argv[]) {
@@ -145,12 +147,14 @@ int main(int argc, char *argv[]) {
     }
 
     PairHMMPosit pairhmm_posit(workload, show_results, show_table);
-    // PairHMMFloat<float> pairhmm_float(workload, show_results, show_table);
+    PairHMMFloat<float> pairhmm_float(workload, show_results, show_table);
+    PairHMMFloat<cpp_dec_float_50> pairhmm_decimal(workload, show_results, show_table);
 
     if (calculate_sw) {
         DEBUG_PRINT("Calculating on host...\n");
         pairhmm_posit.calculate(batches);
-        // pairhmm_float.calculate(batches);
+        pairhmm_float.calculate(batches);
+        pairhmm_decimal.calculate(batches);
     }
 
     DEBUG_PRINT("Clearing HW result memory\n");
@@ -223,7 +227,7 @@ int main(int argc, char *argv[]) {
     if (calculate_sw) {
         int errs_posit = 0;
         errs_posit = pairhmm_posit.count_errors((uint32_t *) result_hw);
-        DEBUG_PRINT("Errors Posit: %d\n", errs_posit);
+        DEBUG_PRINT("Posit errors: %d\n", errs_posit);
     }
 
     // Release the afu

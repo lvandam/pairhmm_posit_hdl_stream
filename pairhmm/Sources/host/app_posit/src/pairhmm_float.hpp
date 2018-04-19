@@ -27,43 +27,40 @@ private:
     bool show_results, show_table;
 
 public:
-    PairHMMFloat(t_workload *workload, bool show_results, bool show_table) {
-        workload = workload;
-        show_results = show_results;
-        show_table = show_table;
-        result_sw.reserve(workload->batches * PIPE_DEPTH);
-        for (int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
-            result_sw[i].reserve(3);
+    PairHMMFloat(t_workload *wl, bool show_results, bool show_table) : workload(wl), show_results(show_results), show_table(show_table) {
+        result_sw.reserve(workload->batches * (PIPE_DEPTH+1));
+        for (int i = 0; i < workload->batches * (PIPE_DEPTH+1); i++) {
+            result_sw[i] = t_result_sw(3, 0);
         }
     }
 
     void calculate(t_batch *batches) {
-        for (int q = 0; q < workload->batches; q++) {
-            int x = workload->bx[q];
-            int y = workload->by[q];
+        for (int i = 0; i < workload->batches; i++) {
+            int x = workload->bx[i];
+            int y = workload->by[i];
 
             vector<vector<T>> M(x + 1, vector<T>(y + 1));
             vector<vector<T>> I(x + 1, vector<T>(y + 1));
             vector<vector<T>> D(x + 1, vector<T>(y + 1));
 
             // Calculate results
-            for (int p = 0; p < PIPE_DEPTH; p++) {
-                calculate_mids(&batches[q], p, x, y, M, I, D);
+            for (int j = 0; j < PIPE_DEPTH; j++) {
+                calculate_mids(&batches[i], j, x, y, M, I, D);
 
-                result_sw[q * PIPE_DEPTH + p][0] = 0.0;
+                result_sw[i * PIPE_DEPTH + j][0] = 0.0;
                 for (int c = 1; c < y + 1; c++) {
-                    result_sw[q * PIPE_DEPTH + p][0] += M[x][c];
-                    result_sw[q * PIPE_DEPTH + p][0] += I[x][c];
+                    result_sw[i * PIPE_DEPTH + j][0] += M[x][c];
+                    result_sw[i * PIPE_DEPTH + j][0] += I[x][c];
                 }
 
                 if (show_table) {
-                    print_mid_table(&batches[q], p, x, y, M, I, D);
+                    print_mid_table(&batches[i], j, x, y, M, I, D);
                 }
             }
         }
 
         if (show_results) {
-            print_results(result_sw, workload->batches);
+            print_results();
         }
     }
 
@@ -78,16 +75,16 @@ public:
 
         // Set to zero and intial value in the X direction
         for (int j = 0; j < c + 1; j++) {
-            M[0][j] = 0.0;
-            I[0][j] = 0.0;
+            M[0][j] = 0;
+            I[0][j] = 0;
             D[0][j] = (T)initial;
         }
 
         // Set to zero in Y direction
         for (int i = 1; i < r + 1; i++) {
-            M[i][0] = 0.0;
-            I[i][0] = 0.0;
-            D[i][0] = 0.0;
+            M[i][0] = 0;
+            I[i][0] = 0;
+            D[i][0] = 0;
         }
 
         for (int i = 1; i < r + 1; i++) {
@@ -204,30 +201,36 @@ public:
             printf("═══════════════════════════");
         }
         printf("\n");
-
-
-        fflush(stdout);
     } // print_mid_table
 
-    void print_results(std::vector<t_result_sw> &results, int num_batches) {
-        DEBUG_PRINT("╔═══════════════════════════════╗\n");
-        for (int q = 0; q < num_batches; q++) {
-            DEBUG_PRINT("║ RESULT FOR BATCH %3d:         ║ DECIMAL\n", q);
-            DEBUG_PRINT("╠═══════════════════════════════╣\n");
-            for (int p = 0; p < PIPE_DEPTH; p++) {
-                printf("║%2d: ", p);
-                cout << hex << results[q * PIPE_DEPTH + p][0];
+    void print_results() {
+        cout << "══════════════════════════════════════════════════════════════" << endl;
+
+        if(strcmp(typeid(T).name(), "f") == 0) {
+            cout << "════════════════════════════ FLOAT ═══════════════════════════" << endl;
+        } else {
+            cout << "═══════════════════════ CPP_DEC_FLOAT_50 ═════════════════════" << endl;
+        }
+
+        cout << "══════════════════════════════════════════════════════════════" << endl;
+        cout << "╔═════════════════════════════════════╗" << endl;
+        for (int i = 0; i < workload->batches; i++) {
+            cout << "║ RESULT FOR BATCH "<<i<<":                 ║       DECIMAL" << endl;
+            cout << "╠═════════════════════════════════════╣" << endl;
+            for (int j = 0; j < PIPE_DEPTH; j++) {
+                printf("║%2d: ", j);
+                cout << setw(10) << result_sw[i * PIPE_DEPTH + j][0];
                 cout << " ";
-                cout << hex << results[q * PIPE_DEPTH + p][1];
+                cout << setw(10) << result_sw[i * PIPE_DEPTH + j][1];
                 cout << " ";
-                cout << hex << results[q * PIPE_DEPTH + p][2];
-                cout << " ║ ";
-                cout << results[q * PIPE_DEPTH + p][0];
+                cout << setw(10) << result_sw[i * PIPE_DEPTH + j][2];
+                cout << " ║       ";
+                cout << result_sw[i * PIPE_DEPTH + j][0];
                 cout << endl;
             }
-            DEBUG_PRINT("╚═══════════════════════════════╝\n");
+            cout << "╚═════════════════════════════════════╝" << endl;
         }
-        fflush(stderr);
+        cout << endl;
     } // print_results
 };
 

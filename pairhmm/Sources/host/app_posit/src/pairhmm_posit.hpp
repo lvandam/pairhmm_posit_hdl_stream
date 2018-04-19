@@ -27,39 +27,39 @@ private:
 
 public:
     PairHMMPosit(t_workload *wl, bool show_results, bool show_table) : workload(wl), show_results(show_results), show_table(show_table) {
-        result_sw.reserve(workload->batches * PIPE_DEPTH);
-        for (int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
-            result_sw[i].reserve(3);
+        result_sw.reserve(workload->batches * (PIPE_DEPTH+1));
+        for (int i = 0; i < workload->batches * (PIPE_DEPTH+1); i++) {
+            result_sw[i] = t_result_sw(3, 0);
         }
     }
 
     void calculate(t_batch *batches) {
-        for (int q = 0; q < workload->batches; q++) {
-            int x = workload->bx[q];
-            int y = workload->by[q];
+        for (int i = 0; i < workload->batches; i++) {
+            int x = workload->bx[i];
+            int y = workload->by[i];
 
             t_matrix M(x + 1, vector<posit<NBITS, ES>>(y + 1));
             t_matrix I(x + 1, vector<posit<NBITS, ES>>(y + 1));
             t_matrix D(x + 1, vector<posit<NBITS, ES>>(y + 1));
 
             // Calculate results
-            for (int p = 0; p < PIPE_DEPTH; p++) {
-                calculate_mids(&batches[q], p, x, y, M, I, D);
+            for (int j = 0; j < PIPE_DEPTH; j++) {
+                calculate_mids(&batches[i], j, x, y, M, I, D);
 
-                result_sw[q * PIPE_DEPTH + p][0] = 0.0;
+                result_sw[i * PIPE_DEPTH + j][0] = 0.0;
                 for (int c = 1; c < y + 1; c++) {
-                    result_sw[q * PIPE_DEPTH + p][0] += M[x][c];
-                    result_sw[q * PIPE_DEPTH + p][0] += I[x][c];
+                    result_sw[i * PIPE_DEPTH + j][0] += M[x][c];
+                    result_sw[i * PIPE_DEPTH + j][0] += I[x][c];
                 }
 
                 if (show_table) {
-                    print_mid_table(&batches[q], p, x, y, M, I, D);
+                    print_mid_table(&batches[i], j, x, y, M, I, D);
                 }
             }
         }
 
         if (show_results) {
-            print_results(result_sw, workload->batches);
+            print_results();
         }
     }
 
@@ -198,30 +198,30 @@ public:
             printf("═══════════════════════════");
         }
         printf("\n");
-
-
-        fflush(stdout);
     } // print_mid_table
 
-    void print_results(std::vector<t_result_sw> &results, int num_batches) {
-        DEBUG_PRINT("╔═══════════════════════════════╗\n");
-        for (int q = 0; q < num_batches; q++) {
-            DEBUG_PRINT("║ RESULT FOR BATCH %3d:         ║ DECIMAL\n", q);
-            DEBUG_PRINT("╠═══════════════════════════════╣\n");
-            for (int p = 0; p < PIPE_DEPTH; p++) {
-                printf("║%2d: ", p);
-                cout << hexstring(results[q * PIPE_DEPTH + p][0].collect());
+    void print_results() {
+        cout << "══════════════════════════════════════════════════════════════" << endl;
+        cout << "════════════════════════════ POSIT ═══════════════════════════" << endl;
+        cout << "══════════════════════════════════════════════════════════════" << endl;
+        cout << "╔═══════════════════════════════╗" << endl;
+        for (int i = 0; i < workload->batches; i++) {
+            cout << "║ RESULT FOR BATCH "<<i<<":           ║       DECIMAL" << endl;
+            cout << "╠═══════════════════════════════╣" << endl;
+            for (int j = 0; j < PIPE_DEPTH; j++) {
+                printf("║%2d: ", j);
+                cout << hexstring(result_sw[i * PIPE_DEPTH + j][0].collect());
                 cout << " ";
-                cout << hexstring(results[q * PIPE_DEPTH + p][1].collect());
+                cout << hexstring(result_sw[i * PIPE_DEPTH + j][1].collect());
                 cout << " ";
-                cout << hexstring(results[q * PIPE_DEPTH + p][2].collect());
-                cout << " ║ ";
-                cout << results[q * PIPE_DEPTH + p][0];
+                cout << hexstring(result_sw[i * PIPE_DEPTH + j][2].collect());
+                cout << " ║       ";
+                cout << result_sw[i * PIPE_DEPTH + j][0];
                 cout << endl;
             }
-            DEBUG_PRINT("╚═══════════════════════════════╝\n");
+            cout << "╚═══════════════════════════════╝" << endl;
         }
-        fflush(stderr);
+        cout << endl;
     } // print_results
 };
 
