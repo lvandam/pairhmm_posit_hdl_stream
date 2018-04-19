@@ -9,6 +9,7 @@
 #include <vector>
 #include <posit/posit>
 
+#include "debug_values.hpp"
 #include "defines.hpp"
 #include "utils.hpp"
 #include "batch.hpp"
@@ -26,9 +27,12 @@ private:
     bool show_results, show_table;
 
 public:
-    PairHMMPosit(t_workload *wl, bool show_results, bool show_table) : workload(wl), show_results(show_results), show_table(show_table) {
-        result_sw.reserve(workload->batches * (PIPE_DEPTH+1));
-        for (int i = 0; i < workload->batches * (PIPE_DEPTH+1); i++) {
+    DebugValues<posit<NBITS, ES>> debug_values;
+
+    PairHMMPosit(t_workload *wl, bool show_results, bool show_table) : workload(wl), show_results(show_results),
+                                                                       show_table(show_table) {
+        result_sw.reserve(workload->batches * (PIPE_DEPTH + 1));
+        for (int i = 0; i < workload->batches * (PIPE_DEPTH + 1); i++) {
             result_sw[i] = t_result_sw(3, 0);
         }
     }
@@ -51,6 +55,7 @@ public:
                     result_sw[i * PIPE_DEPTH + j][0] += M[x][c];
                     result_sw[i * PIPE_DEPTH + j][0] += I[x][c];
                 }
+                debug_values.debugValue(result_sw[i * PIPE_DEPTH + j][0], "result[%d][0]", (i*PIPE_DEPTH+j));
 
                 if (show_table) {
                     print_mid_table(&batches[i], j, x, y, M, I, D);
@@ -206,7 +211,7 @@ public:
         cout << "══════════════════════════════════════════════════════════════" << endl;
         cout << "╔═══════════════════════════════╗" << endl;
         for (int i = 0; i < workload->batches; i++) {
-            cout << "║ RESULT FOR BATCH "<<i<<":           ║       DECIMAL" << endl;
+            cout << "║ RESULT FOR BATCH " << i << ":           ║       DECIMAL" << endl;
             cout << "╠═══════════════════════════════╣" << endl;
             for (int j = 0; j < PIPE_DEPTH; j++) {
                 printf("║%2d: ", j);

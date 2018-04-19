@@ -14,6 +14,21 @@
 
 using namespace sw::unum;
 
+typedef struct struct_workload {
+    int pairs;
+    uint32_t *hapl;
+    uint32_t *read;
+
+    int batches;
+    uint32_t *by;
+    uint32_t *bx;
+    size_t *bbytes;
+
+    size_t bytes;
+
+    uint64_t cups_req;
+} t_workload;
+
 typedef union union_prob {
     uint32_t b;    // as binary
 } t_prob;

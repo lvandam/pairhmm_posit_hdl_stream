@@ -1,18 +1,10 @@
-#define _POSIX_C_SOURCE    200809L
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <unistd.h>
-#include <string.h>
-#include <time.h>
 #include <sys/time.h>
 #include <vector>
 #include <omp.h>
+#include <iostream>
 #include <posit/posit>
 #include <boost/multiprecision/cpp_dec_float.hpp>
-
-#include <iostream>
 
 // libcxl
 extern "C" {
@@ -23,6 +15,7 @@ extern "C" {
 #include "batch.hpp"
 #include "utils.hpp"
 #include "psl.hpp"
+#include "debug_values.hpp"
 #include "pairhmm_posit.hpp"
 #include "pairhmm_float.hpp"
 
@@ -34,6 +27,8 @@ using boost::multiprecision::cpp_dec_float_50;
 
 
 int main(int argc, char *argv[]) {
+    int initial_constant_power = 1;
+
     struct cxl_afu_h *afu;
     void *batch;
     t_result *result_hw;
@@ -148,13 +143,13 @@ int main(int argc, char *argv[]) {
 
     PairHMMPosit pairhmm_posit(workload, show_results, show_table);
     PairHMMFloat<float> pairhmm_float(workload, show_results, show_table);
-    PairHMMFloat<cpp_dec_float_50> pairhmm_decimal(workload, show_results, show_table);
+    PairHMMFloat<cpp_dec_float_50> pairhmm_dec50(workload, show_results, show_table);
 
     if (calculate_sw) {
         DEBUG_PRINT("Calculating on host...\n");
         pairhmm_posit.calculate(batches);
         pairhmm_float.calculate(batches);
-        pairhmm_decimal.calculate(batches);
+        pairhmm_dec50.calculate(batches);
     }
 
     DEBUG_PRINT("Clearing HW result memory\n");
@@ -211,20 +206,21 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    for (int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
-        // Interpret 32-bit value from HW as posits and print
-        posit<NBITS, ES> res0, res1, res2, res3;
-        res0.set_raw_bits(result_hw[i].b[0]);
-        res1.set_raw_bits(result_hw[i].b[1]);
-        res2.set_raw_bits(result_hw[i].b[2]);
-        res3.set_raw_bits(result_hw[i].b[3]);
 
-        cout << i << ": " << hexstring(res0.collect()) << " " << hexstring(res1.collect()) << " "
-             << hexstring(res2.collect()) << " " << hexstring(res3.collect()) << endl;
-    }
 
     // Check for errors
     if (calculate_sw) {
+        DebugValues<posit<NBITS,ES>> hw_debug_values;
+
+        for (int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
+            // Store HW posit result for decimal accuracy calculation
+            posit<NBITS, ES> res_hw;
+            res_hw.set_raw_bits(result_hw[i].b[0]);
+            hw_debug_values.debugValue(res_hw, "result[%d][0]", i);
+        }
+
+        writeBenchmark(pairhmm_dec50, pairhmm_float, pairhmm_posit, hw_debug_values, std::to_string(initial_constant_power)+".txt", false, true);
+
         int errs_posit = 0;
         errs_posit = pairhmm_posit.count_errors((uint32_t *) result_hw);
         DEBUG_PRINT("Posit errors: %d\n", errs_posit);

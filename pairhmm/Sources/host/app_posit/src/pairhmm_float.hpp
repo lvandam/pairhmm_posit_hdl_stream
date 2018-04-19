@@ -9,6 +9,7 @@
 #include <vector>
 #include <posit/posit>
 
+#include "debug_values.hpp"
 #include "defines.hpp"
 #include "utils.hpp"
 #include "batch.hpp"
@@ -27,6 +28,8 @@ private:
     bool show_results, show_table;
 
 public:
+    DebugValues<T> debug_values;
+
     PairHMMFloat(t_workload *wl, bool show_results, bool show_table) : workload(wl), show_results(show_results), show_table(show_table) {
         result_sw.reserve(workload->batches * (PIPE_DEPTH+1));
         for (int i = 0; i < workload->batches * (PIPE_DEPTH+1); i++) {
@@ -52,6 +55,7 @@ public:
                     result_sw[i * PIPE_DEPTH + j][0] += M[x][c];
                     result_sw[i * PIPE_DEPTH + j][0] += I[x][c];
                 }
+                debug_values.debugValue(result_sw[i * PIPE_DEPTH + j][0], "result[%d][0]", (i*PIPE_DEPTH+j));
 
                 if (show_table) {
                     print_mid_table(&batches[i], j, x, y, M, I, D);
@@ -115,28 +119,6 @@ public:
             }
         }
     } // calculate_mids
-
-    int count_errors(uint32_t *hr) {
-        int total_errors = 0;
-        T hwp, swp;
-
-        for (int i = 0; i < workload->batches; i++) {
-            for (int j = 0; j < PIPE_DEPTH; j++) {
-                swp = result_sw[i * PIPE_DEPTH + j][0];
-                hwp.set_raw_bits(hr[i * 4 * PIPE_DEPTH + j * 4]);
-
-                T err = swp / hwp;
-
-                if ((err < ERR_LOWER) || (err > ERR_UPPER)) {
-                    total_errors++;
-                    cout << "SW: " << hexstring(swp.collect()) << ", HW: " << hexstring(hwp.collect()) << endl;
-                    exit(-1);
-                }
-            }
-        }
-
-        return (total_errors);
-    } // count_errors
 
     void print_mid_table(t_batch *batch, int pair, int r, int c, t_matrix &M, t_matrix &I, t_matrix &D) {
         int w = c + 1;

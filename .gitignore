@@ -24,7 +24,7 @@ pairhmm/Sources/host/app/build
 pairhmm/Sources/host/app/sim-build
 pairhmm/Sources/host/app_posit/build
 pairhmm/Sources/host/app_posit/sim-build
-
+pairhmm/Sources/sim/*.txt
 
 
 !.gitignore

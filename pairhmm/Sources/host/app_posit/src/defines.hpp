@@ -1,11 +1,19 @@
 #ifndef __DEFINES_H
 #define __DEFINES_H
 
+using namespace std;
+using namespace sw::unum;
+
 // POSIT
 #define NBITS 32
 #define ES 2
 
 #define DEBUG              1
+
+#ifndef DEBUG_PRECISION
+#define DEBUG_PRECISION 40
+#endif // DEBUG_PRECISION
+
 
 #define MAX_POLLS          32000
 #define REPEATS            10
@@ -58,5 +66,38 @@
 #define DEBUG_PRINT(...)    do { } while (0)
 #define BENCH_PRINT(...)    do { fprintf(stderr, __VA_ARGS__); } while (0)
 #endif
+
+struct Entry {
+    string name;
+    cpp_dec_float_50 value;
+};
+
+struct find_entry {
+    string name;
+
+    find_entry(string name) : name(name) {}
+
+    bool operator()(const Entry &m) const {
+        return m.name == name;
+    }
+};
+
+template<size_t nbits>
+std::string hexstring(bitblock<nbits> bits) {
+    char str[8];   // plenty of room
+    const char *hexits = "0123456789ABCDEF";
+    unsigned int max = 8;
+    for (unsigned int i = 0; i < max; i++) {
+        unsigned int hexit = (bits[3] << 3) + (bits[2] << 2) + (bits[1] << 1) + bits[0];
+        str[max - 1 - i] = hexits[hexit];
+        bits >>= 4;
+    }
+    return std::string(str);
+}
+
+template<size_t nbits, size_t es>
+uint32_t to_uint(posit<nbits, es> number) {
+    return (uint32_t) number.collect().to_ulong();
+}
 
 #endif //__DEFINES_H
