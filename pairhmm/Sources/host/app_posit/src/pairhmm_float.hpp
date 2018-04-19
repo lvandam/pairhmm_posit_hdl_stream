@@ -30,9 +30,10 @@ private:
 public:
     DebugValues<T> debug_values;
 
-    PairHMMFloat(t_workload *wl, bool show_results, bool show_table) : workload(wl), show_results(show_results), show_table(show_table) {
-        result_sw.reserve(workload->batches * (PIPE_DEPTH+1));
-        for (int i = 0; i < workload->batches * (PIPE_DEPTH+1); i++) {
+    PairHMMFloat(t_workload *wl, bool show_results, bool show_table) : workload(wl), show_results(show_results),
+                                                                       show_table(show_table) {
+        result_sw.reserve(workload->batches * (PIPE_DEPTH + 1));
+        for (int i = 0; i < workload->batches * (PIPE_DEPTH + 1); i++) {
             result_sw[i] = t_result_sw(3, 0);
         }
     }
@@ -55,7 +56,7 @@ public:
                     result_sw[i * PIPE_DEPTH + j][0] += M[x][c];
                     result_sw[i * PIPE_DEPTH + j][0] += I[x][c];
                 }
-                debug_values.debugValue(result_sw[i * PIPE_DEPTH + j][0], "result[%d][0]", (i*PIPE_DEPTH+j));
+                debug_values.debugValue(result_sw[i * PIPE_DEPTH + j][0], "result[%d][0]", (i * PIPE_DEPTH + j));
 
                 if (show_table) {
                     print_mid_table(&batches[i], j, x, y, M, I, D);
@@ -74,14 +75,14 @@ public:
         t_bbase *hapl = batch->hapl;
         t_probs *prob = batch->prob;
 
-        posit<NBITS,ES> initial;
+        posit<NBITS, ES> initial;
         initial.set_raw_bits(init->initials[pair]);
 
         // Set to zero and intial value in the X direction
         for (int j = 0; j < c + 1; j++) {
             M[0][j] = 0;
             I[0][j] = 0;
-            D[0][j] = (T)initial;
+            D[0][j] = (T) initial;
         }
 
         // Set to zero in Y direction
@@ -113,9 +114,10 @@ public:
                     distm = distm_diff;
                 }
 
-                M[i][j] = (T)distm * ((T)alpha * M[i - 1][j - 1] + (T)beta * I[i - 1][j - 1] + (T)beta * D[i - 1][j - 1]);
-                I[i][j] = (T)delta * M[i - 1][j] + (T)upsilon * I[i - 1][j];
-                D[i][j] = (T)eta * M[i][j - 1] + (T)zeta * D[i][j - 1];
+                M[i][j] = (T) distm *
+                          ((T) alpha * M[i - 1][j - 1] + (T) beta * I[i - 1][j - 1] + (T) beta * D[i - 1][j - 1]);
+                I[i][j] = (T) delta * M[i - 1][j] + (T) upsilon * I[i - 1][j];
+                D[i][j] = (T) eta * M[i][j - 1] + (T) zeta * D[i][j - 1];
             }
         }
     } // calculate_mids
@@ -188,7 +190,7 @@ public:
     void print_results() {
         cout << "══════════════════════════════════════════════════════════════" << endl;
 
-        if(strcmp(typeid(T).name(), "f") == 0) {
+        if (strcmp(typeid(T).name(), "f") == 0) {
             cout << "════════════════════════════ FLOAT ═══════════════════════════" << endl;
         } else {
             cout << "═══════════════════════ CPP_DEC_FLOAT_50 ═════════════════════" << endl;
@@ -197,7 +199,7 @@ public:
         cout << "══════════════════════════════════════════════════════════════" << endl;
         cout << "╔═════════════════════════════════════╗" << endl;
         for (int i = 0; i < workload->batches; i++) {
-            cout << "║ RESULT FOR BATCH "<<i<<":                 ║       DECIMAL" << endl;
+            cout << "║ RESULT FOR BATCH " << i << ":                 ║       DECIMAL" << endl;
             cout << "╠═════════════════════════════════════╣" << endl;
             for (int j = 0; j < PIPE_DEPTH; j++) {
                 printf("║%2d: ", j);

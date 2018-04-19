@@ -36,7 +36,7 @@ add_dependencies(pairhmm_host universal)
 target_link_libraries(pairhmm_host /tools/ppc_64/libcxl/libcxl.a)
 target_include_directories(pairhmm_host PRIVATE /tools/ppc_64/libcxl)
 target_include_directories(pairhmm_host PRIVATE /tools/ppc_64/libcxl/include)
-target_compile_options(pairhmm_host PRIVATE -lrt -lpthread)
+target_compile_options(pairhmm_host PRIVATE -lrt -lpthread -fpermissive)
 
 # Sim (local)
 add_executable(pairhmm_sim ${pairhmm_SRC})

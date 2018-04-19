@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
 
     // Check for errors
     if (calculate_sw) {
-        DebugValues<posit<NBITS,ES>> hw_debug_values;
+        DebugValues<posit<NBITS, ES>> hw_debug_values;
 
         for (int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
             // Store HW posit result for decimal accuracy calculation
@@ -219,7 +219,8 @@ int main(int argc, char *argv[]) {
             hw_debug_values.debugValue(res_hw, "result[%d][0]", i);
         }
 
-        writeBenchmark(pairhmm_dec50, pairhmm_float, pairhmm_posit, hw_debug_values, std::to_string(initial_constant_power)+".txt", false, true);
+        writeBenchmark(pairhmm_dec50, pairhmm_float, pairhmm_posit, hw_debug_values,
+                       std::to_string(initial_constant_power) + ".txt", false, true);
 
         int errs_posit = 0;
         errs_posit = pairhmm_posit.count_errors((uint32_t *) result_hw);

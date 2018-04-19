@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <string.h>
+#include <chrono>
+#include <ctime>
 #include <iostream>
 #include <omp.h>
 #include <cmath>
@@ -40,18 +42,11 @@ cpp_dec_float_50 decimal_accuracy(cpp_dec_float_50 exact, cpp_dec_float_50 compu
 void writeBenchmark(PairHMMFloat<cpp_dec_float_50> &pairhmm_dec50, PairHMMFloat<float> &pairhmm_float,
                     PairHMMPosit &pairhmm_posit, DebugValues<posit<NBITS, ES>> &hw_debug_values, std::string filename,
                     bool printDate, bool overwrite) {
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
+    time_t t = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
-    ofstream outfile;
-    if (overwrite) {
-        outfile = ofstream(filename, ios::out);
-    } else {
-        outfile = ofstream(filename, ios::out | ios::app);
-    }
-
+    ofstream outfile(filename, ios::out);
     if (printDate)
-        outfile << endl << put_time(&tm, "%d-%m-%Y %H:%M:%S") << endl << "===================" << endl;
+        outfile << endl << ctime(&t) << endl << "===================" << endl;
 
     auto dec_values = pairhmm_dec50.debug_values.items;
     auto float_values = pairhmm_float.debug_values.items;
@@ -96,10 +91,10 @@ void writeBenchmark(PairHMMFloat<cpp_dec_float_50> &pairhmm_dec50, PairHMMFloat<
 
         // Relative error values
         outfile << setprecision(50) << fixed << name << ","
-                                                        << dE_f << "," << dE_p << "," << dE_hw << ","
-                                                        << log10(abs(dE_f)) << "," << log10(abs(dE_p)) << "," << log10(abs(dE_hw)) << ","
-                                                        << E << "," << E_f << "," << E_p << "," << E_hw << ","
-                                                        << da_F << "," << da_P << "," << da_HW << endl;
+                << dE_f << "," << dE_p << "," << dE_hw << ","
+                << log10(abs(dE_f)) << "," << log10(abs(dE_p)) << "," << log10(abs(dE_hw)) << ","
+                << E << "," << E_f << "," << E_p << "," << E_hw << ","
+                << da_F << "," << da_P << "," << da_HW << endl;
     }
     outfile.close();
 }

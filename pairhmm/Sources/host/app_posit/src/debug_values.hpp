@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
+#include <chrono>
 #include <ctime>
 #include <cstdarg>
 #include <boost/multiprecision/cpp_dec_float.hpp>
@@ -27,12 +28,12 @@ public:
 
     DebugValues() = default;
 
-    void debugValue(T value, const char* format, ...) {
+    void debugValue(T value, const char *format, ...) {
         char buf[1024];
 
         va_list arglist;
         va_start(arglist, format);
-        vsprintf(buf, format ,arglist);
+        vsprintf(buf, format, arglist);
         va_end(arglist);
 
         Entry entry;
@@ -47,18 +48,18 @@ public:
     }
 
     void printDebugValues() {
-        for(auto el : items) {
+        for (auto el : items) {
             cout << setw(20) << el.name << " = " << fixed << setprecision(DEBUG_PRECISION) << el.value << endl;
         }
     }
 
     void exportDebugValues(string filename) {
-        auto t = std::time(nullptr);
-        auto tm = *std::localtime(&t);
-        ofstream outfile(filename, ios::out|ios::app);
-        outfile << endl << put_time(&tm, "%d-%m-%Y %H:%M:%S") << endl << "===================" << endl;
+        time_t t = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
-        for(auto el : items) {
+        ofstream outfile(filename, ios::out | ios::app);
+        outfile << endl << ctime(&t) << endl << "===================" << endl;
+
+        for (auto el : items) {
             outfile << el.name << "," << fixed << setprecision(DEBUG_PRECISION) << el.value << endl;
         }
 
@@ -67,7 +68,7 @@ public:
 
     std::vector<std::string> getNames() {
         std::vector<std::string> result;
-        for(auto el : items) {
+        for (auto el : items) {
             result.push_back(el.name);
         }
         return result;
@@ -75,7 +76,7 @@ public:
 
     std::vector<cpp_dec_float_50> getValues() {
         std::vector<cpp_dec_float_50> result;
-        for(auto el : items) {
+        for (auto el : items) {
             result.push_back(el.value);
         }
         return result;
