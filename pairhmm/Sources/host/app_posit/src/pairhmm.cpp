@@ -1,8 +1,10 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <vector>
+#include <cstdlib>
 #include <omp.h>
 #include <iostream>
+#include <sstream>
 #include <posit/posit>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 
@@ -27,24 +29,21 @@ using boost::multiprecision::cpp_dec_float_50;
 
 
 int main(int argc, char *argv[]) {
-    int initial_constant_power = 1;
-
     struct cxl_afu_h *afu;
     void *batch;
     t_result *result_hw;
     t_workload *workload;
     t_batch *batches;
 
-    bool show_table = false;
-    bool show_results = false;
+    int initial_constant_power = 1;
     bool calculate_sw = true;
-
-    uint64_t threads = 1;
+    bool show_results = false;
+    bool show_table = false;
 
     DEBUG_PRINT("Parsing input arguments...\n");
     if (argc < 5) {
         fprintf(stderr,
-                "ERROR: Correct usage is: %s <-f = file, -m = manual> ... \n-m: <pairs> <X> <Y> ... \n-f: <input file>\n... <number of threads*> <sw solve?*> <show results?*> <show MID table?*> (* is optional)\n",
+                "ERROR: Correct usage is: %s <-f = file, -m = manual> ... \n-m: <pairs> <X> <Y> <initial constant power> ... \n-f: <input file>\n... <sw solve?*> <show results?*> <show MID table?*> (* is optional)\n",
                 APP_NAME);
         return (-1);
     } else {
@@ -53,56 +52,43 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "ERROR: %s cannot be opened.\n", argv[2]);
                 return (-1);
             }
+
             if (argc >= 4) {
-                threads = strtoul(argv[3], NULL, 0);
+                istringstream(argv[3]) >> calculate_sw;
             }
             if (argc >= 5) {
-                calculate_sw = strtoul(argv[4], NULL, 0);
+                istringstream(argv[4]) >> show_results;
             }
             if (argc >= 6) {
-                show_results = strtoul(argv[5], NULL, 0);
-            }
-            if (argc >= 7) {
-                show_table = strtoul(argv[6], NULL, 0);
-            }
-
-            if (threads <= 0) {
-                threads = omp_get_max_threads();
+                istringstream(argv[5]) >> show_table;
             }
 
             BENCH_PRINT("%s, ", argv[2]);
             BENCH_PRINT("%8d, ", (int) workload->pairs);
-            BENCH_PRINT("%8d, ", (int) threads);
         } else if (strncmp(argv[1], "-m", 2) == 0) {
             DEBUG_PRINT("Manual input mode selected. %d arguments supplied.\n", argc);
             int pairs = strtoul(argv[2], NULL, 0);
             int x = strtoul(argv[3], NULL, 0);
             int y = strtoul(argv[4], NULL, 0);
+            initial_constant_power = strtoul(argv[5], NULL, 0);
 
             workload = gen_workload(pairs, x, y);
 
-            if (argc >= 6) {
-                threads = strtoul(argv[5], NULL, 0);
-            }
             if (argc >= 7) {
-                calculate_sw = strtoul(argv[6], NULL, 0);
+                istringstream(argv[6]) >> calculate_sw;
             }
             if (argc >= 8) {
-                show_results = strtoul(argv[7], NULL, 0);
+                istringstream(argv[7]) >> show_results;
             }
             if (argc >= 9) {
-                show_table = strtoul(argv[8], NULL, 0);
-            }
-            if (threads <= 0) {
-                threads = omp_get_max_threads();
+                istringstream(argv[8]) >> show_table;
             }
 
             BENCH_PRINT("M, ");
             BENCH_PRINT("%8d, %8d, %8d, ", workload->pairs, x, y);
-            BENCH_PRINT("%8d, ", (int) threads);
         } else {
             fprintf(stderr,
-                    "ERROR: Correct usage is: %s <-f = file, -m = manual> ... \n-m: <pairs> <X> <Y> ... \n-f: <input file>\n... <number of threads*> <sw solve?*> <show results?*> <show MID table?*> (* is optional)\n",
+                    "ERROR: Correct usage is: %s <-f = file, -m = manual> ... \n-m: <pairs> <X> <Y> <initial constant power> ... \n-f: <input file>\n... <sw solve?*> <show results?*> <show MID table?*> (* is optional)\n",
                     APP_NAME);
             return (EXIT_FAILURE);
         }
@@ -136,7 +122,7 @@ int main(int argc, char *argv[]) {
 
     for (int q = 0; q < workload->batches; q++) {
         init_batch_address(&batches[q], batch_cur, workload->bx[q], workload->by[q]);
-        fill_batch(&batches[q], workload->bx[q], workload->by[q], 1.0);
+        fill_batch(&batches[q], workload->bx[q], workload->by[q], powf(2.0, initial_constant_power));
         print_batch_info(&batches[q]);
         batch_cur = (void *) ((uint64_t) batch_cur + (uint64_t) workload->bbytes[q]);
     }
@@ -205,8 +191,6 @@ int main(int argc, char *argv[]) {
                  << hexstring(res2.collect()) << " " << hexstring(res3.collect()) << endl;
         }
     }
-
-
 
     // Check for errors
     if (calculate_sw) {

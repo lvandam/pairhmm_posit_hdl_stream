@@ -83,7 +83,7 @@ host-posit: $(program_posit_OBJS)
 	cd $(APP_POSIT_DIR)/build && cmake .. && make pairhmm_host
 
 host-run-posit:
-	$(APP_POSIT_DIR)/build/$(APP)_host -m 32 2 2 1 1 1 1
+	$(APP_POSIT_DIR)/build/$(APP)_host -m 32 2 2 1
 
 
 # Clean targets
