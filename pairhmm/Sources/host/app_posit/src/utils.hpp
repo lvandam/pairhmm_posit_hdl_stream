@@ -8,7 +8,6 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
-#include <omp.h>
 #include <posit/posit>
 
 #include "debug_values.hpp"

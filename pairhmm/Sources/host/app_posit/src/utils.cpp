@@ -6,7 +6,6 @@
 #include <chrono>
 #include <ctime>
 #include <iostream>
-#include <omp.h>
 #include <cmath>
 #include <cfloat>
 

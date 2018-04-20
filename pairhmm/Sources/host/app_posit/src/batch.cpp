@@ -33,6 +33,8 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
     init->y_size = yp;
     init->y_padded = ybp;
 
+    posit<NBITS,ES> zeta(0), eta(0), upsilon(0), delta(0), beta(0), alpha(0), distm_diff(0), distm_simi(0);
+
     for (int k = 0; k < PIPE_DEPTH; k++) {
         posit<NBITS, ES> initial_posit(initial);
         initial_posit += k;
@@ -58,22 +60,25 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
         }
 
         for (int i = 0; i < xp; i++) {
-            prob[i * PIPE_DEPTH + k].p[0].b = (0x38000000 | (k << 4) | (i << 8) |
-                                               ((rand() / (RAND_MAX / 256)) << 8)); // zeta
-            prob[i * PIPE_DEPTH + k].p[1].b = (0x28000001 | (k << 4) | (i << 8) |
-                                               ((rand() / (RAND_MAX / 256)) << 8)); // eta
-            prob[i * PIPE_DEPTH + k].p[2].b = (0x38000002 | (k << 4) | (i << 8) |
-                                               ((rand() / (RAND_MAX / 256)) << 8)); // upsilon
-            prob[i * PIPE_DEPTH + k].p[3].b = (0x28000003 | (k << 4) | (i << 8) |
-                                               ((rand() / (RAND_MAX / 256)) << 8)); // delta
-            prob[i * PIPE_DEPTH + k].p[4].b = (0x38000004 | (k << 4) | (i << 8) |
-                                               ((rand() / (RAND_MAX / 256)) << 8)); // beta
-            prob[i * PIPE_DEPTH + k].p[5].b = (0x28000005 | (k << 4) | (i << 8) |
-                                               ((rand() / (RAND_MAX / 256)) << 8)); // alpha
-            prob[i * PIPE_DEPTH + k].p[6].b = (0x38000006 | (k << 4) | (i << 8) |
-                                               ((rand() / (RAND_MAX / 256)) << 8)); // distm_diff
-            prob[i * PIPE_DEPTH + k].p[7].b = (0x28000007 | (k << 4) | (i << 8) |
-                                               ((rand() / (RAND_MAX / 256)) << 8)); // distm_simi
+            srand((k * PIPE_DEPTH + i) * xp + x * 9949 + y * 9133); // Seed number generator
+
+            zeta = 0.5 + (rand() * 0.2 / RAND_MAX);
+            eta = 0.125 + (rand() * 0.1 / RAND_MAX);
+            upsilon = 0.5 + (rand() * 0.2 / RAND_MAX);
+            delta = 0.125 + (rand() * 0.1 / RAND_MAX);
+            beta = 0.5 + (rand() * 0.2 / RAND_MAX);
+            alpha = 0.125 + (rand() * 0.1 / RAND_MAX);
+            distm_diff = 0.5 + (rand() * 0.2 / RAND_MAX);
+            distm_simi = 0.125 + (rand() * 0.1 / RAND_MAX);
+            
+            prob[i * PIPE_DEPTH + k].p[0].b = (int)zeta.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[1].b = (int)eta.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[2].b = (int)upsilon.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[3].b = (int)delta.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[4].b = (int)beta.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[5].b = (int)alpha.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[6].b = (int)distm_diff.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[7].b = (int)distm_simi.collect().to_ulong();
         }
     }
 } // fill_batch

@@ -2,7 +2,6 @@
 #include <sys/time.h>
 #include <vector>
 #include <cstdlib>
-#include <omp.h>
 #include <iostream>
 #include <sstream>
 #include <posit/posit>
