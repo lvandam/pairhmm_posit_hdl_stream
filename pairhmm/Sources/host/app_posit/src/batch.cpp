@@ -62,15 +62,15 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
         for (int i = 0; i < xp; i++) {
             srand((k * PIPE_DEPTH + i) * xp + x * 9949 + y * 9133); // Seed number generator
 
-            zeta = 0.5 + (rand() * 0.2 / RAND_MAX);
-            eta = 0.125 + (rand() * 0.1 / RAND_MAX);
-            upsilon = 0.5 + (rand() * 0.2 / RAND_MAX);
-            delta = 0.125 + (rand() * 0.1 / RAND_MAX);
-            beta = 0.5 + (rand() * 0.2 / RAND_MAX);
-            alpha = 0.125 + (rand() * 0.1 / RAND_MAX);
-            distm_diff = 0.5 + (rand() * 0.2 / RAND_MAX);
-            distm_simi = 0.125 + (rand() * 0.1 / RAND_MAX);
-            
+            zeta = 0.5 + (rand() * 0.1 / RAND_MAX);
+            eta = 0.125 + (rand() * 0.05 / RAND_MAX);
+            upsilon = 0.5 + (rand() * 0.1 / RAND_MAX);
+            delta = 0.125 + (rand() * 0.05 / RAND_MAX);
+            beta = 0.5 + (rand() * 0.1 / RAND_MAX);
+            alpha = 0.125 + (rand() * 0.05 / RAND_MAX);
+            distm_diff = 0.5 + (rand() * 0.1 / RAND_MAX);
+            distm_simi = 0.125 + (rand() * 0.05 / RAND_MAX);
+
             prob[i * PIPE_DEPTH + k].p[0].b = (int)zeta.collect().to_ulong();
             prob[i * PIPE_DEPTH + k].p[1].b = (int)eta.collect().to_ulong();
             prob[i * PIPE_DEPTH + k].p[2].b = (int)upsilon.collect().to_ulong();
