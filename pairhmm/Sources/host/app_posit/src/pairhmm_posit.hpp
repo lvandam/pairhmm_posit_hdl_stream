@@ -131,7 +131,6 @@ public:
                 if ((err < ERR_LOWER) || (err > ERR_UPPER)) {
                     total_errors++;
                     cout << "SW: " << hexstring(swp.collect()) << ", HW: " << hexstring(hwp.collect()) << endl;
-                    exit(-1);
                 }
             }
         }
