@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Check for errors
+    // Check for errors with SW calculation
     if (calculate_sw) {
         DebugValues<posit<NBITS, ES>> hw_debug_values;
 

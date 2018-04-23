@@ -84,7 +84,7 @@ struct find_entry {
 
 template<size_t nbits>
 std::string hexstring(bitblock<nbits> bits) {
-    char str[8];   // plenty of room
+    char str[8];
     const char *hexits = "0123456789ABCDEF";
     unsigned int max = 8;
     for (unsigned int i = 0; i < max; i++) {
