@@ -15,6 +15,21 @@ using namespace sw::unum;
 const char XDATA[] = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGAC";
 const char YDATA[] = "GTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTAC";
 
+posit<NBITS, ES> random_number(float offset, float dev) {
+    float num_float;
+    posit<NBITS, ES> num_posit;
+
+    do {
+        num_float = offset + (rand() * dev / RAND_MAX);
+        num_posit = num_float;
+
+        cout << num_float << endl;
+        cout << num_posit << endl;
+    } while (num_posit != num_float);
+
+    return num_posit;
+}
+
 void fill_batch(t_batch *batch, int x, int y, float initial) {
     t_inits *init = batch->init;
     t_bbase *read = batch->read;
@@ -33,7 +48,7 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
     init->y_size = yp;
     init->y_padded = ybp;
 
-    posit<NBITS,ES> zeta(0), eta(0), upsilon(0), delta(0), beta(0), alpha(0), distm_diff(0), distm_simi(0);
+    posit<NBITS, ES> zeta(0), eta(0), upsilon(0), delta(0), beta(0), alpha(0), distm_diff(0), distm_simi(0);
 
     for (int k = 0; k < PIPE_DEPTH; k++) {
         posit<NBITS, ES> initial_posit(initial);
@@ -62,23 +77,23 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
         for (int i = 0; i < xp; i++) {
             srand((k * PIPE_DEPTH + i) * xp + x * 9949 + y * 9133); // Seed number generator
 
-            zeta = 0.5 + (rand() * 0.1 / RAND_MAX);
-            eta = 0.125 + (rand() * 0.05 / RAND_MAX);
-            upsilon = 0.5 + (rand() * 0.1 / RAND_MAX);
-            delta = 0.125 + (rand() * 0.05 / RAND_MAX);
-            beta = 0.5 + (rand() * 0.1 / RAND_MAX);
-            alpha = 0.125 + (rand() * 0.05 / RAND_MAX);
-            distm_diff = 0.5 + (rand() * 0.1 / RAND_MAX);
-            distm_simi = 0.125 + (rand() * 0.05 / RAND_MAX);
+            zeta = random_number(0.5, 0.1);
+            eta = random_number(0.125, 0.05);
+            upsilon = random_number(0.5, 0.1);
+            delta = random_number(0.125, 0.05);
+            beta = random_number(0.5, 0.1);
+            alpha = random_number(0.125, 0.05);
+            distm_diff = random_number(0.5, 0.1);
+            distm_simi = random_number(0.125, 0.05);
 
-            prob[i * PIPE_DEPTH + k].p[0].b = (int)zeta.collect().to_ulong();
-            prob[i * PIPE_DEPTH + k].p[1].b = (int)eta.collect().to_ulong();
-            prob[i * PIPE_DEPTH + k].p[2].b = (int)upsilon.collect().to_ulong();
-            prob[i * PIPE_DEPTH + k].p[3].b = (int)delta.collect().to_ulong();
-            prob[i * PIPE_DEPTH + k].p[4].b = (int)beta.collect().to_ulong();
-            prob[i * PIPE_DEPTH + k].p[5].b = (int)alpha.collect().to_ulong();
-            prob[i * PIPE_DEPTH + k].p[6].b = (int)distm_diff.collect().to_ulong();
-            prob[i * PIPE_DEPTH + k].p[7].b = (int)distm_simi.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[0].b = (int) zeta.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[1].b = (int) eta.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[2].b = (int) upsilon.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[3].b = (int) delta.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[4].b = (int) beta.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[5].b = (int) alpha.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[6].b = (int) distm_diff.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[7].b = (int) distm_simi.collect().to_ulong();
         }
     }
 } // fill_batch
