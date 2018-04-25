@@ -560,8 +560,7 @@ begin
 
   re.fbfifo.c.rst <= rs.feedback_rst;
 
--- Set top left input to 1.0 when this is the first cycle of this pair.
-  -- TODO: change this to be re.pairhmm_ins(J).first.mids.dtl <= a value loaded through MMIO?
+  -- Set top left input to 1.0 when this is the first cycle of this pair.
   with rs.cycle select re.fbpairhmm.mids.mtl <= X"3f800000" when CYCLE_ZERO,
                                                 X"00000000" when others;
 

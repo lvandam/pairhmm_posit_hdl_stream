@@ -193,19 +193,20 @@ begin
   step.init.mids.dtl <= mids_sr(PE_CYCLES-1).dl when i.cell /= PE_TOP else
                           i.initial;
 
----------------------------------------------------------------------------------------------------
---     _____ _               __     __  __       _ _   _       _ _           _   _
---    / ____| |             /_ |_  |  \/  |     | | | (_)     | (_)         | | (_)
---   | (___ | |_ ___ _ __    | (_) | \  / |_   _| | |_ _ _ __ | |_  ___ __ _| |_ _  ___  _ __  ___
---    \___ \| __/ _ \ '_ \   | |   | |\/| | | | | | __| | '_ \| | |/ __/ _` | __| |/ _ \| '_ \/ __|
---    ____) | ||  __/ |_) |  | |_  | |  | | |_| | | |_| | |_) | | | (_| (_| | |_| | (_) | | | \__ \
---   |_____/ \__\___| .__/   |_(_) |_|  |_|\__,_|_|\__|_| .__/|_|_|\___\__,_|\__|_|\___/|_| |_|___/
---                  | |                                 | |
---                  |_|                                 |_|
----------------------------------------------------------------------------------------------------
--- Transmission probabilties multiplied with M, D, I
----------------------------------------------------------------------------------------------------
-    -- TODO create start signal, or just remove it?
+    ---------------------------------------------------------------------------------------------------
+    --     _____ _               __     __  __       _ _   _       _ _           _   _
+    --    / ____| |             /_ |_  |  \/  |     | | | (_)     | (_)         | | (_)
+    --   | (___ | |_ ___ _ __    | (_) | \  / |_   _| | |_ _ _ __ | |_  ___ __ _| |_ _  ___  _ __  ___
+    --    \___ \| __/ _ \ '_ \   | |   | |\/| | | | | | __| | '_ \| | |/ __/ _` | __| |/ _ \| '_ \/ __|
+    --    ____) | ||  __/ |_) |  | |_  | |  | | |_| | | |_| | |_) | | | (_| (_| | |_| | (_) | | | \__ \
+    --   |_____/ \__\___| .__/   |_(_) |_|  |_|\__,_|_|\__|_| .__/|_|_|\___\__,_|\__|_|\___/|_| |_|___/
+    --                  | |                                 | |
+    --                  |_|                                 |_|
+    ---------------------------------------------------------------------------------------------------
+    -- Transmission probabilties multiplied with M, D, I
+    --
+    -- 4 CYCLES
+    ---------------------------------------------------------------------------------------------------
 
     mul_alpha : posit_mult_4 generic map (
         N => 32, es => 2
@@ -309,10 +310,12 @@ begin
     --                  |_|
     ---------------------------------------------------------------------------------------------------
     -- Addition of the multiplied probabilities
+    --
+    -- 8 CYCLES
     ---------------------------------------------------------------------------------------------------
-    -- TODO create start signal, or just remove it?
-    -- Substep adding alpha + beta
 
+    -- BEGIN alpha + beta + delayed gamma
+    -- Substep adding alpha + beta
     add_alpha_beta : posit_adder_4 generic map (
         N => 32, es => 2
     ) port map (
@@ -339,6 +342,8 @@ begin
         zero => posit_zeros(8),
         done => fp_valids(8)
     );
+    -- END alpha + beta + delayed gamma
+
 
     add_delta_epsilon : posit_adder_8 generic map (
         N => 32, es => 2
@@ -378,9 +383,12 @@ begin
     --                  |_|                                    |_|
     ---------------------------------------------------------------------------------------------------
     -- Step 3: Multiplication of the emission probabilities
+    --
+    -- 4 CYCLES
     ---------------------------------------------------------------------------------------------------
 
-    -- Mux for the final multiplication:
+    -- Mux for the final multiplication
+    -- Select correct emission probability (distm) depending on read
     process(all)
     begin
         if y_sr(PE_BCC-1) = x_sr(PE_BCC-1) or y_sr(PE_BCC-1) = BP_N or x_sr(PE_BCC-1) = BP_N
@@ -434,7 +442,7 @@ begin
             aclk => cr.clk,
             in1 => step.add.zeett,
             in2 => step.add.emis.upsilon,
-            start => step.init.valid, -- todo create start signal, or just remove it?
+            start => step.init.valid,
             result => step.emult.d,
             inf => posit_infs(13),
             zero => posit_zeros(13),

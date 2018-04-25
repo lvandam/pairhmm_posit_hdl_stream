@@ -367,9 +367,6 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
         r5_add_m <= r4_add_m;
     end
 
-
-
-    // START PATH 1
     // Laurens: Dependency here (add_m) (Pipeline stage?)
     // LOD of mantissa addition result
     assign r5_mant_ovf = r5_add_m[N:N-1];
@@ -381,9 +378,6 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
     	.in(r5_LOD_in),
     	.out(r5_left_shift)
     );
-    // END PATH 1: 0,276 NS
-
-
 
     // Laurens: Dependency here (left_shift) (Pipeline stage?)
     // DSR Left Shifting of mantissa result
