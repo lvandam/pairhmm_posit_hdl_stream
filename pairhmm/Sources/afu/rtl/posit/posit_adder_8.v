@@ -128,7 +128,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     	.rc(r1_rc1),
     	.regime(r1_regime1),
     	.exp(r1_e1),
-    	.mant(r1_mant1),
+    	.frac(r1_mant1),
     	.Lshift(r1_Lshift1)
     );
 
@@ -140,7 +140,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     	.rc(r1_rc2),
     	.regime(r1_regime2),
     	.exp(r1_e2),
-    	.mant(r1_mant2),
+    	.frac(r1_mant2),
     	.Lshift(r1_Lshift2)
     );
 

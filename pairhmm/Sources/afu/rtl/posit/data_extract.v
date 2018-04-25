@@ -1,4 +1,4 @@
-module data_extract(in, rc, regime, exp, mant, Lshift);
+module data_extract(in, rc, regime, exp, frac);
 
     function [31:0] log2;
         input reg [31:0] value;
@@ -16,10 +16,11 @@ module data_extract(in, rc, regime, exp, mant, Lshift);
     parameter es = 2;
     input [N-1:0] in;
     output rc;
-    output [Bs-1:0] regime, Lshift;
+    output [Bs-1:0] regime;
     output [es-1:0] exp;
-    output [N-es-1:0] mant;
+    output [N-es-1:0] frac;
 
+    logic [Bs-1:0] Lshift;
     wire [N-1:0] xin = in;
 
     // Regime check bit (rc), determining if regime field uses leading 0 or 1
@@ -59,6 +60,6 @@ module data_extract(in, rc, regime, exp, mant, Lshift);
     );
 
     assign exp = xin_no_regime[N-1:N-es];
-    assign mant = xin_no_regime[N-es-1:0];
+    assign frac = xin_no_regime[N-es-1:0];
 
 endmodule

@@ -2,8 +2,8 @@
 
 module testmult;
 
-    function [7:0] log2;
-        input reg [7:0] value;
+    function [31:0] log2;
+        input reg [31:0] value;
     	begin
         	value = value - 1;
         	for (log2 = 0; value > 0; log2 = log2 + 1)
@@ -13,9 +13,9 @@ module testmult;
       	end
     endfunction
 
-    parameter N = 8;
+    parameter N = 32;
     parameter Bs = log2(N);
-    parameter es = 1;
+    parameter es = 2;
 
     reg [N-1:0] in1, in2;
     reg start;
@@ -26,7 +26,7 @@ module testmult;
 
 
     // Instantiate the Unit Under Test (UUT)
-    posit_mult_4 #(
+    posit_adder_4 #(
         .N(N),
         .es(es)
     ) uut (
@@ -47,8 +47,8 @@ module testmult;
 		in2 = 0;
 		clk = 0;
 		start = 1;
-        in1 = 8'h30;
-        in2 = 8'h30;
+        in1 = 32'h2CCCCCCD; // 0.20000000018626451
+        in2 = 32'h2CCCCCCD; // 0.20000000018626451
 	end
 
     always #5

@@ -53,7 +53,7 @@ module posit_mult (aclk, in1, in2, start, result, inf, zero, done);
         .rc(rc1),
         .regime(regime1),
         .exp(e1),
-        .mant(mant1),
+        .frac(mant1),
         .Lshift(Lshift1)
     );
 
@@ -62,7 +62,7 @@ module posit_mult (aclk, in1, in2, start, result, inf, zero, done);
         .rc(rc2),
         .regime(regime2),
         .exp(e2),
-        .mant(mant2),
+        .frac(mant2),
         .Lshift(Lshift2)
     );
 

@@ -47,9 +47,9 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
     logic r0_start, r0_s1, r0_s2, r0_zero_tmp1, r0_zero_tmp2, r0_inf, r0_inf1, r0_inf2, r0_zero, r0_zero1, r0_zero2;
 
     logic r0_rc1, r0_rc2;
-    logic [Bs-1:0] r0_regime1, r0_regime2, r0_Lshift1, r0_Lshift2;
+    logic [Bs-1:0] r0_regime1, r0_regime2;
     logic [es-1:0] r0_e1, r0_e2;
-    logic [N-es-1:0] r0_mant1, r0_mant2;
+    logic [N-es-1:0] r0_frac1, r0_frac2;
     logic [N-es:0] r0_m1, r0_m2;
     logic r0_in1_gt_in2;
     logic [N-1:0] r0_xin1, r0_xin2;
@@ -112,8 +112,7 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
     	.rc(r0_rc1),
     	.regime(r0_regime1),
     	.exp(r0_e1),
-    	.mant(r0_mant1),
-    	.Lshift(r0_Lshift1)
+    	.frac(r0_frac1)
     );
 
     data_extract #(
@@ -124,12 +123,11 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
     	.rc(r0_rc2),
     	.regime(r0_regime2),
     	.exp(r0_e2),
-    	.mant(r0_mant2),
-    	.Lshift(r0_Lshift2)
+    	.frac(r0_frac2)
     );
 
-    assign r0_m1 = {r0_zero_tmp1, r0_mant1};
-    assign r0_m2 = {r0_zero_tmp2, r0_mant2};
+    assign r0_m1 = {r0_zero_tmp1, r0_frac1};
+    assign r0_m2 = {r0_zero_tmp2, r0_frac2};
 
     // Large Checking and Assignment
     assign r0_in1_gt_in2 = r0_xin1[N-2:0] >= r0_xin2[N-2:0] ? '1 : '0;
@@ -191,11 +189,11 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
     assign r2_le = r2_in1_gt_in2 ? r2_e1 : r2_e2;
     assign r2_se = r2_in1_gt_in2 ? r2_e2 : r2_e1;
 
-    // Mantissa
+    // Fraction
     assign r2_lm = r2_in1_gt_in2 ? r2_m1 : r2_m2;
     assign r2_sm = r2_in1_gt_in2 ? r2_m2 : r2_m1;
 
-    // Exponent Difference: Lower Mantissa Right Shift Amount
+    // Exponent Difference: Lower Fraction Right Shift Amount
 
     sub_N #(
     	.N(Bs)
@@ -221,7 +219,7 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
     	r2_r_diff2
     );
 
-    // DSR Right Shifting of Small Mantissa
+    // DSR Right Shifting of Small Fraction
     generate
         if (es >= 2)
         begin
@@ -298,7 +296,7 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
     	.c(r4_DSR_right_out)
     );
 
-    // Mantissa Addition
+    // Fraction Addition
     generate
     	if (es >= 2)
         begin
@@ -343,7 +341,7 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
     logic r5_start, r5_inf, r5_zero;
 
     logic r5_ls;
-    logic [1:0] r5_mant_ovf;
+    logic [1:0] r5_frac_ovf;
     logic [N-1:0] r5_LOD_in, r5_DSR_left_out_t, r5_DSR_left_out;
     logic [N:0] r5_add_m;
     logic [es-1:0] r5_le, r5_se;
@@ -368,8 +366,8 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
     end
 
     // Laurens: Dependency here (add_m) (Pipeline stage?)
-    // LOD of mantissa addition result
-    assign r5_mant_ovf = r5_add_m[N:N-1];
+    // LOD of fraction addition result
+    assign r5_frac_ovf = r5_add_m[N:N-1];
     assign r5_LOD_in = {(r5_add_m[N] | r5_add_m[N-1]), r5_add_m[N-2:0]};
 
     LOD_N #(
@@ -380,7 +378,7 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
     );
 
     // Laurens: Dependency here (left_shift) (Pipeline stage?)
-    // DSR Left Shifting of mantissa result
+    // DSR Left Shifting of fraction result
     // Exponent and Regime Computation
 
     DSR_left_N_S #(
@@ -420,7 +418,7 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
     	es+Bs+1
     ) uut_add_mantovf (
     	r5_le_o_tmp,
-    	r5_mant_ovf[1],
+    	r5_frac_ovf[1],
     	r5_le_o
     );
 
@@ -428,7 +426,7 @@ module posit_adder_4 (aclk, in1, in2, start, result, inf, zero, done);
     assign r5_e_o = (r5_le_o[es+Bs] & |r5_le_oN[es-1:0]) ? r5_le_o[es-1:0] : r5_le_oN[es-1:0];
     assign r5_r_o = (~r5_le_o[es+Bs] || (r5_le_o[es+Bs] & |r5_le_oN[es-1:0])) ? (r5_le_oN[es+Bs-1:es] + 1'b1) : r5_le_oN[es+Bs-1:es];
 
-    // Exponent and Mantissa Packing
+    // Exponent and Fraction Packing
     assign r5_tmp_o = { {N{~r5_le_o[es+Bs]}}, r5_le_o[es+Bs], r5_e_o, r5_DSR_left_out[N-2:es]};
 
     // Laurens: Dependency here (tmp_o, r_o) (Pipeline stage?)

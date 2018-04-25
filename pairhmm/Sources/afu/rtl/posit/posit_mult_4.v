@@ -45,15 +45,15 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
     //                                                                |_|
 
     logic [N-1:0] r0_in1, r0_in2;
-    logic r0_start, r0_s1, r0_s2, r0_zero_tmp1, r0_zero_tmp2, r0_inf, r0_inf1, r0_inf2, r0_zero, r0_zero1, r0_zero2;
+    logic r0_start, r0_s1, r0_s2, r0_nonzero1, r0_nonzero2, r0_inf, r0_inf1, r0_inf2, r0_zero, r0_zero1, r0_zero2;
 
     logic r0_rc1, r0_rc2;
-    logic [Bs-1:0] r0_regime1, r0_regime2, r0_Lshift1, r0_Lshift2;
+    logic [Bs-1:0] r0_regime1, r0_regime2;
     logic [es-1:0] r0_e1, r0_e2;
-    logic [N-es-1:0] r0_mant1, r0_mant2;
+    logic [N-es-1:0] r0_frac1, r0_frac2;
     logic [N-1:0] r0_xin1, r0_xin2;
     logic r0_mult_s;
-    logic [N-es:0] r0_m1, r0_m2;
+    logic [N-es:0] r0_f1, r0_f2;
 
     always @(posedge aclk)
     begin
@@ -61,36 +61,36 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
         begin
             r0_in1 <= '0;
             r0_s1 <= 0;
-            r0_zero_tmp1 <= 0;
+            r0_nonzero1 <= 0;
         end
         else
         begin
             r0_in1 <= in1;
             r0_s1 <= in1[N-1];
-            r0_zero_tmp1 <= |in1[N-2:0];
+            r0_nonzero1 <= |in1[N-2:0];
         end
 
         if(in2 === 'x)
         begin
             r0_in2 <= '0;
             r0_s2 <= 0;
-            r0_zero_tmp2 <= 0;
+            r0_nonzero2 <= 0;
         end
         else
         begin
             r0_in2 <= in2;
             r0_s2 <= in2[N-1];
-            r0_zero_tmp2 <= |in2[N-2:0];
+            r0_nonzero2 <= |in2[N-2:0];
         end
 
         r0_start <= (start === 'x) ? '0 : start;
     end
 
-    assign r0_inf1 = (in1[N-1] === 'x) ? '0 : in1[N-1] & (~r0_zero_tmp1);
-    assign r0_inf2 = (in2[N-1] === 'x) ? '0 : in2[N-1] & (~r0_zero_tmp2);
+    assign r0_inf1 = (in1[N-1] === 'x) ? '0 : in1[N-1] & (~r0_nonzero1);
+    assign r0_inf2 = (in2[N-1] === 'x) ? '0 : in2[N-1] & (~r0_nonzero2);
 
-    assign r0_zero1 = (in1[N-1] === 'x) ? '0 : ~(in1[N-1] | r0_zero_tmp1);
-    assign r0_zero2 = (in2[N-1] === 'x) ? '0 : ~(in2[N-1] | r0_zero_tmp2);
+    assign r0_zero1 = (in1[N-1] === 'x) ? '0 : ~(in1[N-1] | r0_nonzero1);
+    assign r0_zero2 = (in2[N-1] === 'x) ? '0 : ~(in2[N-1] | r0_nonzero2);
 
     assign r0_inf = r0_inf1 | r0_inf2;
     assign r0_zero = r0_zero1 & r0_zero2;
@@ -100,14 +100,12 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
     assign r0_xin2 = r0_s2 ? -r0_in2 : r0_in2;
     assign r0_mult_s = r0_s1 ^ r0_s2;
 
-    // TODO maybe remove Lshift output?
     data_extract #(.N(N), .es(es)) data_extract_1 (
         .in(r0_xin1),
         .rc(r0_rc1),
         .regime(r0_regime1),
         .exp(r0_e1),
-        .mant(r0_mant1),
-        .Lshift(r0_Lshift1)
+        .frac(r0_frac1)
     );
 
     data_extract #(.N(N), .es(es)) data_extract_2 (
@@ -115,12 +113,12 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
         .rc(r0_rc2),
         .regime(r0_regime2),
         .exp(r0_e2),
-        .mant(r0_mant2),
-        .Lshift(r0_Lshift2)
+        .frac(r0_frac2)
     );
 
-    assign r0_m1 = {r0_zero_tmp1, r0_mant1};
-    assign r0_m2 = {r0_zero_tmp2, r0_mant2};
+    // Account for hidden bit
+    assign r0_f1 = {r0_nonzero1, r0_frac1};
+    assign r0_f2 = {r0_nonzero2, r0_frac2};
 
 
     //  __
@@ -133,7 +131,7 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
     logic r1_start, r1_inf, r1_zero, r1_rc1, r1_rc2, r1_mult_s;
     logic [Bs-1:0] r1_regime1, r1_regime2;
     logic [es-1:0] r1_e1, r1_e2;
-    logic [N-es:0] r1_m1, r1_m2;
+    logic [N-es:0] r1_f1, r1_f2;
     logic [2*(N-es)+1:0] r1_mult_m;
 
     always @(posedge aclk)
@@ -141,8 +139,8 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
         r1_start <= r0_start;
         r1_inf <= r0_inf;
         r1_zero <= r0_zero;
-        r1_m1 <= r0_m1;
-        r1_m2 <= r0_m2;
+        r1_f1 <= r0_f1;
+        r1_f2 <= r0_f2;
         r1_regime1 <= r0_regime1;
         r1_regime2 <= r0_regime2;
         r1_rc1 <= r0_rc1;
@@ -152,8 +150,8 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
         r1_mult_s <= r0_mult_s;
     end
 
-    // Mantissa multiplication
-    assign r1_mult_m = r1_m1 * r1_m2;
+    // Fraction multiplication
+    assign r1_mult_m = r1_f1 * r1_f2;
 
 
     //  ___
@@ -196,14 +194,14 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
         r2_mult_m <= r1_mult_m;
     end
 
-    assign r2_mult_m_overflow = r2_mult_m[2*(N-es)+1];
+    assign r2_mult_m_overflow = r2_mult_m[2*(N-es)+1]; // Is there a 2 in multiplication result? Set overflow bit
 
-    assign r2_mult_mN = ~r2_mult_m_overflow ? r2_mult_m << 1'b1 : r2_mult_m; // ?
+    assign r2_mult_mN = ~r2_mult_m_overflow ? r2_mult_m << 1'b1 : r2_mult_m; // Overflow? Divide fraction by 2 (put in exponent)
 
-    assign r2_r1 = r2_rc1 ? {2'b0, r2_regime1} : -r2_regime1;
+    assign r2_r1 = r2_rc1 ? {2'b0, r2_regime1} : -r2_regime1; // Leading 0 -> Regime value is negative
     assign r2_r2 = r2_rc2 ? {2'b0, r2_regime2} : -r2_regime2;
 
-    // SIGNED REGIME + EXPONENT (taking into account mantissa multiplication overflow)
+    // SIGNED REGIME + EXPONENT (taking into account fraction multiplication overflow)
     assign r2_mult_e  =  {r2_r1, r2_e1} + {r2_r2, r2_e2} + r2_mult_m_overflow;
 
     // ABSOLUTE REGIME + EXPONENT
@@ -214,14 +212,15 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
     assign r2_e_o = (r2_mult_e[es+Bs+1] & |r2_mult_eN[es-1:0]) ? r2_mult_e[es-1:0] : r2_mult_eN[es-1:0];
 
     // UNSIGNED REGIME
-    assign r2_r_o = (~r2_mult_e[es+Bs+1] || (r2_mult_e[es+Bs+1] & |r2_mult_eN[es-1:0])) ? (r2_mult_eN[es+Bs:es] + 1'b1) : r2_mult_eN[es+Bs:es];
+    //              (positive regime+exponent OR (negative reg+exp && non-zero exponent)  ) then (absolute regime + 1)      else absolute regime
+    assign r2_r_o = (~r2_mult_e[es+Bs+1]      || (r2_mult_e[es+Bs+1] & |r2_mult_eN[es-1:0])) ? (r2_mult_eN[es+Bs:es] + 1'b1) : r2_mult_eN[es+Bs:es];
 
-    // Exponent and Mantissa/Fraction Packing
+    // Exponent and Fraction Packing
     assign r2_exp_fraction = {
         { N{~r2_mult_e[es+Bs+1]} }, // Repeat negated sign bit of (Regime + Exponent)
         r2_mult_e[es+Bs+1], // Sign bit of (Regime + Exponent)
         r2_e_o, // Unsigned exponent field
-        r2_mult_mN[2*(N-es):N-es+2] // Mantissa/Fraction field (cut off)
+        r2_mult_mN[2*(N-es):N-es+2] // Fraction field (cut off)
     };
 
 
@@ -234,7 +233,7 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
 
     logic r3_start, r3_inf, r3_zero, r3_mult_s;
 
-    logic [2*(N-es)+1:0] r3_mult_mN;
+    logic r3_mult_zero;
     logic [Bs:0] r3_r_o;
     logic [2*N-1:0] r3_exp_fraction, r3_out_unsigned, r3_out_signed;
 
@@ -250,7 +249,7 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
     begin
         r3_exp_fraction <= r2_exp_fraction;
         r3_r_o <= r2_r_o;
-        r3_mult_mN <= r2_mult_mN;
+        r3_mult_zero <= r2_mult_mN[2*(N-es)+1]; // "Hidden bit" might be 0 (when inf/zero)
     end
 
     // Including Regime bits in Exponent + Fraction package
@@ -258,16 +257,18 @@ module posit_mult_4 (aclk, in1, in2, start, result, inf, zero, done);
         .N(2*N),
         .S(Bs+1)
     ) dsr2 (
-        .a(r3_exp_fraction), // our exponent + fraction bits
-        .b(r3_r_o[Bs] ? {Bs{1'b1}} : r3_r_o), // Right shift amount: negative fraction? Shift by all 1's. Positive? Shift by regime value.
+        .a(r3_exp_fraction), // exponent + fraction bits
+        .b(r3_r_o[Bs] ? {Bs{1'b1}} : r3_r_o), // Shift to right by regime value (clip at maximum number of bits)
         .c(r3_out_unsigned)
     );
 
     // Signed output (2*N wide)
-    assign r3_out_signed = r3_mult_s ? -r3_out_unsigned : r3_out_unsigned;
+    assign r3_out_signed = r3_mult_s ? -r3_out_unsigned : r3_out_unsigned; // Fix the sign
 
-    // Output infinite, zero or overflow? Set this as output. Otherwise, pack sign bit and signed output
-    assign result = (r3_inf | r3_zero | (~r3_mult_mN[2*(N-es)+1])) ? {r3_inf, {N-1{1'b0}}} : {r3_mult_s, r3_out_signed[N-1:1]};
+    // Output infinite or zero? Set this as output. Otherwise, pack the sign bit and signed output
+    assign result = (r3_inf | r3_zero | (~r3_mult_zero)) ? {r3_inf, {N-1{1'b0}}} : {r3_mult_s, r3_out_signed[N-1:1]};
+    assign zero = r3_zero;
+    assign inf = r3_inf;
     assign done = r3_start;
 
 endmodule
