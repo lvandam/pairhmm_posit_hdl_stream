@@ -72,8 +72,8 @@ architecture rtl of pe is
 
     component posit_adder_4
         generic (
-          N: integer := 32;
-          es: integer := 2
+          N: integer := POSIT_NBITS;
+          es: integer := POSIT_ES
         );
         port (
           aclk: in std_logic;
@@ -89,8 +89,8 @@ architecture rtl of pe is
 
     component posit_adder_8
         generic (
-          N: integer := 32;
-          es: integer := 2
+          N: integer := POSIT_NBITS;
+          es: integer := POSIT_ES
         );
         port (
           aclk: in std_logic;
@@ -106,8 +106,8 @@ architecture rtl of pe is
 
     component posit_mult_4
         generic (
-          N: integer := 32;
-          es: integer := 2
+          N: integer := POSIT_NBITS;
+          es: integer := POSIT_ES
         );
         port (
           aclk: in std_logic;
@@ -209,7 +209,7 @@ begin
     ---------------------------------------------------------------------------------------------------
 
     mul_alpha : posit_mult_4 generic map (
-        N => 32, es => 2
+        N => POSIT_NBITS, es => POSIT_ES
     ) port map (
         aclk => cr.clk,
         in1 => step.init.tmis.alpha,
@@ -222,7 +222,7 @@ begin
     );
 
     mul_beta : posit_mult_4 generic map (
-        N => 32, es => 2
+        N => POSIT_NBITS, es => POSIT_ES
     ) port map (
         aclk => cr.clk,
         in1 => step.init.tmis.beta,
@@ -235,7 +235,7 @@ begin
     );
 
     mul_gamma : posit_mult_4 generic map (
-        N => 32, es => 2
+        N => POSIT_NBITS, es => POSIT_ES
     ) port map (
         aclk => cr.clk,
         in1 => step.init.tmis.beta,
@@ -248,7 +248,7 @@ begin
     );
 
     mul_delta : posit_mult_4 generic map (
-        N => 32, es => 2
+        N => POSIT_NBITS, es => POSIT_ES
     ) port map (
         aclk => cr.clk,
         in1 => step.init.tmis.delta,
@@ -261,7 +261,7 @@ begin
     );
 
     mul_epsilon : posit_mult_4 generic map (
-        N => 32, es => 2
+        N => POSIT_NBITS, es => POSIT_ES
     ) port map (
         aclk => cr.clk,
         in1 => step.init.tmis.epsilon,
@@ -274,7 +274,7 @@ begin
     );
 
     mul_zeta : posit_mult_4 generic map (
-        N => 32, es => 2
+        N => POSIT_NBITS, es => POSIT_ES
     ) port map (
         aclk => cr.clk,
         in1 => step.init.tmis.zeta,
@@ -287,7 +287,7 @@ begin
     );
 
     mul_eta : posit_mult_4 generic map (
-        N => 32, es => 2
+        N => POSIT_NBITS, es => POSIT_ES
     ) port map (
         aclk => cr.clk,
         in1 => step.init.tmis.eta,
@@ -317,7 +317,7 @@ begin
     -- BEGIN alpha + beta + delayed gamma
     -- Substep adding alpha + beta
     add_alpha_beta : posit_adder_4 generic map (
-        N => 32, es => 2
+        N => POSIT_NBITS, es => POSIT_ES
     ) port map (
         aclk => cr.clk,
         in1 => step.trans.almtl,
@@ -331,7 +331,7 @@ begin
 
     -- Substep adding alpha + beta + delayed gamma
     add_alpha_beta_gamma : posit_adder_4 generic map (
-        N => 32, es => 2
+        N => POSIT_NBITS, es => POSIT_ES
     ) port map (
         aclk => cr.clk,
         in1 => step.add.albetl,
@@ -346,7 +346,7 @@ begin
 
 
     add_delta_epsilon : posit_adder_8 generic map (
-        N => 32, es => 2
+        N => POSIT_NBITS, es => POSIT_ES
     ) port map (
         aclk => cr.clk,
         in1 => step.trans.demt,
@@ -359,7 +359,7 @@ begin
     );
 
     add_zeta_eta : posit_adder_8 generic map (
-        N => 32, es => 2
+        N => POSIT_NBITS, es => POSIT_ES
     ) port map (
         aclk => cr.clk,
         in1 => step.trans.zeml,
@@ -400,7 +400,7 @@ begin
     end process;
 
     mul_lambda : posit_mult_4 generic map (
-        N => 32, es => 2
+        N => POSIT_NBITS, es => POSIT_ES
     ) port map (
         aclk => cr.clk,
         in1 => step.add.albegatl,
@@ -418,7 +418,7 @@ begin
 
     THETA_MULT: if DISABLE_THETA /= '1' generate
         mul_theta : posit_mult_4 generic map (
-            N => 32, es => 2
+            N => POSIT_NBITS, es => POSIT_ES
         ) port map (
             aclk => cr.clk,
             in1 => step.add.deept,
@@ -437,7 +437,7 @@ begin
 
     UPSILON_MULT: if DISABLE_UPSILON /= '1' generate
         mul_upsilon : posit_mult_4 generic map (
-            N => 32, es => 2
+            N => POSIT_NBITS, es => POSIT_ES
         ) port map (
             aclk => cr.clk,
             in1 => step.add.zeett,

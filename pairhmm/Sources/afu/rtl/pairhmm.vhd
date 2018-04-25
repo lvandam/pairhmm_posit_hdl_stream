@@ -226,7 +226,7 @@ begin
   end process;
 
   add_m : posit_adder_8 generic map (
-    N => 32, es => 2
+    N => POSIT_NBITS, es => POSIT_ES
   ) port map (
     aclk => cr.clk,
     in1 => addm_ina,
@@ -238,7 +238,7 @@ begin
   );
 
   add_i : posit_adder_8 generic map (
-    N => 32, es => 2
+    N => POSIT_NBITS, es => POSIT_ES
   ) port map (
     aclk => cr.clk,
     in1 => addi_ina,
