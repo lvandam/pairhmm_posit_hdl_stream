@@ -22,9 +22,6 @@ posit<NBITS, ES> random_number(float offset, float dev) {
     do {
         num_float = offset + (rand() * dev / RAND_MAX);
         num_posit = num_float;
-
-        cout << num_float << endl;
-        cout << num_posit << endl;
     } while (num_posit != num_float);
 
     return num_posit;

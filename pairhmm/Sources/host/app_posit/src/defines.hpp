@@ -6,7 +6,7 @@ using namespace sw::unum;
 
 // POSIT
 #define NBITS 32
-#define ES 2
+#define ES 3
 
 #define DEBUG              1
 
