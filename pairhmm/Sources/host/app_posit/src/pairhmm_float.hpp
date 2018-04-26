@@ -209,7 +209,7 @@ public:
                 cout << " ";
                 cout << setw(10) << result_sw[i * PIPE_DEPTH + j][2];
                 cout << " ║       ";
-                cout << setprecision(50) << result_sw[i * PIPE_DEPTH + j][0];
+                cout << setprecision(10) << result_sw[i * PIPE_DEPTH + j][0];
                 cout << endl;
             }
             cout << "╚═════════════════════════════════════╝" << endl;
