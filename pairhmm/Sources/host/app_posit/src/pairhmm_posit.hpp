@@ -220,7 +220,7 @@ public:
                 cout << " ";
                 cout << hexstring(result_sw[i * PIPE_DEPTH + j][2].collect());
                 cout << " ║       ";
-                cout << result_sw[i * PIPE_DEPTH + j][0];
+                cout << setprecision(50) << result_sw[i * PIPE_DEPTH + j][0];
                 cout << endl;
             }
             cout << "╚═══════════════════════════════╝" << endl;
