@@ -26,17 +26,15 @@ proc r  {} {
   vlog -quiet ../cores/probabilities_fifo/sim/probabilities_fifo.v
 
   # compile posit units
-  vlog -quiet ../afu/rtl/posit/add_mantovf.v
-  vlog -quiet ../afu/rtl/posit/add_N.v
-  vlog -quiet ../afu/rtl/posit/sub_N.v
+  vlog -sv -quiet ../afu/rtl/posit/posit_pkg.sv
   vlog -quiet ../afu/rtl/posit/DSR_left_N_S.v
   vlog -quiet ../afu/rtl/posit/DSR_right_N_S.v
   vlog -quiet ../afu/rtl/posit/LOD_N.v
   vlog -quiet ../afu/rtl/posit/LZD_N.v
   vlog -quiet ../afu/rtl/posit/data_extract.v
-  vlog -sv -quiet ../afu/rtl/posit/posit_adder_4.v
-  vlog -sv -quiet ../afu/rtl/posit/posit_adder_8.v
-  vlog -sv -quiet ../afu/rtl/posit/posit_mult_4.v
+  vlog -sv -quiet ../afu/rtl/posit/posit_adder_4.sv
+  vlog -sv -quiet ../afu/rtl/posit/posit_adder_8.sv
+  vlog -sv -quiet ../afu/rtl/posit/posit_mult_4.sv
 
   # compile rtl
   echo "Compiling rtl"

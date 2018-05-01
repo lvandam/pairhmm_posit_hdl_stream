@@ -211,31 +211,10 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     assign r2_lm = r2_in1_gt_in2 ? r2_m1 : r2_m2;
     assign r2_sm = r2_in1_gt_in2 ? r2_m2 : r2_m1;
 
-    // Exponent Difference: Lower Mantissa Right Shift Amount
-
-    sub_N #(
-    	.N(Bs)
-    ) uut_sub1 (
-    	r2_lr,
-    	r2_sr,
-    	r2_r_diff11
-    );
-
-    add_N #(
-    	.N(Bs)
-    ) uut_add1 (
-    	r2_lr,
-    	r2_sr,
-    	r2_r_diff12
-    );
-
-    sub_N #(
-    	.N(Bs)
-    ) uut_sub2 (
-    	r2_sr,
-    	r2_lr,
-    	r2_r_diff2
-    );
+    // Add/Subtract regime
+    assign r2_r_diff11 = {1'b0, r2_lr} - {1'b0, r2_sr};
+    assign r2_r_diff12 = {1'b0, r2_lr} + {1'b0, r2_sr};
+    assign r2_r_diff2 = {1'b0, r2_sr} - {1'b0, r2_lr};
 
     // DSR Right Shifting of Small Mantissa
     generate
@@ -289,15 +268,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
         r3_lr_N <= r2_lr_N;
     end
 
-
-    sub_N #(
-    	.N(es + Bs + 1)
-    ) uut_sub_diff (
-    	.a({r3_r_diff, r3_le}),
-    	.b({{Bs+1{1'b0}}, r3_se}),
-    	.c(r3_diff)
-    );
-
+    assign r3_diff = {1'b0, r3_r_diff, r3_le} - {1'b0, {Bs+1{1'b0}}, r3_se};
     assign r3_exp_diff = (|r3_diff[es+Bs:Bs]) ? {Bs{1'b1}} : r3_diff[Bs-1:0];
 
 
@@ -401,24 +372,8 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
        end
    endgenerate
 
-
-    add_N #(
-    	.N(N)
-    ) uut_add_m1 (
-    	r4b_add_m_in1,
-    	r4b_DSR_right_out,
-    	r4b_add_m1
-    );
-
-    sub_N #(
-    	.N(N)
-    ) uut_sub_m2 (
-    	r4b_add_m_in1,
-    	r4b_DSR_right_out,
-    	r4b_add_m2
-    );
-
-    // Laurens: Dependency here (add_m1, add_m2) (Pipeline stage?)
+    assign r4b_add_m1 = {1'b0, r4b_add_m_in1} + {1'b0, r4b_DSR_right_out};
+    assign r4b_add_m2 = {1'b0, r4b_add_m_in1} - {1'b0, r4b_DSR_right_out};
     assign r4b_add_m = r4b_op ? r4b_add_m1 : r4b_add_m2;
 
 
@@ -487,15 +442,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     	.c(r5_DSR_left_out_t)
     );
 
-    sub_N #(
-    	.N(es+Bs+1)
-    ) sub3 (
-    	.a({r5_lr_N, r5_le}),
-    	.b({{es+1{1'b0}}, r5_left_shift}),
-    	.c(r5_le_o_tmp)
-    );
-
-    // Laurens: Dependency here (DSR_left_out_t, le_o_tmp) (Pipeline stage?)
+    assign r5_le_o_tmp = {1'b0, r5_lr_N, r5_le} - {1'b0, {es+1{1'b0}}, r5_left_shift};
     assign r5_DSR_left_out = r5_DSR_left_out_t[N-1] ? r5_DSR_left_out_t[N-1:0] : {r5_DSR_left_out_t[N-2:0], 1'b0};
 
     //    __
@@ -534,13 +481,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
         r6_DSR_left_out <= r5_DSR_left_out;
     end
 
-    add_mantovf #(
-    	es+Bs+1
-    ) uut_add_mantovf (
-    	r6_le_o_tmp,
-    	r6_mant_ovf[1],
-    	r6_le_o
-    );
+    assign r6_le_o = r6_le_o_tmp + r6_mant_ovf[1];
 
     assign r6_le_oN = r6_le_o[es+Bs] ? -r6_le_o : r6_le_o;
     assign r6_e_o = (r6_le_o[es+Bs] & |r6_le_oN[es-1:0]) ? r6_le_o[es-1:0] : r6_le_oN[es-1:0];
