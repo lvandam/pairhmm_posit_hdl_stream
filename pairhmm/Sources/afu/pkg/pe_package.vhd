@@ -58,7 +58,7 @@ package pe_package is
     mt  => (others => '0'),
     it  => (others => '0'),
     dt  => (others => '0'),
-    ml  => X"3F800000",
+    ml  => X"40000000", -- posit<32,2>/posit<32,3>: 40000000
     il  => (others => '0'),
     dl  => (others => '0')
     );
