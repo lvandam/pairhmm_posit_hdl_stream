@@ -117,7 +117,7 @@ public:
                 M[i][j] = (T)distm *
                           ((T)alpha * M[i - 1][j - 1] + (T)beta * I[i - 1][j - 1] + (T)beta * D[i - 1][j - 1]);
                 I[i][j] = (T)delta * M[i - 1][j] + (T)upsilon * I[i - 1][j];
-                D[i][j] = (T)eta * M[i][j - 1] + (T)zeta * D[i][j - 1];
+                D[i][j] = (T)zeta * M[i][j - 1] + (T)eta * D[i][j - 1];
             }
         }
     } // calculate_mids

@@ -112,7 +112,7 @@ public:
 
                 M[i][j] = distm * (alpha * M[i - 1][j - 1] + beta * I[i - 1][j - 1] + beta * D[i - 1][j - 1]);
                 I[i][j] = delta * M[i - 1][j] + upsilon * I[i - 1][j];
-                D[i][j] = eta * M[i][j - 1] + zeta * D[i][j - 1];
+                D[i][j] = zeta * M[i][j - 1] + eta * D[i][j - 1];
             }
         }
     } // calculate_mids
