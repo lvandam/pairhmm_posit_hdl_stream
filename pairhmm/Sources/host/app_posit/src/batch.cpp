@@ -33,10 +33,10 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
     t_bbase *hapl = batch->hapl;
     t_probs *prob = batch->prob;
 
-    int xp = px(x, y);
-    int xbp = pbp(xp);
-    int yp = py(y);
-    int ybp = pbp(yp);
+    int xp = px(x, y); // Padded read size
+    int xbp = pbp(xp); // Padded base pair (how many reads)
+    int yp = py(y); // Padded haplotype size
+    int ybp = pbp(yp); // Padded base pair (how many haplos)
 
     init->batch_bytes = calc_batch_size(x, y, PES);
     init->x_size = xp;
@@ -73,8 +73,8 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
         for (int i = 0; i < xp; i++) {
             srand((k * PIPE_DEPTH + i) * xp + x * 9949 + y * 9133); // Seed number generator
 
-            zeta = random_number(0.5, 0.1);
-            eta = random_number(0.125, 0.05);
+            eta = random_number(0.5, 0.1);
+            zeta = random_number(0.125, 0.05);
             upsilon = random_number(0.5, 0.1);
             delta = random_number(0.125, 0.05);
             beta = random_number(0.5, 0.1);
@@ -82,8 +82,8 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
             distm_diff = random_number(0.5, 0.1);
             distm_simi = random_number(0.125, 0.05);
 
-            prob[i * PIPE_DEPTH + k].p[0].b = (int) zeta.collect().to_ulong();
-            prob[i * PIPE_DEPTH + k].p[1].b = (int) eta.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[0].b = (int) eta.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[1].b = (int) zeta.collect().to_ulong();
             prob[i * PIPE_DEPTH + k].p[2].b = (int) upsilon.collect().to_ulong();
             prob[i * PIPE_DEPTH + k].p[3].b = (int) delta.collect().to_ulong();
             prob[i * PIPE_DEPTH + k].p[4].b = (int) beta.collect().to_ulong();
