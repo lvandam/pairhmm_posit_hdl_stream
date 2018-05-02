@@ -97,7 +97,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     logic r1_start, r1_s1, r1_s2, r1_zero_tmp1, r1_zero_tmp2, r1_inf, r1_zero;
 
     logic r1_rc1, r1_rc2;
-    logic [Bs-1:0] r1_regime1, r1_regime2, r1_Lshift1, r1_Lshift2;
+    logic [Bs-1:0] r1_regime1, r1_regime2;
     logic [es-1:0] r1_e1, r1_e2;
     logic [N-es-1:0] r1_mant1, r1_mant2;
     logic [N-es:0] r1_m1, r1_m2;
@@ -128,8 +128,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     	.rc(r1_rc1),
     	.regime(r1_regime1),
     	.exp(r1_e1),
-    	.frac(r1_mant1),
-    	.Lshift(r1_Lshift1)
+    	.frac(r1_mant1)
     );
 
     data_extract #(
@@ -140,8 +139,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     	.rc(r1_rc2),
     	.regime(r1_regime2),
     	.exp(r1_e2),
-    	.frac(r1_mant2),
-    	.Lshift(r1_Lshift2)
+    	.frac(r1_mant2)
     );
 
     assign r1_m1 = {r1_zero_tmp1, r1_mant1};
