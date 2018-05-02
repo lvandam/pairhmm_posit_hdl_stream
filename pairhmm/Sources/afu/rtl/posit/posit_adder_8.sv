@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype wire
 
-module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
+module posit_adder_8 (clk, in1, in2, start, result, inf, zero, done);
 
     function [31:0] log2;
         input reg [31:0] value;
@@ -27,7 +27,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
    //                 | |
    //                 |_|
 
-    input wire aclk;
+    input wire clk;
     input wire [N-1:0] in1, in2;
     input wire start;
     output wire [N-1:0] result;
@@ -46,7 +46,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     logic [N-1:0] r0_in1, r0_in2;
     logic r0_start, r0_s1, r0_s2, r0_zero_tmp1, r0_zero_tmp2, r0_inf, r0_inf1, r0_inf2, r0_zero, r0_zero1, r0_zero2;
 
-    always @(posedge aclk)
+    always @(posedge clk)
     begin
         if(in1 === 'x)
         begin
@@ -104,7 +104,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     logic r1_in1_gt_in2;
     logic [N-1:0] r1_xin1, r1_xin2;
 
-    always @(posedge aclk) // Global pipeline signals
+    always @(posedge clk) // Global pipeline signals
     begin
         r1_in1 <= r0_in1;
         r1_in2 <= r0_in2;
@@ -164,7 +164,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     logic [Bs:0] r2_r_diff11, r2_r_diff12, r2_r_diff2, r2_r_diff, r2_lr_N;
     logic [N-1:0] r2_DSR_right_in;
 
-    always @(posedge aclk) // Global pipeline signals
+    always @(posedge clk) // Global pipeline signals
     begin
        r2_start <= r1_start;
        r2_s1 <= r1_s1;
@@ -173,7 +173,7 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
        r2_zero <= r1_zero;
     end
 
-    always @(posedge aclk) // Extracted data
+    always @(posedge clk) // Extracted data
     begin
         r2_rc1 <= r1_rc1;
         r2_rc2 <= r1_rc2;
@@ -247,14 +247,14 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     logic [es+Bs+1:0] r3_diff;
     logic [Bs-1:0] r3_exp_diff;
 
-    always @(posedge aclk)
+    always @(posedge clk)
     begin
        r3_start <= r2_start;
        r3_inf <= r2_inf;
        r3_zero <= r2_zero;
     end
 
-    always @(posedge aclk)
+    always @(posedge clk)
     begin
         r3_r_diff <= r2_r_diff;
         r3_le <= r2_le;
@@ -287,14 +287,14 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     logic [N-es:0] r4_lm;
     logic [Bs:0] r4_r_diff, r4_lr_N;
 
-    always @(posedge aclk)
+    always @(posedge clk)
     begin
         r4_start <= r3_start;
         r4_inf <= r3_inf;
         r4_zero <= r3_zero;
     end
 
-    always @(posedge aclk)
+    always @(posedge clk)
     begin
         r4_r_diff <= r3_r_diff;
         r4_le <= r3_le;
@@ -339,14 +339,14 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
    logic [N-es:0] r4b_lm;
    logic [Bs:0] r4b_r_diff, r4b_lr_N;
 
-   always @(posedge aclk)
+   always @(posedge clk)
    begin
        r4b_start <= r4_start;
        r4b_inf <= r4_inf;
        r4b_zero <= r4_zero;
    end
 
-   always @(posedge aclk)
+   always @(posedge clk)
    begin
        r4b_r_diff <= r4_r_diff;
        r4b_le <= r4_le;
@@ -394,14 +394,14 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     logic [Bs:0] r5_lr_N;
     logic [es+Bs+1:0] r5_le_o_tmp;
 
-    always @(posedge aclk)
+    always @(posedge clk)
     begin
         r5_start <= r4b_start;
         r5_inf <= r4b_inf;
         r5_zero <= r4b_zero;
     end
 
-    always @(posedge aclk)
+    always @(posedge clk)
     begin
         r5_le <= r4b_le;
         r5_se <= r4b_se;
@@ -464,14 +464,14 @@ module posit_adder_8 (aclk, in1, in2, start, result, inf, zero, done);
     logic [Bs-1:0] r6_r_o;
     logic [2*N-1:0] r6_tmp_o, r6_tmp1_o;
 
-    always @(posedge aclk)
+    always @(posedge clk)
     begin
         r6_start <= r5_start;
         r6_inf <= r5_inf;
         r6_zero <= r5_zero;
     end
 
-    always @(posedge aclk)
+    always @(posedge clk)
     begin
         r6_ls <= r5_ls;
     	r6_le_o_tmp <= r5_le_o_tmp;

@@ -96,7 +96,7 @@ architecture logic of pairhmm is
           es: integer := 2
         );
         port (
-          aclk: in std_logic;
+          clk: in std_logic;
           in1: in std_logic_vector(31 downto 0);
           in2: in std_logic_vector(31 downto 0);
           start: in std_logic;
@@ -228,7 +228,7 @@ begin
   add_m : posit_adder_8 generic map (
     N => POSIT_NBITS, es => POSIT_ES
   ) port map (
-    aclk => cr.clk,
+    clk => cr.clk,
     in1 => addm_ina,
     in2 => addm_inb,
     start => addm_ina_valid and addm_inb_valid,
@@ -240,7 +240,7 @@ begin
   add_i : posit_adder_8 generic map (
     N => POSIT_NBITS, es => POSIT_ES
   ) port map (
-    aclk => cr.clk,
+    clk => cr.clk,
     in1 => addi_ina,
     in2 => addi_inb,
     start => addi_ina_valid and addi_inb_valid,

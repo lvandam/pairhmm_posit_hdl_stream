@@ -57,11 +57,11 @@ module posit_adder_4 (clk, in1, in2, start, result, inf, zero, done);
         r0_start <= (start === 'x) ? '0 : start;
     end
 
-    assign r0_inf1 = (in1[N-1] === 'x) ? '0 : in1[N-1] & (~r0_zero_tmp1);
-    assign r0_inf2 = (in2[N-1] === 'x) ? '0 : in2[N-1] & (~r0_zero_tmp2);
+    assign r0_inf1 = (in1[N-1] === 'x) ? '0 : in1[N-1] & (~r0_nonzero1);
+    assign r0_inf2 = (in2[N-1] === 'x) ? '0 : in2[N-1] & (~r0_nonzero2);
 
-    assign r0_zero1 = (in1[N-1] === 'x) ? '0 : ~(in1[N-1] | r0_zero_tmp1);
-    assign r0_zero2 = (in2[N-1] === 'x) ? '0 : ~(in2[N-1] | r0_zero_tmp2);
+    assign r0_zero1 = (in1[N-1] === 'x) ? '0 : ~(in1[N-1] | r0_nonzero1);
+    assign r0_zero2 = (in2[N-1] === 'x) ? '0 : ~(in2[N-1] | r0_nonzero2);
 
     assign r0_inf = r0_inf1 | r0_inf2;
     assign r0_zero = r0_zero1 & r0_zero2;
