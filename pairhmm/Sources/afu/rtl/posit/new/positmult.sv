@@ -57,7 +57,8 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
     // STICKY BIT CALCULATION (all the bits from [msb, lsb], that is, msb is included)
     logic [MBITS-1:0] fraction_leftover;
     logic [NBITS-1:0] leftover_shift;
-    assign leftover_shift = NBITS - 4 - regime_shift_amount;//-3
+    assign leftover_shift = NBITS - 4 - regime_shift_amount;
+    // Determine all fraction bits that are truncated in the final result
     DSR_left_N_S #(
         .N(MBITS),
         .S(NBITS)
@@ -102,17 +103,18 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
     assign inward_projection = product.scale[8] ? (product.scale < max_k) : (product.scale > max_k);
 
     // In case of inward projection, determine the regime
-    logic [6:0] inward_projection_k1, inward_projection_k2;
+    logic [6:0] inward_projection_k1;
+    logic inward_projection_k2;
     assign inward_projection_k1 = product.scale[8] ? -(-product.scale >> ES) : (product.scale >> ES);
-    assign inward_projection_k2 = (~|inward_projection_k1 & product.scale[8]) ? -1 : inward_projection_k1;
+    assign inward_projection_k2 = (~|inward_projection_k1 & product.scale[8]) ? 1 : inward_projection_k1[6];
 
     // Determine result (without sign), either a full regime part (inward projection) or the unsigned regime+exp+fraction
-    assign result_no_sign = inward_projection ? (inward_projection_k2[6] ? {{NBITS-2{1'b0}}, 1'b1} : {NBITS-1{1'b1}}) : exp_fraction_shifted_for_regime[NBITS-1:1];
+    assign result_no_sign = inward_projection ? (inward_projection_k2 ? {{NBITS-2{1'b0}}, 1'b1} : {NBITS-1{1'b1}}) : exp_fraction_shifted_for_regime[NBITS-1:1];
 
+    // Perform rounding (based on sticky bit)
     logic blast;
-    assign blast = result_no_sign[0];
-
     logic [NBITS-2:0] result_no_sign_rounded;
+    assign blast = result_no_sign[0];
     assign result_no_sign_rounded = ((blast & bafter) | (bafter & sticky_bit)) ? (result_no_sign + 1) : result_no_sign;
 
     // In case the product is negative, take 2's complement of everything but the sign

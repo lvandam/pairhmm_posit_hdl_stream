@@ -1,3 +1,7 @@
+// Laurens van Dam
+// Delft University of Technology
+// May 2018
+
 package posit_defines;
 
 parameter NBITS = 32;
