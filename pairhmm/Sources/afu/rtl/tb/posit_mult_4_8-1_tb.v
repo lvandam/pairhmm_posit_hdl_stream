@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module posit_mult_4_8bit_tb_v;
+module posit_mult_4_8_1_tb_v;
 
     function [31:0] log2;
         input reg [31:0] value;
@@ -18,7 +18,7 @@ module posit_mult_4_8bit_tb_v;
 
     parameter N = 8;
     parameter Bs = log2(N);
-    parameter es = 4;
+    parameter es = 1;
 
     reg [N-1:0] in1, in2;
     reg start;
@@ -46,8 +46,8 @@ module posit_mult_4_8bit_tb_v;
 
     reg [N-1:0] data1 [1:65534];
     reg [N-1:0] data2 [1:65534];
-    initial $readmemb("Pin1_mult_8bit.txt", data1);
-    initial $readmemb("Pin2_mult_8bit.txt", data2);
+    initial $readmemb("Pin1_mult_8-1.txt", data1);
+    initial $readmemb("Pin2_mult_8-1.txt", data2);
 
     reg [15:0] i;
 
@@ -98,7 +98,7 @@ module posit_mult_4_8bit_tb_v;
 
     initial
     begin
-        $readmemb("Pout_mult_8bit_ES4.txt", result);
+        $readmemb("Pout_mult_8-1.txt", result);
     end
 
     reg [N-1:0] diff;

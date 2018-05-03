@@ -74,18 +74,40 @@ public:
         t_bbase *hapl = batch->hapl;
         t_probs *prob = batch->prob;
 
+        if(pair == 0)
+        {
+            cout << "PAIR 0 (POSIT)" << endl;
+        }
+
         // Set to zero and intial value in the X direction
         for (int j = 0; j < c + 1; j++) {
             M[0][j] = 0.0;
             I[0][j] = 0.0;
             D[0][j].set_raw_bits(init->initials[pair]);
+
+            if(pair == 0)
+            {
+                cout << "M[0]["<<j<<"]: " << hex << hexstring(M[0][j].collect()) << dec << endl;
+                cout << "I[0]["<<j<<"]: " << hex << hexstring(I[0][j].collect()) << dec << endl;
+                cout << "D[0]["<<j<<"]: " << hex << hexstring(D[0][j].collect()) << dec << endl;
+                cout << endl;
+            }
         }
+
 
         // Set to zero in Y direction
         for (int i = 1; i < r + 1; i++) {
             M[i][0] = 0.0;
             I[i][0] = 0.0;
             D[i][0] = 0.0;
+
+            if(pair == 0)
+            {
+                cout << "M["<<i<<"][0]: " << hex << hexstring(M[i][0].collect()) << dec << endl;
+                cout << "I["<<i<<"][0]: " << hex << hexstring(I[i][0].collect()) << dec << endl;
+                cout << "D["<<i<<"][0]: " << hex << hexstring(D[i][0].collect()) << dec << endl;
+                cout << endl;
+            }
         }
 
         for (int i = 1; i < r + 1; i++) {
@@ -113,6 +135,14 @@ public:
                 M[i][j] = distm * (alpha * M[i - 1][j - 1] + beta * I[i - 1][j - 1] + beta * D[i - 1][j - 1]);
                 I[i][j] = delta * M[i - 1][j] + upsilon * I[i - 1][j];
                 D[i][j] = zeta * M[i][j - 1] + eta * D[i][j - 1];
+
+                if(pair == 0)
+                {
+                    cout << "M["<<i<<"]["<<j<<"]: " << hex << hexstring(M[i][j].collect()) << dec << endl;
+                    cout << "I["<<i<<"]["<<j<<"]: " << hex << hexstring(I[i][j].collect()) << dec << endl;
+                    cout << "D["<<i<<"]["<<j<<"]: " << hex << hexstring(D[i][j].collect()) << dec << endl;
+                    cout << endl;
+                }
             }
         }
     } // calculate_mids

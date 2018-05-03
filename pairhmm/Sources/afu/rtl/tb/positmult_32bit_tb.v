@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module posit_mult_4_8bit_tb_v;
+module positmult_32bit_tb;
 
     function [31:0] log2;
         input reg [31:0] value;
@@ -14,11 +14,11 @@ module posit_mult_4_8bit_tb_v;
     endfunction
 
     // Enter latency here
-    integer latency = 4;
+    integer latency = 0;
 
-    parameter N = 8;
+    parameter N = 32;
     parameter Bs = log2(N);
-    parameter es = 4;
+    parameter es = 2;
 
     reg [N-1:0] in1, in2;
     reg start;
@@ -30,10 +30,7 @@ module posit_mult_4_8bit_tb_v;
 
 
     // Instantiate the Unit Under Test (UUT)
-    posit_mult_4 #(
-        .N(N),
-        .es(es)
-    ) uut (
+    positmult uut (
         .clk(clk),
         .in1(in1),
         .in2(in2),
@@ -46,10 +43,10 @@ module posit_mult_4_8bit_tb_v;
 
     reg [N-1:0] data1 [1:65534];
     reg [N-1:0] data2 [1:65534];
-    initial $readmemb("Pin1_mult_8bit.txt", data1);
-    initial $readmemb("Pin2_mult_8bit.txt", data2);
+    initial $readmemb("Pin1_mult_32-2_rand1.txt", data1);
+    initial $readmemb("Pin2_mult_32-2_rand1.txt", data2);
 
-    reg [15:0] i;
+    reg [31:0] i;
 
 	initial
     begin
@@ -79,7 +76,7 @@ module posit_mult_4_8bit_tb_v;
         in1 = data1[i];
         in2 = data2[i];
 
-        if(i == 16'hffff)
+        if(i == 32'hffffffff)
         begin
             $finish;
         end
@@ -91,14 +88,14 @@ module posit_mult_4_8bit_tb_v;
 
     initial
     begin
-        outfile = $fopen("error_8bit.txt", "wb");
+        outfile = $fopen("error_32bit.txt", "wb");
     end
 
     reg [N-1:0] result [1:65534];
 
     initial
     begin
-        $readmemb("Pout_mult_8bit_ES4.txt", result);
+        $readmemb("Pout_mult_32-2_rand1.txt", result);
     end
 
     reg [N-1:0] diff;
