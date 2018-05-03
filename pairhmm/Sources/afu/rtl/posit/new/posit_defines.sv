@@ -8,7 +8,7 @@ parameter MBITS = 2 *  FHBITS; // Size of multiplier output
 
 typedef struct {
     logic sign;
-    logic [6:0] scale;
+    logic signed [7:0] scale;
     logic [ES-1:0] exponent;
     logic [FBITS-1:0] fraction;
     logic inf;
@@ -17,7 +17,7 @@ typedef struct {
 
 typedef struct {
     logic sign;
-    logic [6:0] scale;
+    logic signed [8:0] scale;
     logic [ES-1:0] exponent;
     logic [MBITS-1:0] fraction;
     logic inf;

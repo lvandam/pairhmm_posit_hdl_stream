@@ -46,8 +46,8 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
 
     // Check if the radix point needs to shift
 
-    assign product.scale = fraction_mult[MBITS-1] ? (a.scale + b.scale + 1) : (a.scale + b.scale);
 
+    assign product.scale   = fraction_mult[MBITS-1] ? (a.scale + b.scale + 1) : (a.scale + b.scale);
     assign result_fraction = fraction_mult[MBITS-1] ? (fraction_mult << 1) : (fraction_mult << 2); // Shift hidden bit out
 
     assign product.fraction = result_fraction[MBITS-1:0];
@@ -55,31 +55,21 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
     assign product.zero = a.zero | b.zero;
     assign product.inf = a.inf | b.inf;
 
-    // TODO special case handling output
-    //     if (product.isZero()) {
-    //         setToZero();
-    //     }
-    //     else if (product.isInfinite()) {
-    //         setToNaR();
-    //     }
-
-
     // TODO check inward projection:
     // if (check_inward_projection_range(scale)) {    // regime dominated
     // ELSE::::
 
-
     logic [ES-1:0] result_exponent;
     assign result_exponent = product.scale % (2 << ES);
 
-    logic [4:0] regime_shift_amount;
+    logic [6:0] regime_shift_amount;
     // Positive scale -> Should shift with 1's with 1 extra (specification)
     // Negative scale -> Make value positive
-    assign regime_shift_amount = (product.scale[6] == 0) ? 1 + (product.scale >> ES) : -(product.scale >> ES);
+    assign regime_shift_amount = (product.scale[8] == 0) ? 1 + (product.scale >> ES) : -(product.scale >> ES);
 
     logic [2*NBITS-1:0] regime_exp_fraction;
-    assign regime_exp_fraction = { {NBITS{~product.scale[6]}}, // Regime leading bits
-                            product.scale[6], // Regime terminating bit
+    assign regime_exp_fraction = { {NBITS{~product.scale[8]}}, // Regime leading bits
+                            product.scale[8], // Regime terminating bit
                             result_exponent, // Exponent
                             product.fraction[MBITS-1:MBITS-NBITS+3]}; // Fraction
 
@@ -87,7 +77,7 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
 
     DSR_right_N_S #(
         .N(2*NBITS),
-        .S(5)
+        .S(7)
     ) dsr2 (
         .a(regime_exp_fraction), // exponent + fraction bits
         .b(regime_shift_amount), // Shift to right by regime value (clip at maximum number of bits)
@@ -109,7 +99,7 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
     logic sticky_bit;
     assign sticky_bit = |fraction_leftover[MBITS-1:0];
 
-    // TODO THIS PART
+    // TODO THIS PART (implement sticky bit)
     // bool sb = anyAfter(input_fraction, input_fbits - 1 - nf);
     //
     // // construct the untruncated posit
@@ -150,9 +140,7 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
     // if (_trace_rounding) std::cout << "projection  rounding ";
     // }
 
-
-
-
+    // TODO (?) In case the product is negative, take 2's complement of everything but the sign
 
     assign result = (product.zero | product.inf) ? {product.inf, {NBITS-1{1'b0}}} : {product.sign, exp_fraction_shifted_for_regime[NBITS-1:1]};
     assign inf = product.inf;
