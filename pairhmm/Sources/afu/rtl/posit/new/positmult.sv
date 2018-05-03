@@ -26,17 +26,6 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
         .out(b)
     );
 
-    // TODO MULTIPLY THE TWO INPUTS (module_multiply function)
-    // TODO implement this (mux?)
-    // if (lhs.isInfinite() || rhs.isInfinite()) {
-    //     result.setToInfinite();
-    //     return;
-    // }
-    // if (lhs.isZero() || rhs.isZero()) {
-    //     result.setToZero();
-    //     return;
-    // }
-
     logic [MBITS-1:0] fraction_mult, result_fraction;
 
     logic [FHBITS-1:0] r1, r2;
@@ -45,8 +34,6 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
     assign fraction_mult = r1 * r2; // Unsigned multiplication of fractions
 
     // Check if the radix point needs to shift
-
-
     assign product.scale   = fraction_mult[MBITS-1] ? (a.scale + b.scale + 1) : (a.scale + b.scale);
     assign result_fraction = fraction_mult[MBITS-1] ? (fraction_mult << 1) : (fraction_mult << 2); // Shift hidden bit out
 
@@ -54,10 +41,6 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
     assign product.sign = a.sign ^ b.sign;
     assign product.zero = a.zero | b.zero;
     assign product.inf = a.inf | b.inf;
-
-    // TODO check inward projection:
-    // if (check_inward_projection_range(scale)) {    // regime dominated
-    // ELSE::::
 
     logic [ES-1:0] result_exponent;
     assign result_exponent = product.scale % (2 << ES);
@@ -67,22 +50,8 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
     // Negative scale -> Make value positive
     assign regime_shift_amount = (product.scale[8] == 0) ? 1 + (product.scale >> ES) : -(product.scale >> ES);
 
-    logic [2*NBITS-1:0] regime_exp_fraction;
-    assign regime_exp_fraction = { {NBITS{~product.scale[8]}}, // Regime leading bits
-                            product.scale[8], // Regime terminating bit
-                            result_exponent, // Exponent
-                            product.fraction[MBITS-1:MBITS-NBITS+3]}; // Fraction
 
-    logic [2*NBITS-1:0] exp_fraction_shifted_for_regime;
 
-    DSR_right_N_S #(
-        .N(2*NBITS),
-        .S(7)
-    ) dsr2 (
-        .a(regime_exp_fraction), // exponent + fraction bits
-        .b(regime_shift_amount), // Shift to right by regime value (clip at maximum number of bits)
-        .c(exp_fraction_shifted_for_regime)
-    );
 
     // STICKY BIT CALCULATION (all the bits from [msb, lsb], that is, msb is included)
     logic [MBITS-1:0] fraction_leftover;
@@ -97,23 +66,37 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
         .c(fraction_leftover)
     );
     logic sticky_bit;
-    assign sticky_bit = |fraction_leftover[MBITS-1:0];
+    assign sticky_bit = |fraction_leftover[MBITS-1:0]; // Logical OR of all truncated fraction multiplication bits
+    // END STICKY BIT CALCULATION
 
-    // TODO THIS PART (implement sticky bit)
-    // bool sb = anyAfter(input_fraction, input_fbits - 1 - nf);
-    //
-    // // construct the untruncated posit
-    // // pt    = BitOr[BitShiftLeft[reg, es + nf + 1], BitShiftLeft[esval, nf + 1], BitShiftLeft[fv, 1], sb];
-    // regime <<= es + nf + 1;
-    // exponent <<= nf + 1;
-    // fraction <<= 1;
-    // sticky_bit.set(0, sb);
-    //
-    // pt_bits |= regime;
-    // pt_bits |= exponent;
-    // pt_bits |= fraction;
-    // pt_bits |= sticky_bit;
-    //
+    logic [28:0] fraction_truncated, fraction_after_sticky;
+    assign fraction_truncated = product.fraction[MBITS-1:MBITS-NBITS+3];
+
+    assign fraction_after_sticky = fraction_truncated[28:0]; // TODO is this logic worth it?
+
+
+
+
+
+    logic [2*NBITS-1:0] regime_exp_fraction;
+    assign regime_exp_fraction = { {NBITS{~product.scale[8]}}, // Regime leading bits
+                            product.scale[8], // Regime terminating bit
+                            result_exponent, // Exponent
+                            fraction_after_sticky[28:0]}; // Fraction
+
+    logic [2*NBITS-1:0] exp_fraction_shifted_for_regime;
+    DSR_right_N_S #(
+        .N(2*NBITS),
+        .S(7)
+    ) dsr2 (
+        .a(regime_exp_fraction), // exponent + fraction bits
+        .b(regime_shift_amount), // Shift to right by regime value (clip at maximum number of bits)
+        .c(exp_fraction_shifted_for_regime)
+    );
+
+    // assign fraction_no_significand
+
+
     // unsigned len = 1 + std::max<unsigned>((nbits + 1), (2 + run + es));
     // bool blast = pt_bits.test(len - nbits);
     // bool bafter = pt_bits.test(len - nbits - 1);
@@ -128,23 +111,32 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
     // int k = (scale < 0) ? -30 : 30;
     // return (scale < 0) ? (scale < (k << ES)) : (scale > (k << ES));
 
+    logic [NBITS-2:0] result_no_sign;
 
-    // if (check_inward_projection_range(scale)) {    // regime dominated
-    // std::cout << "inward projection" << std::endl;
-    // // we are projecting to minpos/maxpos
-    // _regime.assign_regime_pattern(k);
-    // // store raw bit representation
-    // _raw_bits = _sign ? twos_complement(collect()) : collect();
-    // _raw_bits.set(nbits - 1, _sign);
-    // // we are done
-    // if (_trace_rounding) std::cout << "projection  rounding ";
-    // }
+    // Calculate the max k factor for this posit config
+	logic signed [7:0] max_k;
+	assign max_k = product.scale[8] ? -120 : 120;
+    // Determine if we have inward projection (which means the regime dominated)
+    logic inward_projection;
+    assign inward_projection = product.scale[8] ? (product.scale < max_k) : (product.scale > max_k);
+
+    // the scale of a posit is  2 ^ scale = useed ^ k * 2 ^ exp
+    // -> (scale >> es) = (k*2^es + exp) >> es
+    // -> (scale >> es) = k + (exp >> es)
+    // -> k = (scale >> es)
+    logic [6:0] inward_projection_k1, inward_projection_k2;
+    assign inward_projection_k1 = product.scale[8] ? -(-product.scale >> ES) : (product.scale >> ES);
+    assign inward_projection_k2 = (~|inward_projection_k1 & product.scale[8]) ? -1 : inward_projection_k1;
+
+    // Determine result (without sign), either a full regime part (inward projection) or the unsigned regime+exp+fraction
+    assign result_no_sign = inward_projection ? (inward_projection_k2[6] ? {{NBITS-2{1'b0}}, 1'b1} : {NBITS-1{1'b1}}) : exp_fraction_shifted_for_regime[NBITS-1:1];
 
     // In case the product is negative, take 2's complement of everything but the sign
-    logic [NBITS-1:1] signed_posit_no_sign;
-    assign signed_posit_no_sign = product.sign ? -exp_fraction_shifted_for_regime[NBITS-1:1] : exp_fraction_shifted_for_regime[NBITS-1:1];
+    logic [NBITS-2:0] signed_result_no_sign;
+    assign signed_result_no_sign = product.sign ? -result_no_sign[NBITS-2:0] : result_no_sign[NBITS-2:0];
 
-    assign result = (product.zero | product.inf) ? {product.inf, {NBITS-1{1'b0}}} : {product.sign, signed_posit_no_sign};
+    // Final output
+    assign result = (product.zero | product.inf) ? {product.inf, {NBITS-1{1'b0}}} : {product.sign, signed_result_no_sign[NBITS-2:0]};
     assign inf = product.inf;
     assign zero = product.zero;
     assign done = start;
@@ -160,70 +152,4 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
     // if (rb) increment_bitset(ptt);
     // if (s) ptt = twos_complement(ptt);
 
-
 endmodule
-
-
-
-
-
-// void convert(bool sign, int scale, bitblock<input_fbits> input_fraction) {
-//
-//     // construct the posit
-//     _sign = sign;
-//     int k = calculate_unconstrained_k<nbits, es>(scale);
-//     // interpolation rule checks
-//     if (check_inward_projection_range(scale)) {    // regime dominated
-//         // we are projecting to minpos/maxpos
-//         _regime.assign_regime_pattern(k);
-//         // store raw bit representation
-//         _raw_bits = _sign ? twos_complement(collect()) : collect();
-//         _raw_bits.set(nbits - 1, _sign);
-//         // we are done
-//     }
-//     else {
-//
-//
-//         unsigned run = (r ? 1 + (e >> es) : -(e >> es));
-//         regime.set(0, 1 ^ r);
-//         for (unsigned i = 1; i <= run; i++) regime.set(i, r);
-//
-//         unsigned esval = e % (uint32_t(1) << es);
-//         exponent = convert_to_bitblock<pt_len>(esval);
-//         unsigned nf = (unsigned)std::max<int>(0, (nbits + 1) - (2 + run + es));
-//         // TODO: what needs to be done if nf > fbits?
-//         //assert(nf <= input_fbits);
-//         // copy the most significant nf fraction bits into fraction
-//         unsigned lsb = nf <= input_fbits ? 0 : nf - input_fbits;
-//         for (unsigned i = lsb; i < nf; i++) fraction[i] = input_fraction[input_fbits - nf + i];
-//
-//         bool sb = anyAfter(input_fraction, input_fbits - 1 - nf);
-//
-//         // construct the untruncated posit
-//         // pt    = BitOr[BitShiftLeft[reg, es + nf + 1], BitShiftLeft[esval, nf + 1], BitShiftLeft[fv, 1], sb];
-//         regime <<= es + nf + 1;
-//         exponent <<= nf + 1;
-//         fraction <<= 1;
-//         sticky_bit.set(0, sb);
-//
-//         pt_bits |= regime;
-//         pt_bits |= exponent;
-//         pt_bits |= fraction;
-//         pt_bits |= sticky_bit;
-//
-//         unsigned len = 1 + std::max<unsigned>((nbits + 1), (2 + run + es));
-//         bool blast = pt_bits.test(len - nbits);
-//         bool bafter = pt_bits.test(len - nbits - 1);
-//         bool bsticky = anyAfter(pt_bits, len - nbits - 1 - 1);
-//
-//         bool rb = (blast & bafter) | (bafter & bsticky);
-//
-//         pt_bits <<= pt_len - len;
-//         bitblock<nbits> ptt;
-//         truncate(pt_bits, ptt);
-//
-//         if (rb) increment_bitset(ptt);
-//         if (s) ptt = twos_complement(ptt);
-//         decode(ptt);
-//     }
-// }
