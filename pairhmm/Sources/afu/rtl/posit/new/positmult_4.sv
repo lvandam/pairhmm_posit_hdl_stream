@@ -61,7 +61,7 @@ module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
 
     logic [FHBITS-1:0] r1_r1, r1_r2;
     assign r1_r1 = {1'b1, r1_a.fraction}; // Add back hidden bit (fraction is without hidden bit)
-    assign r1_r2 = {1'b1, r1_a.fraction}; // Add back hidden bit (fraction is without hidden bit)
+    assign r1_r2 = {1'b1, r1_b.fraction}; // Add back hidden bit (fraction is without hidden bit)
     assign r1_fraction_mult = r1_r1 * r1_r2; // Unsigned multiplication of fractions
 
     // Check if the radix point needs to shift

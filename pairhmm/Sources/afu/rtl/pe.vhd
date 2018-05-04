@@ -104,11 +104,7 @@ architecture rtl of pe is
         );
     end component;
 
-    component posit_mult_4
-        generic (
-          N: integer := POSIT_NBITS;
-          es: integer := POSIT_ES
-        );
+    component positmult_4
         port (
           clk: in std_logic;
           in1: in std_logic_vector(31 downto 0);
@@ -208,9 +204,7 @@ begin
     -- 4 CYCLES
     ---------------------------------------------------------------------------------------------------
 
-    mul_alpha : posit_mult_4 generic map (
-        N => POSIT_NBITS, es => POSIT_ES
-    ) port map (
+    mul_alpha : positmult_4 port map (
         clk => cr.clk,
         in1 => step.init.tmis.alpha,
         in2 => step.init.mids.mtl,
@@ -221,9 +215,7 @@ begin
         done => fp_valids(0)
     );
 
-    mul_beta : posit_mult_4 generic map (
-        N => POSIT_NBITS, es => POSIT_ES
-    ) port map (
+    mul_beta : positmult_4 port map (
         clk => cr.clk,
         in1 => step.init.tmis.beta,
         in2 => step.init.mids.itl,
@@ -234,9 +226,7 @@ begin
         done => fp_valids(1)
     );
 
-    mul_gamma : posit_mult_4 generic map (
-        N => POSIT_NBITS, es => POSIT_ES
-    ) port map (
+    mul_gamma : positmult_4 port map (
         clk => cr.clk,
         in1 => step.init.tmis.beta,
         in2 => step.init.mids.dtl,
@@ -247,9 +237,7 @@ begin
         done => fp_valids(2)
     );
 
-    mul_delta : posit_mult_4 generic map (
-        N => POSIT_NBITS, es => POSIT_ES
-    ) port map (
+    mul_delta : positmult_4 port map (
         clk => cr.clk,
         in1 => step.init.tmis.delta,
         in2 => step.init.mids.mt,
@@ -260,9 +248,7 @@ begin
         done => fp_valids(3)
     );
 
-    mul_epsilon : posit_mult_4 generic map (
-        N => POSIT_NBITS, es => POSIT_ES
-    ) port map (
+    mul_epsilon : positmult_4 port map (
         clk => cr.clk,
         in1 => step.init.tmis.epsilon,
         in2 => step.init.mids.it,
@@ -273,9 +259,7 @@ begin
         done => fp_valids(4)
     );
 
-    mul_zeta : posit_mult_4 generic map (
-        N => POSIT_NBITS, es => POSIT_ES
-    ) port map (
+    mul_zeta : positmult_4 port map (
         clk => cr.clk,
         in1 => step.init.tmis.zeta,
         in2 => step.init.mids.ml,
@@ -286,9 +270,7 @@ begin
         done => fp_valids(5)
     );
 
-    mul_eta : posit_mult_4 generic map (
-        N => POSIT_NBITS, es => POSIT_ES
-    ) port map (
+    mul_eta : positmult_4 port map (
         clk => cr.clk,
         in1 => step.init.tmis.eta,
         in2 => step.init.mids.dl,
@@ -399,9 +381,7 @@ begin
         end if;
     end process;
 
-    mul_lambda : posit_mult_4 generic map (
-        N => POSIT_NBITS, es => POSIT_ES
-    ) port map (
+    mul_lambda : positmult_4 port map (
         clk => cr.clk,
         in1 => step.add.albegatl,
         in2 => distm,
@@ -417,9 +397,7 @@ begin
     end generate;
 
     THETA_MULT: if DISABLE_THETA /= '1' generate
-        mul_theta : posit_mult_4 generic map (
-            N => POSIT_NBITS, es => POSIT_ES
-        ) port map (
+        mul_theta : positmult_4 port map (
             clk => cr.clk,
             in1 => step.add.deept,
             in2 => step.add.emis.theta,
@@ -436,9 +414,7 @@ begin
     end generate;
 
     UPSILON_MULT: if DISABLE_UPSILON /= '1' generate
-        mul_upsilon : posit_mult_4 generic map (
-            N => POSIT_NBITS, es => POSIT_ES
-        ) port map (
+        mul_upsilon : positmult_4 port map (
             clk => cr.clk,
             in1 => step.add.zeett,
             in2 => step.add.emis.upsilon,
