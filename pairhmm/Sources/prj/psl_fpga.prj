@@ -5,7 +5,6 @@ vhdl2008 work "afu/lib/functions.vhd"
 vhdl2008 work "afu/lib/psl.vhd"
 vhdl2008 work "afu/lib/wed.vhd"
 
-system work "afu/rtl/posit/posit_pkg.sv"
 system work "afu/rtl/posit/DSR_left_N_S.v"
 system work "afu/rtl/posit/DSR_right_N_S.v"
 system work "afu/rtl/posit/LOD_N.v"

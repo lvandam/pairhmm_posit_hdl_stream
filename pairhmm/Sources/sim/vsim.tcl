@@ -26,7 +26,6 @@ proc r  {} {
   vlog -quiet ../cores/probabilities_fifo/sim/probabilities_fifo.v
 
   # compile posit units
-  vlog -sv -quiet ../afu/rtl/posit/posit_pkg.sv
   vlog -quiet ../afu/rtl/posit/DSR_left_N_S.v
   vlog -quiet ../afu/rtl/posit/DSR_right_N_S.v
   vlog -quiet ../afu/rtl/posit/LOD_N.v
