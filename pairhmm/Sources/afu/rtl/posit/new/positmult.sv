@@ -124,7 +124,7 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
     // Final output
     assign result = (product.zero | product.inf) ? {product.inf, {NBITS-1{1'b0}}} : {product.sign, signed_result_no_sign[NBITS-2:0]};
     assign inf = product.inf;
-    assign zero = product.zero;
+    assign zero = ~product.inf & product.zero;
     assign done = start;
 
 endmodule
