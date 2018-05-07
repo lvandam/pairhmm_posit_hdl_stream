@@ -81,7 +81,7 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
         .out(hidden_pos)
     );
 
-    logic signed [8:0] scale_sum;
+    logic signed [7:0] scale_sum;
     assign scale_sum = fraction_sum_raw[ABITS] ? (hi.scale + 1) : (~fraction_sum_raw[ABITS-1] ? (hi.scale - hidden_pos + 1) : hi.scale);
     // assign scale_sum = fraction_sum_raw[ABITS] ? (hi.scale - 1) : hi.scale;
 
@@ -112,13 +112,13 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
     assign result_exponent = sum.scale % (2 << ES);
 
     logic [2*NBITS-1:0] regime_exp_fraction;
-    assign regime_exp_fraction = { {NBITS-1{~sum.scale[8]}}, // Regime leading bits
-                            sum.scale[8], // Regime terminating bit
+    assign regime_exp_fraction = { {NBITS-1{~sum.scale[7]}}, // Regime leading bits
+                            sum.scale[7], // Regime terminating bit
                             result_exponent, // Exponent
                             fraction_sum_normalized[ABITS:2]}; // Fraction
 
     logic [6:0] regime_shift_amount;
-    assign regime_shift_amount = (sum.scale[8] == 0) ? 1 + (sum.scale >> ES) : -(sum.scale >> ES);
+    assign regime_shift_amount = (sum.scale[7] == 0) ? 1 + (sum.scale >> ES) : -(sum.scale >> ES);
 
     logic [2*NBITS-1:0] exp_fraction_shifted_for_regime;
     DSR_right_N_S #(

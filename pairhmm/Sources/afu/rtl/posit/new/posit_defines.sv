@@ -31,7 +31,7 @@ typedef struct {
 
 typedef struct {
     logic sign;
-    logic signed [8:0] scale;
+    logic signed [7:0] scale;
     logic [ES-1:0] exponent;
     logic [ABITS-1:0] fraction;
     logic inf;
