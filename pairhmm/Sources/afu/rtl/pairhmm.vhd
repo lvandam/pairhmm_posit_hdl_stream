@@ -90,21 +90,18 @@ architecture logic of pairhmm is
   signal    lastlast        : std_logic;
   signal    lastlast1       : std_logic;
 
-    component posit_adder_8
-        generic (
-          N: integer := 32;
-          es: integer := 2
-        );
-        port (
-          clk: in std_logic;
-          in1: in std_logic_vector(31 downto 0);
-          in2: in std_logic_vector(31 downto 0);
-          start: in std_logic;
-          result: out std_logic_vector(31 downto 0);
-          inf: out std_logic;
-          done: out std_logic
-        );
-    end component;
+  component positadd_8
+      port (
+        clk: in std_logic;
+        in1: in std_logic_vector(31 downto 0);
+        in2: in std_logic_vector(31 downto 0);
+        start: in std_logic;
+        result: out std_logic_vector(31 downto 0);
+        inf: out std_logic;
+        zero: out std_logic;
+        done: out std_logic
+      );
+  end component;
 
 begin
 
@@ -225,9 +222,7 @@ begin
     end if;
   end process;
 
-  add_m : posit_adder_8 generic map (
-    N => POSIT_NBITS, es => POSIT_ES
-  ) port map (
+  add_m : positadd_8 port map (
     clk => cr.clk,
     in1 => addm_ina,
     in2 => addm_inb,
@@ -237,9 +232,7 @@ begin
     done => addm_out_valid
   );
 
-  add_i : posit_adder_8 generic map (
-    N => POSIT_NBITS, es => POSIT_ES
-  ) port map (
+  add_i : positadd_8 port map (
     clk => cr.clk,
     in1 => addi_ina,
     in2 => addi_inb,
@@ -248,7 +241,6 @@ begin
     inf => posit_infs(1),
     done => addi_out_valid
   );
-
 
   process(cr.clk)
     variable rescounter : integer range 0 to PE_DEPTH := 0;

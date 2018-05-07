@@ -37,6 +37,8 @@ proc r  {} {
   vlog -sv -quiet ../afu/rtl/posit/new/posit_defines.sv
   vlog -sv -quiet ../afu/rtl/posit/new/posit_extract.sv
   vlog -sv -quiet ../afu/rtl/posit/new/positmult_4.sv
+  vlog -sv -quiet ../afu/rtl/posit/new/positadd_4.sv
+  vlog -sv -quiet ../afu/rtl/posit/new/positadd_8.sv
 
   # compile rtl
   echo "Compiling rtl"

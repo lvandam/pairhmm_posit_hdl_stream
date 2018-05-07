@@ -70,11 +70,7 @@ architecture rtl of pe is
     signal  posit_zeros       :   posit_zeros_type;
     signal  fp_valids         :   fp_valids_type;
 
-    component posit_adder_4
-        generic (
-          N: integer := POSIT_NBITS;
-          es: integer := POSIT_ES
-        );
+    component positadd_4
         port (
           clk: in std_logic;
           in1: in std_logic_vector(31 downto 0);
@@ -87,11 +83,7 @@ architecture rtl of pe is
         );
     end component;
 
-    component posit_adder_8
-        generic (
-          N: integer := POSIT_NBITS;
-          es: integer := POSIT_ES
-        );
+    component positadd_8
         port (
           clk: in std_logic;
           in1: in std_logic_vector(31 downto 0);
@@ -298,9 +290,7 @@ begin
 
     -- BEGIN alpha + beta + delayed gamma
     -- Substep adding alpha + beta
-    add_alpha_beta : posit_adder_4 generic map (
-        N => POSIT_NBITS, es => POSIT_ES
-    ) port map (
+    add_alpha_beta : positadd_4 port map (
         clk => cr.clk,
         in1 => step.trans.almtl,
         in2 => step.trans.beitl,
@@ -312,9 +302,7 @@ begin
     );
 
     -- Substep adding alpha + beta + delayed gamma
-    add_alpha_beta_gamma : posit_adder_4 generic map (
-        N => POSIT_NBITS, es => POSIT_ES
-    ) port map (
+    add_alpha_beta_gamma : positadd_4 port map (
         clk => cr.clk,
         in1 => step.add.albetl,
         in2 => add_gamma_sr(PE_ADD_CYCLES-1),
@@ -327,9 +315,7 @@ begin
     -- END alpha + beta + delayed gamma
 
 
-    add_delta_epsilon : posit_adder_8 generic map (
-        N => POSIT_NBITS, es => POSIT_ES
-    ) port map (
+    add_delta_epsilon : positadd_8 port map (
         clk => cr.clk,
         in1 => step.trans.demt,
         in2 => step.trans.epit,
@@ -340,9 +326,7 @@ begin
         done => fp_valids(9)
     );
 
-    add_zeta_eta : posit_adder_8 generic map (
-        N => POSIT_NBITS, es => POSIT_ES
-    ) port map (
+    add_zeta_eta : positadd_8 port map (
         clk => cr.clk,
         in1 => step.trans.zeml,
         in2 => step.trans.etdl,
