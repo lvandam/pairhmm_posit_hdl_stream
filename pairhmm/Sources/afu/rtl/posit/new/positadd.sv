@@ -83,9 +83,7 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
 
     logic signed [7:0] scale_sum;
     assign scale_sum = fraction_sum_raw[ABITS] ? (hi.scale + 1) : (~fraction_sum_raw[ABITS-1] ? (hi.scale - hidden_pos + 1) : hi.scale);
-    // assign scale_sum = fraction_sum_raw[ABITS] ? (hi.scale - 1) : hi.scale;
 
-    // TODO
     // if(shift >= ABITS) {
     //     set sum to 0
     // }
@@ -104,6 +102,9 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
         .c(fraction_sum_normalized)
     );
 
+    logic out_rounded_zero;
+    assign out_rounded_zero = (hidden_pos >= ABITS); // The hidden bit is shifted out of range, our sum becomes 0 (when truncated)
+
     assign sum.sign = hi.sign;
     assign sum.scale = scale_sum;
 
@@ -111,14 +112,39 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
     logic [ES-1:0] result_exponent;
     assign result_exponent = sum.scale % (2 << ES);
 
+    logic [6:0] regime_shift_amount;
+    assign regime_shift_amount = (sum.scale[7] == 0) ? 1 + (sum.scale >> ES) : -(sum.scale >> ES);
+
+
+    // STICKY BIT CALCULATION (all the bits from [msb, lsb], that is, msb is included)
+    logic [ABITS:0] fraction_leftover;
+    logic [6:0] leftover_shift;
+    assign leftover_shift = NBITS - 4 - regime_shift_amount;
+    // Determine all fraction bits that are truncated in the final result
+    DSR_left_N_S #(
+        .N(ABITS+1),
+        .S(7)
+    ) fraction_leftover_shift (
+        .a(fraction_sum_normalized), // exponent + fraction bits
+        .b(leftover_shift), // Shift to right by regime value (clip at maximum number of bits)
+        .c(fraction_leftover)
+    );
+    logic sticky_bit;
+    assign sticky_bit = |fraction_leftover[ABITS-1:0]; // Logical OR of all truncated fraction multiplication bits
+
+    logic bafter;
+    assign bafter = fraction_leftover[ABITS];
+    // END STICKY BIT CALCULATION
+
+
+    logic [28:0] fraction_truncated;
+    assign fraction_truncated = {fraction_sum_normalized[ABITS:4], (fraction_sum_normalized[3] | sticky_bit)};
+
     logic [2*NBITS-1:0] regime_exp_fraction;
     assign regime_exp_fraction = { {NBITS-1{~sum.scale[7]}}, // Regime leading bits
                             sum.scale[7], // Regime terminating bit
                             result_exponent, // Exponent
-                            fraction_sum_normalized[ABITS:2]}; // Fraction
-
-    logic [6:0] regime_shift_amount;
-    assign regime_shift_amount = (sum.scale[7] == 0) ? 1 + (sum.scale >> ES) : -(sum.scale >> ES);
+                            fraction_truncated[28:0] }; // Fraction
 
     logic [2*NBITS-1:0] exp_fraction_shifted_for_regime;
     DSR_right_N_S #(
@@ -133,18 +159,25 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
     // TODO Inward projection
     // Determine result (without sign), either a full regime part (inward projection) or the unsigned regime+exp+fraction
     logic [NBITS-2:0] result_no_sign;
-    assign result_no_sign = exp_fraction_shifted_for_regime[NBITS:2];
+    assign result_no_sign = exp_fraction_shifted_for_regime[NBITS-1:1];
 
-    // TODO sticky bit
+    // Perform rounding (based on sticky bit)
+    logic blast;
     logic [NBITS-2:0] result_no_sign_rounded;
-    assign result_no_sign_rounded = result_no_sign;
+    assign blast = result_no_sign[0];
+
+    logic tie_to_even, round_nearest;
+    assign tie_to_even = blast & bafter; // Value 1.5 -> round to 2 (even)
+    assign round_nearest = bafter & sticky_bit; // Value > 0.5: round to nearest
+
+    assign result_no_sign_rounded = (tie_to_even | round_nearest) ? (result_no_sign + 1) : result_no_sign;
 
     // In case the product is negative, take 2's complement of everything but the sign
     logic [NBITS-2:0] signed_result_no_sign;
     assign signed_result_no_sign = sum.sign ? -result_no_sign_rounded[NBITS-2:0] : result_no_sign_rounded[NBITS-2:0];
 
     // Final output
-    assign result = (sum.zero | sum.inf) ? {sum.inf, {NBITS-1{1'b0}}} : {sum.sign, signed_result_no_sign[NBITS-2:0]};
+    assign result = (out_rounded_zero | sum.zero | sum.inf) ? {sum.inf, {NBITS-1{1'b0}}} : {sum.sign, signed_result_no_sign[NBITS-2:0]};
     assign inf = sum.inf;
     assign zero = ~sum.inf & sum.zero;
     assign done = start;

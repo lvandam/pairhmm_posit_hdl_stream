@@ -62,10 +62,9 @@ module posit_extract (input wire [NBITS-1:0] in, output value out);
         .c(exp_fraction_u)
     );
 
-    assign out.exponent = exp_fraction_u[NBITS-1:NBITS-ES];
     assign out.fraction = exp_fraction_u[NBITS-ES-1:3];
 
     // Scale = k*(2^es) + 2^exp
-    assign out.scale = regime_scale + out.exponent;
+    assign out.scale = regime_scale + exp_fraction_u[NBITS-1:NBITS-ES];
 
 endmodule

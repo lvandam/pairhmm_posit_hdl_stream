@@ -81,7 +81,7 @@ module positmult (clk, in1, in2, start, result, inf, zero, done);
     assign regime_exp_fraction = { {NBITS{~product.scale[8]}}, // Regime leading bits
                             product.scale[8], // Regime terminating bit
                             result_exponent, // Exponent
-                            fraction_truncated[28:0]}; // Fraction
+                            fraction_truncated[28:0] }; // Fraction
 
     logic [2*NBITS-1:0] exp_fraction_shifted_for_regime;
     DSR_right_N_S #(
