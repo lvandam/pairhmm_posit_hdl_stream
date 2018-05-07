@@ -182,10 +182,14 @@ module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
     assign r3_result_no_sign = r3_inward_projection ? (r3_inward_projection_k2 ? {{NBITS-2{1'b0}}, 1'b1} : {NBITS-1{1'b1}}) : r3_exp_fraction_shifted_for_regime[NBITS-1:1];
 
     // Perform rounding (based on sticky bit)
-    logic r3_blast;
+    logic r3_blast, r3_tie_to_even, r3_round_nearest;
     logic [NBITS-2:0] r3_result_no_sign_rounded;
+    
     assign r3_blast = r3_result_no_sign[0];
-    assign r3_result_no_sign_rounded = ((r3_blast & r3_bafter) | (r3_bafter & r3_sticky_bit)) ? (r3_result_no_sign + 1) : r3_result_no_sign;
+    assign r3_tie_to_even = r3_blast & r3_bafter; // Value 1.5 -> round to 2 (even)
+    assign r3_round_nearest = r3_bafter & r3_sticky_bit; // Value > 0.5: round to nearest
+
+    assign r3_result_no_sign_rounded = (r3_tie_to_even | r3_round_nearest) ? (r3_result_no_sign + 1) : r3_result_no_sign;
 
     // In case the product is negative, take 2's complement of everything but the sign
     logic [NBITS-2:0] r3_signed_result_no_sign;

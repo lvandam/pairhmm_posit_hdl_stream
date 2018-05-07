@@ -154,16 +154,15 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
     );
 
     // TODO Inward projection?
-    // Determine result (without sign), either a full regime part (inward projection) or the unsigned regime+exp+fraction
+    // Determine result (without sign), the unsigned regime+exp+fraction
     logic [NBITS-2:0] result_no_sign;
     assign result_no_sign = exp_fraction_shifted_for_regime[NBITS-1:1];
 
     // Perform rounding (based on sticky bit)
-    logic blast;
+    logic blast, tie_to_even, round_nearest;
     logic [NBITS-2:0] result_no_sign_rounded;
-    assign blast = result_no_sign[0];
 
-    logic tie_to_even, round_nearest;
+    assign blast = result_no_sign[0];
     assign tie_to_even = blast & bafter; // Value 1.5 -> round to 2 (even)
     assign round_nearest = bafter & sticky_bit; // Value > 0.5: round to nearest
 
