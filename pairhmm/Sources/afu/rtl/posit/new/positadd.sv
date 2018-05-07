@@ -54,21 +54,24 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
     assign equalize_shift_amount = scale_diff;
 
     // Shift smaller magnitude based on scale difference
-    logic [ABITS-1:0] low_fraction_shifted; // TODO We lose some bits here
+    logic [2*ABITS-1:0] low_fraction_shifted; // TODO We lose some bits here
     DSR_right_N_S #(
-        .N(ABITS),
+        .N(2*ABITS),
         .S(8)
     ) scale_matching_shift (
-        .a({1'b1, low.fraction, {3{1'b0}}}),
+        .a({1'b1, low.fraction, {ABITS+3{1'b0}}}),
         .b(equalize_shift_amount), // Shift to right by scale difference
         .c(low_fraction_shifted)
     );
 
+    logic truncated_after_equalizing;
+    assign truncated_after_equalizing = |low_fraction_shifted[ABITS-1:0];
+
     // Add the fractions
     logic unsigned [ABITS:0] fraction_sum_raw, fraction_sum_raw_add, fraction_sum_raw_sub;
 
-    assign fraction_sum_raw_add = {1'b1, hi.fraction, {3{1'b0}}} + low_fraction_shifted;
-    assign fraction_sum_raw_sub = {1'b1, hi.fraction, {3{1'b0}}} - low_fraction_shifted;
+    assign fraction_sum_raw_add = {1'b1, hi.fraction, {3{1'b0}}} + low_fraction_shifted[2*ABITS-1:ABITS];
+    assign fraction_sum_raw_sub = {1'b1, hi.fraction, {3{1'b0}}} - low_fraction_shifted[2*ABITS-1:ABITS];
     assign fraction_sum_raw = operation ? fraction_sum_raw_add : fraction_sum_raw_sub;
 
     // Result normalization: shift until normalized (and fix the sign)
@@ -83,10 +86,6 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
 
     logic signed [7:0] scale_sum;
     assign scale_sum = fraction_sum_raw[ABITS] ? (hi.scale + 1) : (~fraction_sum_raw[ABITS-1] ? (hi.scale - hidden_pos + 1) : hi.scale);
-
-    // if(shift >= ABITS) {
-    //     set sum to 0
-    // }
 
     // Normalize the sum output (shift left)
     logic [4:0] shift_amount_hiddenbit_out;
@@ -115,7 +114,6 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
     logic [6:0] regime_shift_amount;
     assign regime_shift_amount = (sum.scale[7] == 0) ? 1 + (sum.scale >> ES) : -(sum.scale >> ES);
 
-
     // STICKY BIT CALCULATION (all the bits from [msb, lsb], that is, msb is included)
     logic [ABITS:0] fraction_leftover;
     logic [6:0] leftover_shift;
@@ -130,12 +128,11 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
         .c(fraction_leftover)
     );
     logic sticky_bit;
-    assign sticky_bit = |fraction_leftover[ABITS-1:0]; // Logical OR of all truncated fraction multiplication bits
+    assign sticky_bit = truncated_after_equalizing | |fraction_leftover[ABITS-1:0]; // Logical OR of all truncated fraction multiplication bits
 
     logic bafter;
     assign bafter = fraction_leftover[ABITS];
     // END STICKY BIT CALCULATION
-
 
     logic [28:0] fraction_truncated;
     assign fraction_truncated = {fraction_sum_normalized[ABITS:4], (fraction_sum_normalized[3] | sticky_bit)};
@@ -156,7 +153,7 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
         .c(exp_fraction_shifted_for_regime)
     );
 
-    // TODO Inward projection
+    // TODO Inward projection?
     // Determine result (without sign), either a full regime part (inward projection) or the unsigned regime+exp+fraction
     logic [NBITS-2:0] result_no_sign;
     assign result_no_sign = exp_fraction_shifted_for_regime[NBITS-1:1];
