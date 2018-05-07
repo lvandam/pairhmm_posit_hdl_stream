@@ -6,6 +6,7 @@
 `default_nettype wire
 
 `include "posit_defines.sv"
+`include "posit_extract.sv"
 
 import posit_defines::*;
 
