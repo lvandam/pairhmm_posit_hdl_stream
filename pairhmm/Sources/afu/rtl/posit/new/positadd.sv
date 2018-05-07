@@ -36,18 +36,22 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
     assign sum.inf = a.inf | b.inf;
 
     logic a_lt_b; // A larger than B
-    assign a_lt_b = ((a.scale < b.scale) || ((a.scale == b.scale) && (a.fraction < b.fraction))); // TODO or: r0_xin1[N-2:0] >= r0_xin2[N-2:0] ? '1 : '0;
+    logic [NBITS-1:0] in1_abs, in2_abs; // absolute inputs (TODO integrate this somewhere, unnecessary logic)
+    assign in1_abs = a.sign ? -in1 : in1;
+    assign in2_abs = b.sign ? -in2 : in2;
+    assign a_lt_b = in1_abs[NBITS-2:0] >= in2_abs[NBITS-2:0] ? '1 : '0;
+
     assign operation = a.sign ~^ b.sign; // 1 = equal signs = add, 0 = unequal signs = subtract
-    assign low = a_lt_b ? a : b;
-    assign hi = a_lt_b ? b : a;
+    assign low = a_lt_b ? b : a;
+    assign hi = a_lt_b ? a : b;
 
     // Difference in scales (regime and exponent)
     logic unsigned [7:0] scale_diff;
-    assign scale_diff = hi.scale - low.scale;
+    assign scale_diff = hi.scale - low.scale; // TODO this is dirty
 
     // Amount the smaller input has to be shifted (everything of the scale difference that the regime cannot cover)
     logic unsigned [7:0] equalize_shift_amount;
-    assign equalize_shift_amount = scale_diff % (2 << ES);
+    assign equalize_shift_amount = scale_diff;
 
     // Shift smaller magnitude based on scale difference
     logic [ABITS-1:0] low_fraction_shifted; // TODO We lose some bits here
@@ -68,8 +72,18 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
     assign fraction_sum_raw = operation ? fraction_sum_raw_add : fraction_sum_raw_sub;
 
     // Result normalization: shift until normalized (and fix the sign)
+    // Find the hidden bit (leading zero counter)
+    logic [4:0] hidden_pos;
+    LOD_N #(
+        .N(ABITS+1)
+    ) hidden_bit_counter(
+        .in(fraction_sum_raw[ABITS:0]),
+        .out(hidden_pos)
+    );
+
     logic signed [8:0] scale_sum;
-    assign scale_sum = fraction_sum_raw[ABITS] ? (hi.scale - 1) : hi.scale;
+    assign scale_sum = fraction_sum_raw[ABITS] ? (hi.scale + 1) : (~fraction_sum_raw[ABITS-1] ? (hi.scale - hidden_pos + 1) : hi.scale);
+    // assign scale_sum = fraction_sum_raw[ABITS] ? (hi.scale - 1) : hi.scale;
 
     // TODO
     // if(shift >= ABITS) {
@@ -77,23 +91,21 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
     // }
 
     // Normalize the sum output (shift left)
+    logic [4:0] shift_amount_hiddenbit_out;
+    assign shift_amount_hiddenbit_out = hidden_pos + 1;
 
-    logic [29:0] fraction_sum_normalized;
-    assign fraction_sum_normalized = fraction_sum_raw[ABITS] ? fraction_sum_raw[ABITS-1:1] : fraction_sum_raw[ABITS-2:0]; // TODO overflow 2 MSB's are 00
-
-    // assign scale_sum = (~fraction_sum_overflow) ? hi.scale : hi.scale + 1;
+    logic [ABITS:0] fraction_sum_normalized;
+    DSR_left_N_S #(
+        .N(ABITS+1),
+        .S(5)
+    ) ls (
+        .a(fraction_sum_raw[ABITS:0]),
+        .b(shift_amount_hiddenbit_out),
+        .c(fraction_sum_normalized)
+    );
 
     assign sum.sign = hi.sign;
     assign sum.scale = scale_sum;
-
-
-
-
-
-
-
-
-
 
     // PACK INTO POSIT
     logic [ES-1:0] result_exponent;
@@ -103,7 +115,7 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
     assign regime_exp_fraction = { {NBITS-1{~sum.scale[8]}}, // Regime leading bits
                             sum.scale[8], // Regime terminating bit
                             result_exponent, // Exponent
-                            fraction_sum_normalized[29:0]}; // Fraction
+                            fraction_sum_normalized[ABITS:2]}; // Fraction
 
     logic [6:0] regime_shift_amount;
     assign regime_shift_amount = (sum.scale[8] == 0) ? 1 + (sum.scale >> ES) : -(sum.scale >> ES);
@@ -131,13 +143,10 @@ module positadd (clk, in1, in2, start, result, inf, zero, done);
     logic [NBITS-2:0] signed_result_no_sign;
     assign signed_result_no_sign = sum.sign ? -result_no_sign_rounded[NBITS-2:0] : result_no_sign_rounded[NBITS-2:0];
 
-
-
     // Final output
     assign result = (sum.zero | sum.inf) ? {sum.inf, {NBITS-1{1'b0}}} : {sum.sign, signed_result_no_sign[NBITS-2:0]};
     assign inf = sum.inf;
     assign zero = ~sum.inf & sum.zero;
     assign done = start;
-
 
 endmodule
