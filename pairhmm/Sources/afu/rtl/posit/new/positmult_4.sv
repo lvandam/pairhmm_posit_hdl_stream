@@ -5,9 +5,6 @@
 `timescale 1ns / 1ps
 `default_nettype wire
 
-`include "posit_defines.sv"
-`include "posit_extract.sv"
-
 import posit_defines::*;
 
 module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
@@ -184,7 +181,7 @@ module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
     // Perform rounding (based on sticky bit)
     logic r3_blast, r3_tie_to_even, r3_round_nearest;
     logic [NBITS-2:0] r3_result_no_sign_rounded;
-    
+
     assign r3_blast = r3_result_no_sign[0];
     assign r3_tie_to_even = r3_blast & r3_bafter; // Value 1.5 -> round to 2 (even)
     assign r3_round_nearest = r3_bafter & r3_sticky_bit; // Value > 0.5: round to nearest
