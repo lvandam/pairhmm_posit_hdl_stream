@@ -14,6 +14,7 @@ module positadd_4 (clk, in1, in2, start, result, inf, zero, done);
     output wire [31:0] result;
     output wire inf, zero, done;
 
+
     //   ___
     //  / _ \
     // | | | |
@@ -24,6 +25,7 @@ module positadd_4 (clk, in1, in2, start, result, inf, zero, done);
     logic r0_start;
 
     value r0_a, r0_b;
+    logic [NBITS-2:0] r0_in1_abs, r0_in2_abs;
 
     always @(posedge clk)
     begin
@@ -35,26 +37,28 @@ module positadd_4 (clk, in1, in2, start, result, inf, zero, done);
     // Extract posit characteristics, among others the regime & exponent scales
     posit_extract a_extract (
         .in(r0_in1),
+        .abs(r0_in1_abs),
         .out(r0_a)
     );
 
     posit_extract b_extract (
         .in(r0_in2),
+        .abs(r0_in2_abs),
         .out(r0_b)
     );
 
     value r0_low, r0_hi;
 
     logic r0_a_lt_b; // A larger than B
-    logic [NBITS-1:0] r0_in1_abs, r0_in2_abs; // absolute inputs (TODO integrate this somewhere, unnecessary logic)
-
-    assign r0_in1_abs = r0_a.sign ? -r0_in1 : r0_in1;
-    assign r0_in2_abs = r0_b.sign ? -r0_in2 : r0_in2;
     assign r0_a_lt_b = r0_in1_abs[NBITS-2:0] >= r0_in2_abs[NBITS-2:0] ? '1 : '0;
 
     assign r0_operation = r0_a.sign ~^ r0_b.sign; // 1 = equal signs = add, 0 = unequal signs = subtract
     assign r0_low = r0_a_lt_b ? r0_b : r0_a;
     assign r0_hi = r0_a_lt_b ? r0_a : r0_b;
+
+    logic unsigned [7:0] r0_scale_diff;
+    assign r0_scale_diff = r0_hi.scale - r0_low.scale; // TODO this is dirty
+
 
     //  __
     // /_ |
@@ -65,8 +69,8 @@ module positadd_4 (clk, in1, in2, start, result, inf, zero, done);
     logic r1_start;
 
     value r1_low, r1_hi;
-    value_sum r1_sum;
     logic r1_operation;
+    logic unsigned [7:0] r1_scale_diff;
 
     always @(posedge clk)
     begin
@@ -75,12 +79,11 @@ module positadd_4 (clk, in1, in2, start, result, inf, zero, done);
         r1_low <= r0_low;
         r1_hi <= r0_hi;
         r1_operation <= r0_operation;
+        r1_scale_diff <= r0_scale_diff;
     end
 
     // Difference in scales (regime and exponent)
     // Amount the smaller input has to be shifted (everything of the scale difference that the regime cannot cover)
-    logic unsigned [7:0] r1_scale_diff;
-    assign r1_scale_diff = r1_hi.scale - r1_low.scale; // TODO this is dirty
 
     // Shift smaller magnitude based on scale difference
     logic [2*ABITS-1:0] r1_low_fraction_shifted; // TODO We lose some bits here
@@ -103,29 +106,8 @@ module positadd_4 (clk, in1, in2, start, result, inf, zero, done);
     assign r1_fraction_sum_raw_sub = {1'b1, r1_hi.fraction, {3{1'b0}}} - r1_low_fraction_shifted[2*ABITS-1:ABITS];
     assign r1_fraction_sum_raw = r1_operation ? r1_fraction_sum_raw_add : r1_fraction_sum_raw_sub;
 
-    // Result normalization: shift until normalized (and fix the sign)
-    // Find the hidden bit (leading zero counter)
-    logic [4:0] r1_hidden_pos;
-    LOD_N #(
-        .N(ABITS+1)
-    ) hidden_bit_counter(
-        .in(r1_fraction_sum_raw[ABITS:0]),
-        .out(r1_hidden_pos)
-    );
 
-    logic signed [7:0] r1_scale_sum;
-    assign r1_scale_sum = r1_fraction_sum_raw[ABITS] ? (r1_hi.scale + 1) : (~r1_fraction_sum_raw[ABITS-1] ? (r1_hi.scale - r1_hidden_pos + 1) : r1_hi.scale);
 
-    assign r1_sum.sign = r1_hi.sign;
-    assign r1_sum.scale = r1_scale_sum;
-    assign r1_sum.zero = r1_hi.zero & r1_low.zero;
-    assign r1_sum.inf = r1_hi.inf | r1_low.inf;
-
-    logic [4:0] r1_shift_amount_hiddenbit_out;
-    assign r1_shift_amount_hiddenbit_out = r1_hidden_pos + 1;
-
-    logic r1_out_rounded_zero;
-    assign r1_out_rounded_zero = (r1_hidden_pos >= ABITS); // The hidden bit is shifted out of range, our sum becomes 0 (when truncated)
 
     //  ___
     // |__ \
@@ -138,18 +120,40 @@ module positadd_4 (clk, in1, in2, start, result, inf, zero, done);
     value_sum r2_sum;
     logic unsigned [ABITS:0] r2_fraction_sum_raw;
     logic r2_truncated_after_equalizing, r2_out_rounded_zero;
-    logic [4:0] r2_shift_amount_hiddenbit_out;
+    logic [4:0] r2_shift_amount_hiddenbit_out, r2_hidden_pos;
 
     always @(posedge clk)
     begin
         r2_start <= r1_start;
 
-        r2_sum <= r1_sum;
         r2_fraction_sum_raw <= r1_fraction_sum_raw;
         r2_shift_amount_hiddenbit_out <= r1_shift_amount_hiddenbit_out;
         r2_truncated_after_equalizing <= r1_truncated_after_equalizing;
-        r2_out_rounded_zero <= r1_out_rounded_zero;
     end
+
+
+    // Result normalization: shift until normalized (and fix the sign)
+    // Find the hidden bit (leading zero counter)
+    LOD_N #(
+        .N(ABITS+1)
+    ) hidden_bit_counter(
+        .in(r2_fraction_sum_raw[ABITS:0]),
+        .out(r2_hidden_pos)
+    );
+
+    logic signed [7:0] r2_scale_sum;
+    assign r2_scale_sum = r2_fraction_sum_raw[ABITS] ? (r2_hi.scale + 1) : (~r2_fraction_sum_raw[ABITS-1] ? (r2_hi.scale - r2_hidden_pos + 1) : r2_hi.scale);
+
+    assign r2_sum.sign = r2_hi.sign;
+    assign r2_sum.scale = r2_scale_sum;
+    assign r2_sum.zero = r2_hi.zero & r2_low.zero;
+    assign r2_sum.inf = r2_hi.inf | r2_low.inf;
+
+    logic [4:0] r2_shift_amount_hiddenbit_out;
+    assign r2_shift_amount_hiddenbit_out = r2_hidden_pos + 1;
+
+    logic r2_out_rounded_zero;
+    assign r2_out_rounded_zero = (r2_hidden_pos >= ABITS); // The hidden bit is shifted out of range, our sum becomes 0 (when truncated)
 
     // Normalize the sum output (shift left)
     logic [ABITS:0] r2_fraction_sum_normalized;
@@ -199,6 +203,7 @@ module positadd_4 (clk, in1, in2, start, result, inf, zero, done);
                             r2_sum.scale[7], // Regime terminating bit
                             r2_result_exponent, // Exponent
                             r2_fraction_truncated[28:0] }; // Fraction
+
 
     //  ____
     // |___ \

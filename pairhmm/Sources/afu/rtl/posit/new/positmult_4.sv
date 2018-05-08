@@ -15,7 +15,12 @@ module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
     output wire inf, zero, done;
 
 
-    // 0
+    //   ___
+    //  / _ \
+    // | | | |
+    // | | | |
+    // | |_| |
+    //  \___/
     logic [31:0] r0_in1, r0_in2;
     logic r0_start;
 
@@ -40,8 +45,12 @@ module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
     );
 
 
-
-    // 1
+    //  __
+    // /_ |
+    //  | |
+    //  | |
+    //  | |
+    //  |_|
     logic r1_start;
 
     value r1_a, r1_b;
@@ -72,19 +81,20 @@ module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
     assign r1_product.inf = r1_a.inf | r1_b.inf;
 
 
-
-    // 2
+    //  ___
+    // |__ \
+    //    ) |
+    //   / /
+    //  / /_
+    // |____|
     logic r2_start;
     value_product r2_product;
 
     always @(posedge clk)
     begin
         r2_start <= r1_start;
-
         r2_product <= r1_product;
     end
-
-
 
     logic [ES-1:0] r2_result_exponent;
     assign r2_result_exponent = r2_product.scale % (2 << ES);
@@ -124,15 +134,12 @@ module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
                             r2_fraction_truncated[28:0]}; // Fraction
 
 
-
-
-
-
-
-
-
-
-    // 3
+    //  ____
+    // |___ \
+    //   __) |
+    //  |__ <
+    //  ___) |
+    // |____/
     logic r3_start;
     value_product r3_product;
     logic [6:0] r3_regime_shift_amount;

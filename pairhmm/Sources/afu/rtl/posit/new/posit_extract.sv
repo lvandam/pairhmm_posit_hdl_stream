@@ -9,7 +9,7 @@
 
 import posit_defines::*;
 
-module posit_extract (input wire [NBITS-1:0] in, output value out);
+module posit_extract (input wire [NBITS-1:0] in, output wire [NBITS-2:0] abs, output value out);
     logic [7:0] regime_scale;
     logic [4:0] regime_u, k0, k1;
     logic [NBITS-1:0] exp_fraction_u;
@@ -66,5 +66,7 @@ module posit_extract (input wire [NBITS-1:0] in, output value out);
 
     // Scale = k*(2^es) + 2^exp
     assign out.scale = regime_scale + exp_fraction_u[NBITS-1:NBITS-ES];
+
+    assign abs = in_u[NBITS-2:0];
 
 endmodule

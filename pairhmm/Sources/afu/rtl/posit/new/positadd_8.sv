@@ -14,6 +14,7 @@ module positadd_8 (clk, in1, in2, start, result, inf, zero, done);
     output wire [31:0] result;
     output wire inf, zero, done;
 
+
     //   ___
     //  / _ \
     // | | | |
@@ -55,6 +56,7 @@ module positadd_8 (clk, in1, in2, start, result, inf, zero, done);
     assign r0_operation = r0_a.sign ~^ r0_b.sign; // 1 = equal signs = add, 0 = unequal signs = subtract
     assign r0_low = r0_a_lt_b ? r0_b : r0_a;
     assign r0_hi = r0_a_lt_b ? r0_a : r0_b;
+
 
     //  __
     // /_ |
@@ -104,7 +106,12 @@ module positadd_8 (clk, in1, in2, start, result, inf, zero, done);
     assign r1_fraction_sum_raw = r1_operation ? r1_fraction_sum_raw_add : r1_fraction_sum_raw_sub;
 
 
-    // 1B
+    //  __   ____
+    // /_ | |  _ \
+    //  | | | |_) |
+    //  | | |  _ <
+    //  | | | |_) |
+    //  |_| |____/
     logic r1b_start;
 
     value r1b_low, r1b_hi;
@@ -146,6 +153,7 @@ module positadd_8 (clk, in1, in2, start, result, inf, zero, done);
 
     logic r1b_out_rounded_zero;
     assign r1b_out_rounded_zero = (r1b_hidden_pos >= ABITS); // The hidden bit is shifted out of range, our sum becomes 0 (when truncated)
+
 
     //  ___
     // |__ \
@@ -193,7 +201,13 @@ module positadd_8 (clk, in1, in2, start, result, inf, zero, done);
     logic [6:0] r2_leftover_shift;
     assign r2_leftover_shift = NBITS - 4 - r2_regime_shift_amount;
 
-    // 2B
+
+    //  ___    ____
+    // |__ \  |  _ \
+    //    ) | | |_) |
+    //   / /  |  _ <
+    //  / /_  | |_) |
+    // |____| |____/
     logic r2b_start;
 
     value_sum r2b_sum;
@@ -243,6 +257,7 @@ module positadd_8 (clk, in1, in2, start, result, inf, zero, done);
                             r2b_result_exponent, // Exponent
                             r2b_fraction_truncated[28:0] }; // Fraction
 
+
     //  ____
     // |___ \
     //   __) |
@@ -283,7 +298,13 @@ module positadd_8 (clk, in1, in2, start, result, inf, zero, done);
     logic [NBITS-2:0] r3_result_no_sign;
     assign r3_result_no_sign = r3_exp_fraction_shifted_for_regime[NBITS-1:1];
 
-    // 3B
+
+    //  ____    ____
+    // |___ \  |  _ \
+    //   __) | | |_) |
+    //  |__ <  |  _ <
+    //  ___) | | |_) |
+    // |____/  |____/
     logic r3b_start;
 
     value_sum r3b_sum;
@@ -315,7 +336,13 @@ module positadd_8 (clk, in1, in2, start, result, inf, zero, done);
     logic [NBITS-2:0] r3b_signed_result_no_sign;
     assign r3b_signed_result_no_sign = r3b_sum.sign ? -r3b_result_no_sign_rounded[NBITS-2:0] : r3b_result_no_sign_rounded[NBITS-2:0];
 
-    // Final stage (99)
+
+    //   ___     ___
+    //  / _ \   / _ \
+    // | (_) | | (_) |
+    //  \__, |  \__, |
+    //    / /     / /
+    //   /_/     /_/
     logic r99_start;
 
     value_sum r99_sum;
