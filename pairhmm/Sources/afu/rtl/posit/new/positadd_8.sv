@@ -23,9 +23,9 @@ module positadd_8 (clk, in1, in2, start, result, inf, zero, done);
     //  \___/
     logic [31:0] r0_in1, r0_in2;
     logic r0_start;
-    logic [NBITS-1:0] r0_in1_abs, r0_in2_abs; // absolute inputs (TODO integrate this somewhere, unnecessary logic)
 
     value r0_a, r0_b;
+    logic [NBITS-2:0] r0_in1_abs, r0_in2_abs;
 
     always @(posedge clk)
     begin
@@ -50,7 +50,6 @@ module positadd_8 (clk, in1, in2, start, result, inf, zero, done);
     value r0_low, r0_hi;
 
     logic r0_a_lt_b; // A larger than B
-
     assign r0_a_lt_b = r0_in1_abs[NBITS-2:0] >= r0_in2_abs[NBITS-2:0] ? '1 : '0;
 
     assign r0_operation = r0_a.sign ~^ r0_b.sign; // 1 = equal signs = add, 0 = unequal signs = subtract
