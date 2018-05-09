@@ -89,7 +89,7 @@ module positadd_8 (clk, in1, in2, start, result, inf, zero, done);
         .N(2*ABITS),
         .S(8)
     ) scale_matching_shift (
-        .a({1'b1, r1_low.fraction, {ABITS+3{1'b0}}}),
+        .a({~r1_low.zero, r1_low.fraction, {ABITS+3{1'b0}}}),
         .b(r1_scale_diff), // Shift to right by scale difference
         .c(r1_low_fraction_shifted)
     );
@@ -100,8 +100,8 @@ module positadd_8 (clk, in1, in2, start, result, inf, zero, done);
     // Add the fractions
     logic unsigned [ABITS:0] r1_fraction_sum_raw, r1_fraction_sum_raw_add, r1_fraction_sum_raw_sub;
 
-    assign r1_fraction_sum_raw_add = {1'b1, r1_hi.fraction, {3{1'b0}}} + r1_low_fraction_shifted[2*ABITS-1:ABITS];
-    assign r1_fraction_sum_raw_sub = {1'b1, r1_hi.fraction, {3{1'b0}}} - r1_low_fraction_shifted[2*ABITS-1:ABITS];
+    assign r1_fraction_sum_raw_add = {~r1_hi.zero, r1_hi.fraction, {3{1'b0}}} + r1_low_fraction_shifted[2*ABITS-1:ABITS];
+    assign r1_fraction_sum_raw_sub = {~r1_hi.zero, r1_hi.fraction, {3{1'b0}}} - r1_low_fraction_shifted[2*ABITS-1:ABITS];
     assign r1_fraction_sum_raw = r1_operation ? r1_fraction_sum_raw_add : r1_fraction_sum_raw_sub;
 
 

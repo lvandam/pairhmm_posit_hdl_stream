@@ -73,24 +73,16 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
         }
 
         for (int i = 0; i < xp; i++) {
-            // srand((k * PIPE_DEPTH + i) * xp + x * 9949 + y * 9133); // Seed number generator
+            srand((k * PIPE_DEPTH + i) * xp + x * 9949 + y * 9133); // Seed number generator
 
-            // eta = random_number(0.5, 0.1);
-            eta = 0.5 + (0.1 * 0.5 * ((float)i / xp));
-            // zeta = random_number(0.125, 0.05);
-            zeta = 0.125 + (0.05 * 0.5 * ((float)i / xp));
-            // upsilon = random_number(0.5, 0.1);
-            upsilon = 0.5 + (0.1 * 0.5 * ((float)i / xp));
-            // delta = random_number(0.125, 0.05);
-            delta = 0.125 + (0.05 * 0.5 * ((float)i / xp));
-            // beta = random_number(0.5, 0.1);
-            beta = 0.5 + (0.1 * 0.5 * ((float)i / xp));
-            // alpha = random_number(0.125, 0.05);
-            alpha = 0.125 + (0.05 * 0.5 * ((float)i / xp));
-            // distm_diff = random_number(0.5, 0.1);
-            distm_diff = 0.5 + (0.1 * 0.5 * ((float)i / xp));
-            // distm_simi = random_number(0.125, 0.05);
-            distm_simi = 0.125 + (0.05 * 0.5 * ((float)i / xp));
+            eta = random_number(0.5, 0.1);
+            zeta = random_number(0.125, 0.05);
+            upsilon = random_number(0.5, 0.1);
+            delta = random_number(0.125, 0.05);
+            beta = random_number(0.5, 0.1);
+            alpha = random_number(0.125, 0.05);
+            distm_diff = random_number(0.5, 0.1);
+            distm_simi = random_number(0.125, 0.05);
 
             prob[i * PIPE_DEPTH + k].p[0].b = (int) eta.collect().to_ulong();
             prob[i * PIPE_DEPTH + k].p[1].b = (int) zeta.collect().to_ulong();
