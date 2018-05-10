@@ -5,9 +5,9 @@
 `timescale 1ns / 1ps
 `default_nettype wire
 
-import posit_defines::*;
+import posit_defines_es3::*;
 
-module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
+module positmult_4_es3 (clk, in1, in2, start, result, inf, zero, done);
 
     input wire clk, start;
     input wire [31:0] in1, in2;
@@ -34,13 +34,13 @@ module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
     end
 
     // Extract posit characteristics, among others the regime & exponent scales
-    posit_extract a_extract (
+    posit_extract_es3 a_extract (
         .in(r0_in1),
         .abs(),
         .out(r0_a)
     );
 
-    posit_extract b_extract (
+    posit_extract_es3 b_extract (
         .in(r0_in2),
         .abs(),
         .out(r0_b)
@@ -101,19 +101,19 @@ module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
     logic [ES-1:0] r2_result_exponent;
     assign r2_result_exponent = r2_product.scale % (2 << ES);
 
-    logic [7:0] r2_regime_shift_amount;
+    logic [6:0] r2_regime_shift_amount;
     // Positive scale -> Should shift with 1's with 1 extra (specification)
     // Negative scale -> Make value positive
     assign r2_regime_shift_amount = (r2_product.scale[9] == 0) ? 1 + (r2_product.scale >> ES) : -(r2_product.scale >> ES);
 
     // STICKY BIT CALCULATION (all the bits from [msb, lsb], that is, msb is included)
     logic [MBITS-1:0] r2_fraction_leftover;
-    logic [NBITS-1:0] r2_leftover_shift;
-    assign r2_leftover_shift = NBITS - 3 - r2_regime_shift_amount;
+    logic [4:0] r2_leftover_shift;
+    assign r2_leftover_shift = NBITS - ES - 2 - r2_regime_shift_amount;
     // Determine all fraction bits that are truncated in the final result
     DSR_left_N_S #(
         .N(MBITS),
-        .S(NBITS)
+        .S(5)
     ) fraction_leftover_shift (
         .a(r2_product.fraction), // exponent + fraction bits
         .b(r2_leftover_shift), // Shift to right by regime value (clip at maximum number of bits)
@@ -144,7 +144,7 @@ module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
     // |____/
     logic r3_start;
     value_product r3_product;
-    logic [7:0] r3_regime_shift_amount;
+    logic [6:0] r3_regime_shift_amount;
     logic [2*NBITS-1:0] r3_regime_exp_fraction;
     logic r3_bafter, r3_sticky_bit;
 
@@ -162,7 +162,7 @@ module positmult_4 (clk, in1, in2, start, result, inf, zero, done);
     logic [2*NBITS-1:0] r3_exp_fraction_shifted_for_regime;
     DSR_right_N_S #(
         .N(2*NBITS),
-        .S(8)
+        .S(7)
     ) dsr2 (
         .a(r3_regime_exp_fraction), // exponent + fraction bits
         .b(r3_regime_shift_amount), // Shift to right by regime value (clip at maximum number of bits)

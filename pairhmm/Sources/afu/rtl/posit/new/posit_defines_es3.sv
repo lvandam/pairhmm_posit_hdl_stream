@@ -2,7 +2,7 @@
 // Delft University of Technology
 // May 2018
 
-package posit_defines;
+package posit_defines_es3;
 
 parameter NBITS = 32;
 parameter ES = 3;
@@ -36,4 +36,4 @@ typedef struct {
     logic zero;
 } value_sum;
 
-endpackage : posit_defines
+endpackage : posit_defines_es3

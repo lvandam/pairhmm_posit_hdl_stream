@@ -7,10 +7,10 @@
 
 `include "posit_defines_es3.sv"
 
-import posit_defines::*;
+import posit_defines_es3::*;
 
 module posit_extract_es3 (input wire [NBITS-1:0] in, output wire [NBITS-2:0] abs, output value out);
-    logic [7:0] regime_scale;
+    logic [8:0] regime_scale;
     logic [4:0] regime_u, k0, k1;
     logic [NBITS-1:0] exp_fraction_u;
     logic [4:0] regime_width;
