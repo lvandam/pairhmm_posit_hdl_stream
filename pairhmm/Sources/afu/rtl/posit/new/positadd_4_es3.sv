@@ -107,8 +107,6 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     assign r1_fraction_sum_raw = r1_operation ? r1_fraction_sum_raw_add : r1_fraction_sum_raw_sub;
 
 
-
-
     //  ___
     // |__ \
     //    ) |
@@ -151,7 +149,7 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     assign r2_sum.zero = r2_hi.zero & r2_low.zero;
     assign r2_sum.inf = r2_hi.inf | r2_low.inf;
 
-    assign r2_shift_amount_hiddenbit_out = r2_hidden_pos + 1;
+    assign r2_shift_amount_hiddenbit_out = r2_hidden_pos;// + 1;
 
     assign r2_out_rounded_zero = (r2_hidden_pos >= ABITS); // The hidden bit is shifted out of range, our sum becomes 0 (when truncated)
 
@@ -168,20 +166,20 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
 
     // PACK INTO POSIT
     logic [ES-1:0] r2_result_exponent;
-    assign r2_result_exponent = r2_sum.scale % (2 << ES);
+    assign r2_result_exponent = r2_sum.scale[8] ? ((-r2_sum.scale) % (2 << ES)) : (r2_sum.scale % (2 << ES));
 
     logic [5:0] r2_regime_shift_amount;
     assign r2_regime_shift_amount = (r2_sum.scale[8] == 0) ? 1 + (r2_sum.scale >> ES) : -(r2_sum.scale >> ES);
 
     // STICKY BIT CALCULATION (all the bits from [msb, lsb], that is, msb is included)
     logic [ABITS:0] r2_fraction_leftover;
-    logic [6:0] r2_leftover_shift;
+    logic [5:0] r2_leftover_shift;
     assign r2_leftover_shift = NBITS - ES - 2 - r2_regime_shift_amount;
 
     // Determine all fraction bits that are truncated in the final result
     DSR_left_N_S #(
         .N(ABITS+1),
-        .S(7)
+        .S(6)
     ) fraction_leftover_shift (
         .a(r2_fraction_sum_normalized), // exponent + fraction bits
         .b(r2_leftover_shift), // Shift to right by regime value (clip at maximum number of bits)
@@ -196,7 +194,7 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     // END STICKY BIT CALCULATION
 
     logic [27:0] r2_fraction_truncated;
-    assign r2_fraction_truncated = {r2_fraction_sum_normalized[ABITS:5], (r2_fraction_sum_normalized[4] | r2_sticky_bit)};
+    assign r2_fraction_truncated = {r2_fraction_sum_normalized[ABITS:4], (r2_fraction_sum_normalized[3] | r2_sticky_bit)};
 
     logic [2*NBITS-1:0] r2_regime_exp_fraction;
     assign r2_regime_exp_fraction = { {NBITS-1{~r2_sum.scale[8]}}, // Regime leading bits
@@ -215,7 +213,7 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
 
     value_sum r3_sum;
     logic [2*NBITS-1:0] r3_regime_exp_fraction;
-    logic [5:0] r3_regime_shift_amount;
+    logic [6:0] r3_regime_shift_amount;
     logic r3_bafter, r3_sticky_bit, r3_out_rounded_zero;
 
     always @(posedge clk)
