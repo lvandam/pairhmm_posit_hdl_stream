@@ -48,7 +48,7 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
     posit<NBITS, ES> zeta(0), eta(0), upsilon(0), delta(0), beta(0), alpha(0), distm_diff(0), distm_simi(0);
 
     for (int k = 0; k < PIPE_DEPTH; k++) {
-        posit<NBITS, ES> initial_posit(initial / PIPE_DEPTH);
+        posit<NBITS, ES> initial_posit(initial / yp);
 
         // Get raw bits to send to HW
         init->initials[k] = to_uint(initial_posit);
