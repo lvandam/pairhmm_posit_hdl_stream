@@ -142,7 +142,7 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     );
 
     logic signed [8:0] r2_scale_sum;
-    assign r2_scale_sum = r2_fraction_sum_raw[ABITS] ? (r2_hi.scale + 1) : (~r2_fraction_sum_raw[ABITS-1] ? (r2_hi.scale - r2_hidden_pos + 1) : r2_hi.scale);
+    assign r2_scale_sum = r2_fraction_sum_raw[ABITS] ? (r2_hi.scale + 1) : (~r2_fraction_sum_raw[ABITS-1] ? (r2_hi.scale - r2_hidden_pos + 2) : r2_hi.scale);
 
     assign r2_sum.sign = r2_hi.sign;
     assign r2_sum.scale = r2_scale_sum;
@@ -166,7 +166,8 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
 
     // PACK INTO POSIT
     logic [ES-1:0] r2_result_exponent;
-    assign r2_result_exponent = r2_sum.scale[8] ? ((-r2_sum.scale) % (2 << ES)) : (r2_sum.scale % (2 << ES));
+    assign r2_result_exponent = r2_sum.scale % (1 << ES);
+    // assign r2_result_exponent = r2_sum.scale[8] ? ((-r2_sum.scale) % (1 << ES)) : (r2_sum.scale % (1 << ES));
 
     logic [5:0] r2_regime_shift_amount;
     assign r2_regime_shift_amount = (r2_sum.scale[8] == 0) ? 1 + (r2_sum.scale >> ES) : -(r2_sum.scale >> ES);
