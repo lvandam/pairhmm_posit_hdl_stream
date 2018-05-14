@@ -149,7 +149,7 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     assign r2_sum.zero = r2_hi.zero & r2_low.zero;
     assign r2_sum.inf = r2_hi.inf | r2_low.inf;
 
-    assign r2_shift_amount_hiddenbit_out = r2_hidden_pos;// + 1;
+    assign r2_shift_amount_hiddenbit_out = r2_hidden_pos;
 
     assign r2_out_rounded_zero = (r2_hidden_pos >= ABITS); // The hidden bit is shifted out of range, our sum becomes 0 (when truncated)
 
@@ -167,9 +167,8 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     // PACK INTO POSIT
     logic [ES-1:0] r2_result_exponent;
     assign r2_result_exponent = r2_sum.scale % (1 << ES);
-    // assign r2_result_exponent = r2_sum.scale[8] ? ((-r2_sum.scale) % (1 << ES)) : (r2_sum.scale % (1 << ES));
 
-    logic [5:0] r2_regime_shift_amount;
+    logic [6:0] r2_regime_shift_amount;
     assign r2_regime_shift_amount = (r2_sum.scale[8] == 0) ? 1 + (r2_sum.scale >> ES) : -(r2_sum.scale >> ES);
 
     // STICKY BIT CALCULATION (all the bits from [msb, lsb], that is, msb is included)
