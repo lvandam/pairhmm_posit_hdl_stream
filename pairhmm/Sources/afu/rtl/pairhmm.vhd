@@ -90,7 +90,7 @@ architecture logic of pairhmm is
   signal    lastlast        : std_logic;
   signal    lastlast1       : std_logic;
 
-  component positadd_8
+  component positadd_8_es3
       port (
         clk: in std_logic;
         in1: in std_logic_vector(31 downto 0);
@@ -222,7 +222,7 @@ begin
     end if;
   end process;
 
-  add_m : positadd_8 port map (
+  add_m : positadd_8_es3 port map (
     clk => cr.clk,
     in1 => addm_ina,
     in2 => addm_inb,
@@ -232,7 +232,7 @@ begin
     done => addm_out_valid
   );
 
-  add_i : positadd_8 port map (
+  add_i : positadd_8_es3 port map (
     clk => cr.clk,
     in1 => addi_ina,
     in2 => addi_inb,

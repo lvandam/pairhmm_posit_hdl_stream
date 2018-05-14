@@ -16,6 +16,13 @@ system work "afu/rtl/posit/new/positmult_4.sv"
 system work "afu/rtl/posit/new/positadd_4.sv"
 system work "afu/rtl/posit/new/positadd_8.sv"
 
+
+system work "afu/rtl/posit/new/posit_defines_es3.sv"
+system work "afu/rtl/posit/new/posit_extract_es3.sv"
+system work "afu/rtl/posit/new/positmult_4_es3.sv"
+system work "afu/rtl/posit/new/positadd_4_es3.sv"
+system work "afu/rtl/posit/new/positadd_8_es3.sv"
+
 vhdl2008 work "afu/pkg/control_package.vhd"
 vhdl2008 work "afu/pkg/cu_package.vhd"
 vhdl2008 work "afu/pkg/dma_package.vhd"

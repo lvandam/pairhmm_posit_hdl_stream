@@ -30,15 +30,18 @@ proc r  {} {
   vlog -quiet ../afu/rtl/posit/DSR_right_N_S.v
   vlog -quiet ../afu/rtl/posit/LOD_N.v
   vlog -quiet ../afu/rtl/posit/LZD_N.v
-  vlog -quiet ../afu/rtl/posit/data_extract.v
-  vlog -sv -quiet ../afu/rtl/posit/posit_adder_4.sv
-  vlog -sv -quiet ../afu/rtl/posit/posit_adder_8.sv
-  # New posit multiplier
+  # posit adder / multiplier 32-2
   vlog -sv -quiet ../afu/rtl/posit/new/posit_defines.sv
   vlog -sv -quiet ../afu/rtl/posit/new/posit_extract.sv
   vlog -sv -quiet ../afu/rtl/posit/new/positmult_4.sv
   vlog -sv -quiet ../afu/rtl/posit/new/positadd_4.sv
   vlog -sv -quiet ../afu/rtl/posit/new/positadd_8.sv
+  # posit adder / multiplier 32-3
+  vlog -sv -quiet ../afu/rtl/posit/new/posit_defines_es3.sv
+  vlog -sv -quiet ../afu/rtl/posit/new/posit_extract_es3.sv
+  vlog -sv -quiet ../afu/rtl/posit/new/positmult_4_es3.sv
+  vlog -sv -quiet ../afu/rtl/posit/new/positadd_4_es3.sv
+  vlog -sv -quiet ../afu/rtl/posit/new/positadd_8_es3.sv
 
   # compile rtl
   echo "Compiling rtl"

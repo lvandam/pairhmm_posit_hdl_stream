@@ -70,7 +70,7 @@ architecture rtl of pe is
     signal  posit_zeros       :   posit_zeros_type;
     signal  fp_valids         :   fp_valids_type;
 
-    component positadd_4
+    component positadd_4_es3
         port (
           clk: in std_logic;
           in1: in std_logic_vector(31 downto 0);
@@ -83,7 +83,7 @@ architecture rtl of pe is
         );
     end component;
 
-    component positadd_8
+    component positadd_8_es3
         port (
           clk: in std_logic;
           in1: in std_logic_vector(31 downto 0);
@@ -96,7 +96,7 @@ architecture rtl of pe is
         );
     end component;
 
-    component positmult_4
+    component positmult_4_es3
         port (
           clk: in std_logic;
           in1: in std_logic_vector(31 downto 0);
@@ -196,7 +196,7 @@ begin
     -- 4 CYCLES
     ---------------------------------------------------------------------------------------------------
 
-    mul_alpha : positmult_4 port map (
+    mul_alpha : positmult_4_es3 port map (
         clk => cr.clk,
         in1 => step.init.tmis.alpha,
         in2 => step.init.mids.mtl,
@@ -207,7 +207,7 @@ begin
         done => fp_valids(0)
     );
 
-    mul_beta : positmult_4 port map (
+    mul_beta : positmult_4_es3 port map (
         clk => cr.clk,
         in1 => step.init.tmis.beta,
         in2 => step.init.mids.itl,
@@ -218,7 +218,7 @@ begin
         done => fp_valids(1)
     );
 
-    mul_gamma : positmult_4 port map (
+    mul_gamma : positmult_4_es3 port map (
         clk => cr.clk,
         in1 => step.init.tmis.beta,
         in2 => step.init.mids.dtl,
@@ -229,7 +229,7 @@ begin
         done => fp_valids(2)
     );
 
-    mul_delta : positmult_4 port map (
+    mul_delta : positmult_4_es3 port map (
         clk => cr.clk,
         in1 => step.init.tmis.delta,
         in2 => step.init.mids.mt,
@@ -240,7 +240,7 @@ begin
         done => fp_valids(3)
     );
 
-    mul_epsilon : positmult_4 port map (
+    mul_epsilon : positmult_4_es3 port map (
         clk => cr.clk,
         in1 => step.init.tmis.epsilon,
         in2 => step.init.mids.it,
@@ -251,7 +251,7 @@ begin
         done => fp_valids(4)
     );
 
-    mul_zeta : positmult_4 port map (
+    mul_zeta : positmult_4_es3 port map (
         clk => cr.clk,
         in1 => step.init.tmis.zeta,
         in2 => step.init.mids.ml,
@@ -262,7 +262,7 @@ begin
         done => fp_valids(5)
     );
 
-    mul_eta : positmult_4 port map (
+    mul_eta : positmult_4_es3 port map (
         clk => cr.clk,
         in1 => step.init.tmis.eta,
         in2 => step.init.mids.dl,
@@ -290,7 +290,7 @@ begin
 
     -- BEGIN alpha + beta + delayed gamma
     -- Substep adding alpha + beta
-    add_alpha_beta : positadd_4 port map (
+    add_alpha_beta : positadd_4_es3 port map (
         clk => cr.clk,
         in1 => step.trans.almtl,
         in2 => step.trans.beitl,
@@ -302,7 +302,7 @@ begin
     );
 
     -- Substep adding alpha + beta + delayed gamma
-    add_alpha_beta_gamma : positadd_4 port map (
+    add_alpha_beta_gamma : positadd_4_es3 port map (
         clk => cr.clk,
         in1 => step.add.albetl,
         in2 => add_gamma_sr(PE_ADD_CYCLES-1),
@@ -315,7 +315,7 @@ begin
     -- END alpha + beta + delayed gamma
 
 
-    add_delta_epsilon : positadd_8 port map (
+    add_delta_epsilon : positadd_8_es3 port map (
         clk => cr.clk,
         in1 => step.trans.demt,
         in2 => step.trans.epit,
@@ -326,7 +326,7 @@ begin
         done => fp_valids(9)
     );
 
-    add_zeta_eta : positadd_8 port map (
+    add_zeta_eta : positadd_8_es3 port map (
         clk => cr.clk,
         in1 => step.trans.zeml,
         in2 => step.trans.etdl,
@@ -365,7 +365,7 @@ begin
         end if;
     end process;
 
-    mul_lambda : positmult_4 port map (
+    mul_lambda : positmult_4_es3 port map (
         clk => cr.clk,
         in1 => step.add.albegatl,
         in2 => distm,
@@ -381,7 +381,7 @@ begin
     end generate;
 
     THETA_MULT: if DISABLE_THETA /= '1' generate
-        mul_theta : positmult_4 port map (
+        mul_theta : positmult_4_es3 port map (
             clk => cr.clk,
             in1 => step.add.deept,
             in2 => step.add.emis.theta,
@@ -398,7 +398,7 @@ begin
     end generate;
 
     UPSILON_MULT: if DISABLE_UPSILON /= '1' generate
-        mul_upsilon : positmult_4 port map (
+        mul_upsilon : positmult_4_es3 port map (
             clk => cr.clk,
             in1 => step.add.zeett,
             in2 => step.add.emis.upsilon,
