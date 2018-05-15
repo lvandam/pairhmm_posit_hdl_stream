@@ -133,14 +133,14 @@ module positadd_8_es3 (clk, in1, in2, start, result, inf, zero, done);
     // Find the hidden bit (leading zero counter)
     logic [4:0] r1b_hidden_pos;
     LOD_N #(
-        .N(ABITS+1)
+        .N(32)
     ) hidden_bit_counter(
-        .in(r1b_fraction_sum_raw[ABITS:0]),
+        .in({r1b_fraction_sum_raw[ABITS:0], 1'b0}),
         .out(r1b_hidden_pos)
     );
 
     logic signed [8:0] r1b_scale_sum;
-    assign r1b_scale_sum = r1b_fraction_sum_raw[ABITS] ? (r1b_hi.scale + 1) : (~r1b_fraction_sum_raw[ABITS-1] ? (r1b_hi.scale - r1b_hidden_pos + 2) : r1b_hi.scale);
+    assign r1b_scale_sum = r1b_fraction_sum_raw[ABITS] ? (r1b_hi.scale + 1) : (~r1b_fraction_sum_raw[ABITS-1] ? (r1b_hi.scale - r1b_hidden_pos + 1) : r1b_hi.scale);
 
     assign r1b_sum.sign = r1b_hi.sign;
     assign r1b_sum.scale = r1b_scale_sum;
@@ -148,7 +148,7 @@ module positadd_8_es3 (clk, in1, in2, start, result, inf, zero, done);
     assign r1b_sum.inf = r1b_hi.inf | r1b_low.inf;
 
     logic [4:0] r1b_shift_amount_hiddenbit_out;
-    assign r1b_shift_amount_hiddenbit_out = r1b_hidden_pos;
+    assign r1b_shift_amount_hiddenbit_out = r1b_hidden_pos + 1;
 
     logic r1b_out_rounded_zero;
     assign r1b_out_rounded_zero = (r1b_hidden_pos >= ABITS); // The hidden bit is shifted out of range, our sum becomes 0 (when truncated)
