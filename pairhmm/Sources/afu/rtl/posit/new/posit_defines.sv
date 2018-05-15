@@ -10,6 +10,7 @@ parameter FBITS = NBITS - 3 - ES; // Size of fraction bits
 parameter FHBITS = FBITS + 1; // Size of fraction + hidden bit
 parameter MBITS = 2 *  FHBITS; // Size of multiplier output
 parameter ABITS = FBITS + 4; // Size of addend
+parameter MAX_FRACTION_SHIFT = (1 << ES) * (NBITS - 1);
 
 typedef struct {
     logic sign;
@@ -35,5 +36,13 @@ typedef struct {
     logic inf;
     logic zero;
 } value_sum;
+
+typedef struct {
+    logic sign;
+    logic signed [7:0] scale;
+    logic [MAX_FRACTION_SHIFT+FBITS-1:0] fraction;
+    logic inf;
+    logic zero;
+} value_accum;
 
 endpackage : posit_defines
