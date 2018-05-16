@@ -43,8 +43,8 @@ module positadd_4_32_3_tb;
 
     reg [N-1:0] data1 [1:65534];
     reg [N-1:0] data2 [1:65534];
-    initial $readmemb("Pin1_add_32-2_custom.txt", data1);
-    initial $readmemb("Pin2_add_32-2_custom.txt", data2);
+    initial $readmemb("Pin1_add_32-3_rand3.txt", data1);
+    initial $readmemb("Pin2_add_32-3_rand3.txt", data2);
 
     reg [31:0] i;
 
@@ -95,7 +95,7 @@ module positadd_4_32_3_tb;
 
     initial
     begin
-        $readmemb("Pout_add_32-2_custom.txt", result);
+        $readmemb("Pout_add_32-3_rand3.txt", result);
     end
 
     reg [N-1:0] diff;

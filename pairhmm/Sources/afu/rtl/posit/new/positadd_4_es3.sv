@@ -86,24 +86,24 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     // Amount the smaller input has to be shifted (everything of the scale difference that the regime cannot cover)
 
     // Shift smaller magnitude based on scale difference
-    logic [2*ABITS-1:0] r1_low_fraction_shifted; // TODO We lose some bits here
+    logic [2*ABITS-4:0] r1_low_fraction_shifted; // TODO We lose some bits here
     DSR_right_N_S #(
-        .N(2*ABITS),
+        .N(2*ABITS-3),
         .S(9)
     ) scale_matching_shift (
-        .a({~r1_low.zero, r1_low.fraction, {ABITS+3{1'b0}}}),
+        .a({~r1_low.zero, r1_low.fraction, {ABITS{1'b0}}}),
         .b(r1_scale_diff), // Shift to right by scale difference
         .c(r1_low_fraction_shifted)
     );
 
     logic r1_truncated_after_equalizing;
-    assign r1_truncated_after_equalizing = |r1_low_fraction_shifted[ABITS-1:0];
+    assign r1_truncated_after_equalizing = |r1_low_fraction_shifted[ABITS-4:0];
 
     // Add the fractions
-    logic unsigned [ABITS:0] r1_fraction_sum_raw, r1_fraction_sum_raw_add, r1_fraction_sum_raw_sub;
+    logic unsigned [ABITS-1:0] r1_fraction_sum_raw, r1_fraction_sum_raw_add, r1_fraction_sum_raw_sub;
 
-    assign r1_fraction_sum_raw_add = {~r1_hi.zero, r1_hi.fraction, {3{1'b0}}} + r1_low_fraction_shifted[2*ABITS-1:ABITS];
-    assign r1_fraction_sum_raw_sub = {~r1_hi.zero, r1_hi.fraction, {3{1'b0}}} - r1_low_fraction_shifted[2*ABITS-1:ABITS];
+    assign r1_fraction_sum_raw_add = {~r1_hi.zero, r1_hi.fraction, 2'b0} + r1_low_fraction_shifted[2*ABITS-4:ABITS-2];
+    assign r1_fraction_sum_raw_sub = {~r1_hi.zero, r1_hi.fraction, 2'b0} - r1_low_fraction_shifted[2*ABITS-4:ABITS-2];
     assign r1_fraction_sum_raw = r1_operation ? r1_fraction_sum_raw_add : r1_fraction_sum_raw_sub;
 
     logic [4:0] r1_hidden_pos;
@@ -112,9 +112,12 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     LOD_N #(
         .N(32)
     ) hidden_bit_counter(
-        .in({r1_fraction_sum_raw[ABITS:0], 1'b0}),
+        .in({r1_fraction_sum_raw[ABITS-1:0], 2'b0}),
         .out(r1_hidden_pos)
     );
+
+    logic signed [8:0] r1_scale_sum;
+    assign r1_scale_sum = r1_fraction_sum_raw[ABITS-1] ? (r1_hi.scale + 1) : (~r1_fraction_sum_raw[ABITS-2] ? (r1_hi.scale - r1_hidden_pos + 1) : r1_hi.scale);
 
     //  ___
     // |__ \
@@ -126,9 +129,10 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     value r2_hi, r2_low;
 
     value_sum r2_sum;
-    logic unsigned [ABITS:0] r2_fraction_sum_raw;
+    logic unsigned [ABITS-1:0] r2_fraction_sum_raw;
     logic r2_truncated_after_equalizing, r2_out_rounded_zero;
     logic [4:0] r2_shift_amount_hiddenbit_out, r2_hidden_pos;
+    logic signed [8:0] r2_scale_sum;
 
     always @(posedge clk)
     begin
@@ -139,10 +143,11 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
         r2_low <= r1_low;
         r2_fraction_sum_raw <= r1_fraction_sum_raw;
         r2_truncated_after_equalizing <= r1_truncated_after_equalizing;
+        r2_scale_sum <= r1_scale_sum;
     end
 
-    logic signed [8:0] r2_scale_sum;
-    assign r2_scale_sum = r2_fraction_sum_raw[ABITS] ? (r2_hi.scale + 1) : (~r2_fraction_sum_raw[ABITS-1] ? (r2_hi.scale - r2_hidden_pos + 1) : r2_hi.scale);
+    logic [6:0] r2_regime_shift_amount;
+    assign r2_regime_shift_amount = (r2_scale_sum[8] == 0) ? 1 + (r2_scale_sum >> ES) : -(r2_scale_sum >> ES);
 
     assign r2_sum.sign = r2_hi.sign;
     assign r2_sum.scale = r2_scale_sum;
@@ -154,29 +159,25 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     assign r2_out_rounded_zero = (r2_hidden_pos >= ABITS); // The hidden bit is shifted out of range, our sum becomes 0 (when truncated)
 
     // Normalize the sum output (shift left)
-    logic [ABITS:0] r2_fraction_sum_normalized;
+    logic [ABITS-1:0] r2_fraction_sum_normalized;
     DSR_left_N_S #(
-        .N(ABITS+1),
+        .N(ABITS-0),
         .S(5)
     ) ls (
-        .a(r2_fraction_sum_raw[ABITS:0]),
+        .a(r2_fraction_sum_raw[ABITS-1:0]),
         .b(r2_shift_amount_hiddenbit_out),
         .c(r2_fraction_sum_normalized)
     );
 
-    // PACK INTO POSIT
-
-    logic [6:0] r2_regime_shift_amount;
-    assign r2_regime_shift_amount = (r2_sum.scale[8] == 0) ? 1 + (r2_sum.scale >> ES) : -(r2_sum.scale >> ES);
 
     // STICKY BIT CALCULATION (all the bits from [msb, lsb], that is, msb is included)
-    logic [ABITS:0] r2_fraction_leftover;
+    logic [ABITS-1:0] r2_fraction_leftover;
     logic [5:0] r2_leftover_shift;
     assign r2_leftover_shift = NBITS - ES - 2 - r2_regime_shift_amount;
 
     // Determine all fraction bits that are truncated in the final result
     DSR_left_N_S #(
-        .N(ABITS+1),
+        .N(ABITS-0),
         .S(6)
     ) fraction_leftover_shift (
         .a(r2_fraction_sum_normalized), // exponent + fraction bits
@@ -184,6 +185,8 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
         .c(r2_fraction_leftover)
     );
 
+    logic [ES-1:0] r2_result_exponent;
+    assign r2_result_exponent = r2_scale_sum % (1 << ES);
 
 
     //  ____
@@ -198,7 +201,7 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     logic [2*NBITS-1:0] r3_regime_exp_fraction;
     logic [6:0] r3_regime_shift_amount;
     logic r3_bafter, r3_sticky_bit, r3_out_rounded_zero;
-    logic [ABITS:0] r3_fraction_leftover, r3_fraction_sum_normalized;
+    logic [ABITS-1:0] r3_fraction_leftover, r3_fraction_sum_normalized;
     logic r3_truncated_after_equalizing;
     logic [ES-1:0] r3_result_exponent;
 
@@ -212,15 +215,14 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
         r3_truncated_after_equalizing <= r2_truncated_after_equalizing;
         r3_fraction_leftover <= r2_fraction_leftover;
         r3_fraction_sum_normalized <= r2_fraction_sum_normalized;
+        r3_result_exponent <= r2_result_exponent;
     end
 
-    assign r3_sticky_bit = r3_truncated_after_equalizing | |r3_fraction_leftover[ABITS-1:0]; // Logical OR of all truncated fraction multiplication bits
-    assign r3_bafter = r3_fraction_leftover[ABITS];
-
-    assign r3_result_exponent = r3_sum.scale % (1 << ES);  // TODO maybe move this to previous stage for timing
+    assign r3_sticky_bit = r3_truncated_after_equalizing | |r3_fraction_leftover[ABITS-2:0]; // Logical OR of all truncated fraction multiplication bits
+    assign r3_bafter = r3_fraction_leftover[ABITS-1];
 
     logic [27:0] r3_fraction_truncated;
-    assign r3_fraction_truncated = {r3_fraction_sum_normalized[ABITS:4], (r3_fraction_sum_normalized[3] | r3_sticky_bit)};
+    assign r3_fraction_truncated = {r3_fraction_sum_normalized[ABITS-1:3], (r3_fraction_sum_normalized[2] | r3_sticky_bit)};
 
     assign r3_regime_exp_fraction = { {NBITS-1{~r3_sum.scale[8]}}, // Regime leading bits
                             r3_sum.scale[8], // Regime terminating bit
