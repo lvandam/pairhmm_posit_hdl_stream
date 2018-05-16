@@ -36,6 +36,8 @@ proc r  {} {
   vlog -sv -quiet ../afu/rtl/posit/new/positmult_4.sv
   vlog -sv -quiet ../afu/rtl/posit/new/positadd_4.sv
   vlog -sv -quiet ../afu/rtl/posit/new/positadd_8.sv
+  # accumulator 32-2 8 cycles
+  vlog -sv -quiet ../afu/rtl/posit/new/positaccum_8.sv
   # posit adder / multiplier 32-3
   vlog -sv -quiet ../afu/rtl/posit/new/posit_defines_es3.sv
   vlog -sv -quiet ../afu/rtl/posit/new/posit_extract_es3.sv
