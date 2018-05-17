@@ -10,12 +10,11 @@ system work "afu/rtl/posit/DSR_right_N_S.v"
 system work "afu/rtl/posit/LOD_N.v"
 system work "afu/rtl/posit/LZD_N.v"
 
-system work "afu/rtl/posit/new/posit_defines.sv"
-system work "afu/rtl/posit/new/posit_extract.sv"
-system work "afu/rtl/posit/new/positmult_4.sv"
-system work "afu/rtl/posit/new/positadd_4.sv"
-system work "afu/rtl/posit/new/positadd_8.sv"
-
+#system work "afu/rtl/posit/new/posit_defines.sv"
+#system work "afu/rtl/posit/new/posit_extract.sv"
+#system work "afu/rtl/posit/new/positmult_4.sv"
+#system work "afu/rtl/posit/new/positadd_4.sv"
+#system work "afu/rtl/posit/new/positadd_8.sv"
 
 system work "afu/rtl/posit/new/posit_defines_es3.sv"
 system work "afu/rtl/posit/new/posit_extract_es3.sv"

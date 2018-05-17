@@ -191,7 +191,7 @@ module positadd_8_es3 (clk, in1, in2, start, result, inf, zero, done);
 
     // PACK INTO POSIT
     logic [ES-1:0] r2_result_exponent;
-    assign r2_result_exponent = r2_sum.scale % (1 << ES);
+    assign r2_result_exponent = r2_sum.scale % (2 << ES);
 
     logic [6:0] r2_regime_shift_amount;
     assign r2_regime_shift_amount = (r2_sum.scale[8] == 0) ? 1 + (r2_sum.scale >> ES) : -(r2_sum.scale >> ES);

@@ -14,7 +14,6 @@ parameter ABITS = FBITS + 4; // Size of addend
 typedef struct {
     logic sign;
     logic signed [8:0] scale;
-    logic [ES-1:0] exponent;
     logic [FBITS-1:0] fraction;
     logic inf;
     logic zero;

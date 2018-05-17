@@ -102,8 +102,8 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     // Add the fractions
     logic unsigned [ABITS-1:0] r1_fraction_sum_raw, r1_fraction_sum_raw_add, r1_fraction_sum_raw_sub;
 
-    assign r1_fraction_sum_raw_add = {~r1_hi.zero, r1_hi.fraction, 2'b0} + r1_low_fraction_shifted[2*ABITS-4:ABITS-2];
-    assign r1_fraction_sum_raw_sub = {~r1_hi.zero, r1_hi.fraction, 2'b0} - r1_low_fraction_shifted[2*ABITS-4:ABITS-2];
+    assign r1_fraction_sum_raw_add = {~r1_hi.zero, r1_hi.fraction, {2{1'b0}}} + r1_low_fraction_shifted[2*ABITS-4:ABITS-2];
+    assign r1_fraction_sum_raw_sub = {~r1_hi.zero, r1_hi.fraction, {2{1'b0}}} - r1_low_fraction_shifted[2*ABITS-4:ABITS-2];
     assign r1_fraction_sum_raw = r1_operation ? r1_fraction_sum_raw_add : r1_fraction_sum_raw_sub;
 
     logic [4:0] r1_hidden_pos;
@@ -186,7 +186,7 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
     );
 
     logic [ES-1:0] r2_result_exponent;
-    assign r2_result_exponent = r2_scale_sum % (1 << ES);
+    assign r2_result_exponent = r2_scale_sum % (2 << ES);
 
 
     //  ____
