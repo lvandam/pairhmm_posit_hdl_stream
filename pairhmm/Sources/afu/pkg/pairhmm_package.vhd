@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------
---    _____      _      _    _ __  __ __  __ 
+--    _____      _      _    _ __  __ __  __
 --   |  __ \    (_)    | |  | |  \/  |  \/  |
 --   | |__) |_ _ _ _ __| |__| | \  / | \  / |
 --   |  ___/ _` | | '__|  __  | |\/| | |\/| |
@@ -47,7 +47,7 @@ package pairhmm_package is
     constant pe_y_data_empty : pe_y_data_type := (others => BP_STOP);
 
     type pe_y_data_regs_type  is array (0 to PAIRHMM_NUM_PES - 1) of pe_y_data_type;
-    
+
     constant pe_y_data_regs_empty : pe_y_data_regs_type := (others => pe_y_data_empty);
 
     type ybus_type is record
@@ -91,7 +91,7 @@ package pairhmm_package is
       i                     : pairhmm_in;
       o                     : pairhmm_out;
     end record;
-    
-    type acc_state is (adding, resetting);
+
+    type acc_state is (adding, accumulating, resetting);
 
 end package;

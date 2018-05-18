@@ -12,10 +12,12 @@ module positaccum_8_tb;
     reg clk;
 
     // Instantiate the Unit Under Test (UUT)
-    positaccum_8 uut (
+    positaccum_8 #(
+        .OUT_STAGES(8)
+    ) uut (
         .clk(clk),
-        // .rst(rst),
-        .in(in),
+        .rst(rst),
+        .in1(in),
         .start(start),
         .result(out),
         .inf(inf),
@@ -29,19 +31,20 @@ module positaccum_8_tb;
     begin
 		// Initialize Inputs
 		clk = 0;
-        rst = 1;
+        rst = 0;
 		in = 0;
 		start = 0;
-        #10 rst = 0;
         #10 rst = 1;
+        #10 rst = 0;
 
-        // #55 start = 1; in = 32'b01000000000000000000000000000000;
-        #55 i = 0; start = 1; in = 32'b00011100000000010101000000100001;
+        #100 start = 1; in = 32'b01000000000000000000000000000000;
+        // #100 i = 0; start = 1; in = 32'b00011100000000010101000000100001;
+        // #60 in = 32'b00000010000000010101000000100001;
 	end
 
     always @(posedge clk)
     begin
-        if(i/8 == 5000)
+        if(i/16 == 5000)
         begin
             $display("%b", out);
             $finish;

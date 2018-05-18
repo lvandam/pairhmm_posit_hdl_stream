@@ -19,7 +19,7 @@ use work.functions.all;
 package pe_package is
 
   constant POSIT_NBITS   : natural := 32;
-  constant POSIT_ES      : natural := 3;
+  constant POSIT_ES      : natural := 2;
 
   constant PE_DW         : natural := 32;               -- data width
   constant PE_MUL_CYCLES : natural := 4;

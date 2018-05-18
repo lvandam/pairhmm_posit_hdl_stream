@@ -22,7 +22,7 @@ class PairHMMPosit {
     typedef vector<t_result_sw> t_matrix;
 
 private:
-    std::vector<t_result_sw> result_sw;
+    std::vector<t_result_sw> result_sw, result_sw_m, result_sw_i;
     t_workload *workload;
     bool show_results, show_table;
 
@@ -32,8 +32,12 @@ public:
     PairHMMPosit(t_workload *wl, bool show_results, bool show_table) : workload(wl), show_results(show_results),
                                                                        show_table(show_table) {
         result_sw.reserve(workload->batches * (PIPE_DEPTH + 1));
+        result_sw_m.reserve(workload->batches * (PIPE_DEPTH + 1));
+        result_sw_i.reserve(workload->batches * (PIPE_DEPTH + 1));
         for (int i = 0; i < workload->batches * (PIPE_DEPTH + 1); i++) {
             result_sw[i] = t_result_sw(3, 0);
+            result_sw_m[i] = t_result_sw(3, 0);
+            result_sw_i[i] = t_result_sw(3, 0);
         }
     }
 
@@ -51,10 +55,20 @@ public:
                 calculate_mids(&batches[i], j, x, y, M, I, D);
 
                 result_sw[i * PIPE_DEPTH + j][0] = 0.0;
+                result_sw_m[i * PIPE_DEPTH + j][0] = 0.0;
+                result_sw_i[i * PIPE_DEPTH + j][0] = 0.0;
                 for (int c = 1; c < y + 1; c++) {
-                    result_sw[i * PIPE_DEPTH + j][0] += M[x][c];
-                    result_sw[i * PIPE_DEPTH + j][0] += I[x][c];
+                    result_sw_m[i * PIPE_DEPTH + j][0] += M[x][c];
+                    result_sw_i[i * PIPE_DEPTH + j][0] += I[x][c];
+
+                    if(i * PIPE_DEPTH + j == 0) {
+                        cout << (i*PIPE_DEPTH+j) <<" SUM M " << hexstring(M[x][c].get()) << " -- " << hexstring(result_sw_m[i * PIPE_DEPTH + j][0].get()) << endl;
+                        cout << (i*PIPE_DEPTH+j) <<" SUM I " << hexstring(I[x][c].get()) << " -- " << hexstring(result_sw_i[i * PIPE_DEPTH + j][0].get()) << endl;
+                    }
                 }
+
+                result_sw[i*PIPE_DEPTH+j][0] = result_sw_m[i * PIPE_DEPTH + j][0] + result_sw_i[i * PIPE_DEPTH + j][0];
+
                 debug_values.debugValue(result_sw[i * PIPE_DEPTH + j][0], "result[%d][0]", (i * PIPE_DEPTH + j));
 
                 if (show_table) {

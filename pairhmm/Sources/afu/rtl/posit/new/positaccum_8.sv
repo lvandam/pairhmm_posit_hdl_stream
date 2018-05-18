@@ -7,10 +7,19 @@
 
 import posit_defines::*;
 
-module positaccum_8 (clk, in, start, result, inf, zero, done);
+module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
 
-    input wire clk, start;
-    input wire [31:0] in;
+    parameter OUT_STAGES = 8;
+
+
+    // Configurable delay signals
+    value_accum outAccumShiftReg[OUT_STAGES-1:0];
+    logic [31:0] resultShiftReg[OUT_STAGES-1:0];
+    logic [OUT_STAGES-1:0] infShiftReg, zeroShiftReg, doneShiftReg;
+    integer i;
+
+    input wire clk, rst, start;
+    input wire [31:0] in1;
     output wire [31:0] result;
     output wire inf, zero, done;
 
@@ -28,9 +37,9 @@ module positaccum_8 (clk, in, start, result, inf, zero, done);
     value_accum r0_a, r0_accum;
     logic [NBITS-2:0] r0_in_abs;
 
-    always @(posedge clk)
+    always @(posedge clk, posedge rst)
     begin
-        r0_in <= (in === 'x) ? '0 : in;
+        r0_in <= (in1 === 'x | ~r0_start) ? '0 : in1;
         r0_start <= (start === 'x) ? '0 : start;
 
         if (out_accum.scale === 'x)
@@ -43,7 +52,18 @@ module positaccum_8 (clk, in, start, result, inf, zero, done);
         end
         else
         begin
-            r0_accum <= out_accum;
+            if(rst)
+            begin
+                r0_accum.sign = '0;
+                r0_accum.scale = '0;
+                r0_accum.fraction = '0;
+                r0_accum.inf = '0;
+                r0_accum.zero = '1;
+            end
+            else
+            begin
+                r0_accum <= out_accum;
+            end
         end
     end
 
@@ -147,7 +167,7 @@ module positaccum_8 (clk, in, start, result, inf, zero, done);
     );
 
     logic signed [7:0] r1b_scale_sum;
-    assign r1b_scale_sum = r1b_fraction_sum_raw[ABITS_ACCUM] ? (r1b_hi.scale + 1) : (~r1b_fraction_sum_raw[ABITS_ACCUM-1] ? (r1b_hi.scale - r1b_hidden_pos + 1) : r1b_hi.scale);
+    assign r1b_scale_sum = r1b_fraction_sum_raw[ABITS_ACCUM] ? (r1b_hi.scale + 1) : ((~r1b_fraction_sum_raw[ABITS_ACCUM-1] & ~(r1b_hi.zero & r1b_low.zero)) ? (r1b_hi.scale - r1b_hidden_pos + 1) : r1b_hi.scale);
 
     assign r1b_sum.sign = r1b_hi.sign;
     assign r1b_sum.scale = r1b_scale_sum;
@@ -369,11 +389,58 @@ module positaccum_8 (clk, in, start, result, inf, zero, done);
         r99_signed_result_no_sign <= r3b_signed_result_no_sign;
     end
 
+
+    value_accum new_out_accum;
+    logic [31:0] new_result;
+    logic new_inf, new_zero, new_done;
     // Final output
-    assign out_accum = r99_sum;
-    assign result = (r99_out_rounded_zero | r99_sum.zero | r99_sum.inf) ? {r99_sum.inf, {NBITS-1{1'b0}}} : {r99_sum.sign, r99_signed_result_no_sign[NBITS-2:0]};
-    assign inf = r99_sum.inf;
-    assign zero = ~r99_sum.inf & r99_sum.zero;
-    assign done = r99_start;
+    assign new_out_accum = r99_sum;
+    assign new_result = (r99_out_rounded_zero | r99_sum.zero | r99_sum.inf) ? {r99_sum.inf, {NBITS-1{1'b0}}} : {r99_sum.sign, r99_signed_result_no_sign[NBITS-2:0]};
+    assign new_inf = r99_sum.inf;
+    assign new_zero = ~r99_sum.inf & r99_sum.zero;
+    assign new_done = r99_start;
+
+    //   _____  _      _   __  _    ______               _       _
+    // /  ___|| |    (_) / _|| |   | ___ \             (_)     | |
+    // \ `--. | |__   _ | |_ | |_  | |_/ /  ___   __ _  _  ___ | |_   ___  _ __
+    // `--. \| '_ \ | ||  _|| __| |    /  / _ \ / _` || |/ __|| __| / _ \| '__|
+    // /\__/ /| | | || || |  | |_  | |\ \ |  __/| (_| || |\__ \| |_ |  __/| |
+    // \____/ |_| |_||_||_|   \__| \_| \_| \___| \__, ||_||___/ \__| \___||_|
+    //                                           __/ |
+    //                                          |___/
+    // (configurable delay)
+
+    always @(posedge clk)
+    begin
+        outAccumShiftReg[0] <= new_out_accum;
+        resultShiftReg[0] <= new_result;
+        infShiftReg[0] <= new_inf;
+        zeroShiftReg[0] <= new_zero;
+        doneShiftReg[0] <= new_done;
+
+        for(i = 1; i < OUT_STAGES; i = i + 1)
+        begin
+            outAccumShiftReg[i] <= outAccumShiftReg[i - 1];
+            resultShiftReg[i] <= resultShiftReg[i - 1];
+            infShiftReg[i] <= infShiftReg[i - 1];
+            zeroShiftReg[i] <= zeroShiftReg[i - 1];
+            doneShiftReg[i] <= doneShiftReg[i - 1];
+        end
+    end
+
+
+    //  _____                         _   _
+    // |  __ \                       | | | |
+    // | |__) |   ___   ___   _   _  | | | |_
+    // |  _  /   / _ \ / __| | | | | | | | __|
+    // | | \ \  |  __/ \__ \ | |_| | | | | |_
+    // |_|  \_\  \___| |___/  \__,_| |_|  \__|
+
+    // Final output
+    assign out_accum = outAccumShiftReg[OUT_STAGES - 1];
+    assign result = resultShiftReg[OUT_STAGES - 1];
+    assign inf = infShiftReg[OUT_STAGES - 1];
+    assign zero = zeroShiftReg[OUT_STAGES - 1];
+    assign done = doneShiftReg[OUT_STAGES - 1];
 
 endmodule
