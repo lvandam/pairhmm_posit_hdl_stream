@@ -237,7 +237,7 @@ begin
     signal i_valid_delay : std_logic_vector(6 * PE_ADD_CYCLES - 1 downto 0);
 
     signal acc : acc_state_wide := resetting;
-
+  begin
     gen_es2_add : if POSIT_ES = 2 generate
       resaccum_m : positaccum_16 port map (
         clk    => cr.clk,
@@ -347,6 +347,7 @@ begin
     signal i_valid_delay : std_logic_vector(2 * PE_ADD_CYCLES - 1 downto 0);
 
     signal acc : acc_state := resetting;
+  begin
 
     gen_es2_add : if POSIT_ES = 2 generate
       add_m : positadd_8 port map (
