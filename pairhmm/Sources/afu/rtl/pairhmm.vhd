@@ -96,7 +96,7 @@ architecture logic of pairhmm is
 
   component positaccum_8
     generic (
-      OUT_STAGES : integer := 8         -- 8 + 8 = 16
+      OUT_STAGES : integer := 7         -- 9 + 7 = 16
       );
     port (
       clk    : in  std_logic;
@@ -303,7 +303,7 @@ begin
 
 
   resaccum_m : positaccum_8 generic map (
-    OUT_STAGES => 8
+    OUT_STAGES => 7
     ) port map (
       clk    => cr.clk,
       rst    => res_rst,
@@ -315,7 +315,7 @@ begin
       );
 
   resaccum_i : positaccum_8 generic map (
-    OUT_STAGES => 8
+    OUT_STAGES => 7
     ) port map (
       clk    => cr.clk,
       rst    => res_rst,

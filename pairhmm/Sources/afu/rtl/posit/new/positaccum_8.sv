@@ -9,7 +9,7 @@ import posit_defines::*;
 
 module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
 
-    parameter OUT_STAGES = 8;
+    parameter OUT_STAGES = 7;
 
 
     // Configurable delay signals
@@ -124,12 +124,35 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
     logic r1_truncated_after_equalizing;
     assign r1_truncated_after_equalizing = |r1_low_fraction_shifted[ABITS_ACCUM-1:0];
 
-    // Add the fractions
-    logic unsigned [ABITS_ACCUM:0] r1_fraction_sum_raw, r1_fraction_sum_raw_add, r1_fraction_sum_raw_sub;
 
-    assign r1_fraction_sum_raw_add = {~r1_hi.zero, r1_hi.fraction, {3{1'b0}}} + r1_low_fraction_shifted[2*ABITS_ACCUM-1:ABITS_ACCUM];
-    assign r1_fraction_sum_raw_sub = {~r1_hi.zero, r1_hi.fraction, {3{1'b0}}} - r1_low_fraction_shifted[2*ABITS_ACCUM-1:ABITS_ACCUM];
-    assign r1_fraction_sum_raw = r1_operation ? r1_fraction_sum_raw_add : r1_fraction_sum_raw_sub;
+
+    //  __
+    // /_ |     /\
+    //  | |    /  \
+    //  | |   / /\ \
+    //  | |  / ____ \
+    //  |_| /_/    \_\
+    logic r1a_start, r1a_operation, r1a_truncated_after_equalizing;
+    value_accum r1a_low, r1a_hi;
+    logic [2*ABITS_ACCUM-1:0] r1a_low_fraction_shifted; // TODO We lose some bits here
+
+    always @(posedge clk)
+    begin
+        r1a_start <= r1_start;
+
+        r1a_operation <= r1_operation;
+        r1a_hi <= r1_hi;
+        r1a_low <= r1_low;
+        r1a_low_fraction_shifted <= r1_low_fraction_shifted;
+        r1a_truncated_after_equalizing <= r1_truncated_after_equalizing;
+    end
+
+    // Add the fractions
+    logic unsigned [ABITS_ACCUM:0] r1a_fraction_sum_raw, r1a_fraction_sum_raw_add, r1a_fraction_sum_raw_sub;
+
+    assign r1a_fraction_sum_raw_add = {~r1a_hi.zero, r1a_hi.fraction, {3{1'b0}}} + r1a_low_fraction_shifted[2*ABITS_ACCUM-1:ABITS_ACCUM];
+    assign r1a_fraction_sum_raw_sub = {~r1a_hi.zero, r1a_hi.fraction, {3{1'b0}}} - r1a_low_fraction_shifted[2*ABITS_ACCUM-1:ABITS_ACCUM];
+    assign r1a_fraction_sum_raw = r1a_operation ? r1a_fraction_sum_raw_add : r1a_fraction_sum_raw_sub;
 
 
     //  __   ____
@@ -147,12 +170,12 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
 
     always @(posedge clk)
     begin
-        r1b_start <= r1_start;
+        r1b_start <= r1a_start;
 
-        r1b_low <= r1_low;
-        r1b_hi <= r1_hi;
-        r1b_fraction_sum_raw <= r1_fraction_sum_raw;
-        r1b_truncated_after_equalizing <= r1_truncated_after_equalizing;
+        r1b_low <= r1a_low;
+        r1b_hi <= r1a_hi;
+        r1b_fraction_sum_raw <= r1a_fraction_sum_raw;
+        r1b_truncated_after_equalizing <= r1a_truncated_after_equalizing;
     end
 
 
