@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module positaccum_8_tb;
+module positaccum_16_tb;
     parameter N = 32;
     parameter es = 2;
 
@@ -12,9 +12,7 @@ module positaccum_8_tb;
     reg clk;
 
     // Instantiate the Unit Under Test (UUT)
-    positaccum_8 #(
-        .OUT_STAGES(8)
-    ) uut (
+    positaccum_16 uut (
         .clk(clk),
         .rst(rst),
         .in1(in),
@@ -25,10 +23,11 @@ module positaccum_8_tb;
         .done(done)
     );
 
-    reg [15:0] i;
+    reg [17:0] i;
 
 	initial
     begin
+        i = 0;
 		// Initialize Inputs
 		clk = 0;
         rst = 0;

@@ -7,16 +7,7 @@
 
 import posit_defines::*;
 
-module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
-
-    parameter OUT_STAGES = 7;
-
-
-    // Configurable delay signals
-    value_accum outAccumShiftReg[OUT_STAGES-1:0];
-    logic [31:0] resultShiftReg[OUT_STAGES-1:0];
-    logic [OUT_STAGES-1:0] infShiftReg, zeroShiftReg, doneShiftReg;
-    integer i;
+module positaccum_16 (clk, rst, in1, start, result, inf, zero, done);
 
     input wire clk, rst, start;
     input wire [31:0] in1;
@@ -39,10 +30,10 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
 
     always @(posedge clk, posedge rst)
     begin
-        r0_in <= (in1 === 'x | ~r0_start) ? '0 : in1;
+        r0_in <= (in1 === 'x | ~start) ? '0 : in1;
         r0_start <= (start === 'x) ? '0 : start;
 
-        if (out_accum.scale === 'x)
+        if (rst || out_accum.scale === 'x)
         begin
             r0_accum.sign = '0;
             r0_accum.scale = '0;
@@ -52,18 +43,7 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
         end
         else
         begin
-            if(rst)
-            begin
-                r0_accum.sign = '0;
-                r0_accum.scale = '0;
-                r0_accum.fraction = '0;
-                r0_accum.inf = '0;
-                r0_accum.zero = '1;
-            end
-            else
-            begin
-                r0_accum <= out_accum;
-            end
+            r0_accum <= out_accum;
         end
     end
 
@@ -96,13 +76,34 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
 
     logic r1_operation;
 
-    always @(posedge clk)
+    always @(posedge clk, posedge rst)
     begin
-        r1_start <= r0_start;
+        if(rst)
+        begin
+            r1_start <= '0;
 
-        r1_low <= r0_low;
-        r1_hi <= r0_hi;
-        r1_operation <= r0_operation;
+            r1_operation <= '0;
+
+            r1_hi.sign = '0;
+            r1_hi.scale = '0;
+            r1_hi.fraction = '0;
+            r1_hi.inf = '0;
+            r1_hi.zero = '1;
+
+            r1_low.sign = '0;
+            r1_low.scale = '0;
+            r1_low.fraction = '0;
+            r1_low.inf = '0;
+            r1_low.zero = '1;
+        end
+        else
+        begin
+            r1_start <= r0_start;
+
+            r1_low <= r0_low;
+            r1_hi <= r0_hi;
+            r1_operation <= r0_operation;
+        end
     end
 
     // Difference in scales (regime and exponent)
@@ -135,24 +136,52 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
     logic r1a_start, r1a_operation, r1a_truncated_after_equalizing;
     value_accum r1a_low, r1a_hi;
     logic [2*ABITS_ACCUM-1:0] r1a_low_fraction_shifted; // TODO We lose some bits here
+    logic unsigned [ABITS_ACCUM:0] r1a_fraction_sum_raw;
 
-    always @(posedge clk)
+    always @(posedge clk, posedge rst)
     begin
-        r1a_start <= r1_start;
+        if(rst)
+        begin
+            r1a_start <= '0;
 
-        r1a_operation <= r1_operation;
-        r1a_hi <= r1_hi;
-        r1a_low <= r1_low;
-        r1a_low_fraction_shifted <= r1_low_fraction_shifted;
-        r1a_truncated_after_equalizing <= r1_truncated_after_equalizing;
+            r1a_operation <= '0;
+
+            r1a_hi.sign = '0;
+            r1a_hi.scale = '0;
+            r1a_hi.fraction = '0;
+            r1a_hi.inf = '0;
+            r1a_hi.zero = '1;
+
+            r1a_low.sign = '0;
+            r1a_low.scale = '0;
+            r1a_low.fraction = '0;
+            r1a_low.inf = '0;
+            r1a_low.zero = '1;
+
+            r1a_low_fraction_shifted <= '0;
+            r1a_truncated_after_equalizing <= '0;
+        end
+        else
+        begin
+            r1a_start <= r1_start;
+
+            r1a_operation <= r1_operation;
+            r1a_hi <= r1_hi;
+            r1a_low <= r1_low;
+            r1a_low_fraction_shifted <= r1_low_fraction_shifted;
+            r1a_truncated_after_equalizing <= r1_truncated_after_equalizing;
+        end
     end
 
     // Add the fractions
-    logic unsigned [ABITS_ACCUM:0] r1a_fraction_sum_raw, r1a_fraction_sum_raw_add, r1a_fraction_sum_raw_sub;
-
-    assign r1a_fraction_sum_raw_add = {~r1a_hi.zero, r1a_hi.fraction, {3{1'b0}}} + r1a_low_fraction_shifted[2*ABITS_ACCUM-1:ABITS_ACCUM];
-    assign r1a_fraction_sum_raw_sub = {~r1a_hi.zero, r1a_hi.fraction, {3{1'b0}}} - r1a_low_fraction_shifted[2*ABITS_ACCUM-1:ABITS_ACCUM];
-    assign r1a_fraction_sum_raw = r1a_operation ? r1a_fraction_sum_raw_add : r1a_fraction_sum_raw_sub;
+    ADDSUB151_8 frac_add_sub (
+        .CLK(clk),
+        .SCLR(rst),
+        .ADD(r1a_operation),
+        .A({~r1a_hi.zero, r1a_hi.fraction, {3{1'b0}}}),
+        .B(r1a_low_fraction_shifted[2*ABITS_ACCUM-1:ABITS_ACCUM]),
+        .S(r1a_fraction_sum_raw)
+    );
 
 
     //  __   ____
@@ -168,16 +197,57 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
     logic unsigned [ABITS_ACCUM:0] r1b_fraction_sum_raw;
     logic r1b_truncated_after_equalizing;
 
-    always @(posedge clk)
-    begin
-        r1b_start <= r1a_start;
+    value_accum r1b_lowShiftReg[7:0], r1b_hiShiftReg[7:0];
+    logic [7:0] r1b_startShiftReg, r1b_truncated_after_equalizingShiftReg;
+    integer i;
 
-        r1b_low <= r1a_low;
-        r1b_hi <= r1a_hi;
-        r1b_fraction_sum_raw <= r1a_fraction_sum_raw;
-        r1b_truncated_after_equalizing <= r1a_truncated_after_equalizing;
+    always @(posedge clk, posedge rst)
+    begin
+        if(rst)
+        begin
+            for(i = 0; i < 8; i = i + 1)
+            begin
+                r1b_startShiftReg[i] <= '0;
+
+                r1b_hiShiftReg[i].sign = '0;
+                r1b_hiShiftReg[i].scale = '0;
+                r1b_hiShiftReg[i].fraction = '0;
+                r1b_hiShiftReg[i].inf = '0;
+                r1b_hiShiftReg[i].zero = '1;
+
+                r1b_lowShiftReg[i].sign = '0;
+                r1b_lowShiftReg[i].scale = '0;
+                r1b_lowShiftReg[i].fraction = '0;
+                r1b_lowShiftReg[i].inf = '0;
+                r1b_lowShiftReg[i].zero = '1;
+
+                r1b_truncated_after_equalizingShiftReg[i] <= '0;
+            end
+        end
+        else
+        begin
+            // Delay for 8 cycles until add/subtract result is ready
+            r1b_startShiftReg[0] <= r1a_start;
+            r1b_lowShiftReg[0] <= r1a_low;
+            r1b_hiShiftReg[0] <= r1a_hi;
+            r1b_truncated_after_equalizingShiftReg[0] <= r1a_truncated_after_equalizing;
+
+            for(i = 1; i < 8; i = i + 1)
+            begin
+                r1b_startShiftReg[i] <= r1b_startShiftReg[i - 1];
+                r1b_lowShiftReg[i] <= r1b_lowShiftReg[i - 1];
+                r1b_hiShiftReg[i] <= r1b_hiShiftReg[i - 1];
+                r1b_truncated_after_equalizingShiftReg[i] <= r1b_truncated_after_equalizingShiftReg[i - 1];
+            end
+        end
     end
 
+    assign r1b_fraction_sum_raw = r1a_fraction_sum_raw;
+
+    assign r1b_start = r1b_startShiftReg[7];
+    assign r1b_low = r1b_lowShiftReg[7];
+    assign r1b_hi = r1b_hiShiftReg[7];
+    assign r1b_truncated_after_equalizing = r1b_truncated_after_equalizingShiftReg[7];
 
     // Result normalization: shift until normalized (and fix the sign)
     // Find the hidden bit (leading zero counter)
@@ -217,19 +287,36 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
     logic r2_truncated_after_equalizing, r2_out_rounded_zero;
     logic [7:0] r2_shift_amount_hiddenbit_out;
 
-    always @(posedge clk)
+    always @(posedge clk, posedge rst)
     begin
-        r2_start <= r1b_start;
+        if(rst)
+        begin
+            r2_start <= '0;
 
-        r2_sum.sign <= r1b_sum.sign;
-        r2_sum.scale <= r1b_sum.scale;
-        r2_sum.inf <= r1b_sum.inf;
-        r2_sum.zero <= r1b_sum.zero;
+            r2_sum.sign = '0;
+            r2_sum.scale = '0;
+            r2_sum.inf = '0;
+            r2_sum.zero = '1;
 
-        r2_fraction_sum_raw <= r1b_fraction_sum_raw;
-        r2_shift_amount_hiddenbit_out <= r1b_shift_amount_hiddenbit_out;
-        r2_truncated_after_equalizing <= r1b_truncated_after_equalizing;
-        r2_out_rounded_zero <= r1b_out_rounded_zero;
+            r2_fraction_sum_raw <= '0;
+            r2_shift_amount_hiddenbit_out <= '0;
+            r2_truncated_after_equalizing <= '0;
+            r2_out_rounded_zero <= '0;
+        end
+        else
+        begin
+            r2_start <= r1b_start;
+
+            r2_sum.sign <= r1b_sum.sign;
+            r2_sum.scale <= r1b_sum.scale;
+            r2_sum.inf <= r1b_sum.inf;
+            r2_sum.zero <= r1b_sum.zero;
+
+            r2_fraction_sum_raw <= r1b_fraction_sum_raw;
+            r2_shift_amount_hiddenbit_out <= r1b_shift_amount_hiddenbit_out;
+            r2_truncated_after_equalizing <= r1b_truncated_after_equalizing;
+            r2_out_rounded_zero <= r1b_out_rounded_zero;
+        end
     end
 
     // Normalize the sum output (shift left)
@@ -273,16 +360,37 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
     logic [ES-1:0] r2b_result_exponent;
     logic [6:0] r2b_regime_shift_amount;
 
-    always @(posedge clk)
+    always @(posedge clk, posedge rst)
     begin
-        r2b_start <= r2_start;
-        r2b_sum <= r2_sum;
-        r2b_truncated_after_equalizing <= r2_truncated_after_equalizing;
-        r2b_out_rounded_zero <= r2_out_rounded_zero;
-        r2b_fraction_sum_normalized <= r2_fraction_sum_normalized;
-        r2b_leftover_shift <= r2_leftover_shift;
-        r2b_result_exponent <= r2_result_exponent;
-        r2b_regime_shift_amount <= r2_regime_shift_amount;
+        if(rst)
+        begin
+            r2b_start <= '0;
+
+            r2b_sum.sign = '0;
+            r2b_sum.scale = '0;
+            r2b_sum.fraction = '0;
+            r2b_sum.inf = '0;
+            r2b_sum.zero = '1;
+
+            r2b_truncated_after_equalizing <= '0;
+            r2b_out_rounded_zero <= '0;
+            r2b_fraction_sum_normalized <= '0;
+            r2b_leftover_shift <= '0;
+            r2b_result_exponent <= '0;
+            r2b_regime_shift_amount <= '0;
+        end
+        else
+        begin
+            r2b_start <= r2_start;
+
+            r2b_sum <= r2_sum;
+            r2b_truncated_after_equalizing <= r2_truncated_after_equalizing;
+            r2b_out_rounded_zero <= r2_out_rounded_zero;
+            r2b_fraction_sum_normalized <= r2_fraction_sum_normalized;
+            r2b_leftover_shift <= r2_leftover_shift;
+            r2b_result_exponent <= r2_result_exponent;
+            r2b_regime_shift_amount <= r2_regime_shift_amount;
+        end
     end
 
     // Determine all fraction bits that are truncated in the final result
@@ -325,16 +433,35 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
     logic [6:0] r3_regime_shift_amount;
     logic r3_bafter, r3_sticky_bit, r3_out_rounded_zero;
 
-    always @(posedge clk)
+    always @(posedge clk, posedge rst)
     begin
-        r3_start <= r2b_start;
+        if(rst)
+        begin
+            r3_start <= '0;
 
-        r3_sum <= r2b_sum;
-        r3_regime_exp_fraction <= r2b_regime_exp_fraction;
-        r3_regime_shift_amount <= r2b_regime_shift_amount;
-        r3_bafter <= r2b_bafter;
-        r3_sticky_bit <= r2b_sticky_bit;
-        r3_out_rounded_zero <= r2b_out_rounded_zero;
+            r3_sum.sign = '0;
+            r3_sum.scale = '0;
+            r3_sum.fraction = '0;
+            r3_sum.inf = '0;
+            r3_sum.zero = '1;
+
+            r3_regime_exp_fraction <= '0;
+            r3_regime_shift_amount <= '0;
+            r3_bafter <= '0;
+            r3_sticky_bit <= '0;
+            r3_out_rounded_zero <= '0;
+        end
+        else
+        begin
+            r3_start <= r2b_start;
+
+            r3_sum <= r2b_sum;
+            r3_regime_exp_fraction <= r2b_regime_exp_fraction;
+            r3_regime_shift_amount <= r2b_regime_shift_amount;
+            r3_bafter <= r2b_bafter;
+            r3_sticky_bit <= r2b_sticky_bit;
+            r3_out_rounded_zero <= r2b_out_rounded_zero;
+        end
     end
 
     logic [2*NBITS-1:0] r3_exp_fraction_shifted_for_regime;
@@ -365,15 +492,33 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
     logic [NBITS-2:0] r3b_result_no_sign;
     logic r3b_bafter, r3b_sticky_bit, r3b_out_rounded_zero;
 
-    always @(posedge clk)
+    always @(posedge clk, posedge rst)
     begin
-        r3b_start <= r3_start;
+        if(rst)
+        begin
+            r3b_start <= '0;
 
-        r3b_sum <= r3_sum;
-        r3b_result_no_sign <= r3_result_no_sign;
-        r3b_sticky_bit <= r3_sticky_bit;
-        r3b_out_rounded_zero <= r3_out_rounded_zero;
-        r3b_bafter <= r3_bafter;
+            r3b_sum.sign = '0;
+            r3b_sum.scale = '0;
+            r3b_sum.fraction = '0;
+            r3b_sum.inf = '0;
+            r3b_sum.zero = '1;
+
+            r3b_result_no_sign <= '0;
+            r3b_sticky_bit <= '0;
+            r3b_out_rounded_zero <= '0;
+            r3b_bafter <= '0;
+        end
+        else
+        begin
+            r3b_start <= r3_start;
+
+            r3b_sum <= r3_sum;
+            r3b_result_no_sign <= r3_result_no_sign;
+            r3b_sticky_bit <= r3_sticky_bit;
+            r3b_out_rounded_zero <= r3_out_rounded_zero;
+            r3b_bafter <= r3_bafter;
+        end
     end
 
     // Perform rounding (based on sticky bit)
@@ -403,51 +548,29 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
     logic r99_out_rounded_zero;
     logic [NBITS-2:0] r99_signed_result_no_sign;
 
-    always @(posedge clk)
+    always @(posedge clk, posedge rst)
     begin
-        r99_start <= r3b_start;
-
-        r99_out_rounded_zero <= r3b_out_rounded_zero;
-        r99_sum <= r3b_sum;
-        r99_signed_result_no_sign <= r3b_signed_result_no_sign;
-    end
-
-
-    value_accum new_out_accum;
-    logic [31:0] new_result;
-    logic new_inf, new_zero, new_done;
-    // Final output
-    assign new_out_accum = r99_sum;
-    assign new_result = (r99_out_rounded_zero | r99_sum.zero | r99_sum.inf) ? {r99_sum.inf, {NBITS-1{1'b0}}} : {r99_sum.sign, r99_signed_result_no_sign[NBITS-2:0]};
-    assign new_inf = r99_sum.inf;
-    assign new_zero = ~r99_sum.inf & r99_sum.zero;
-    assign new_done = r99_start;
-
-    //   _____  _      _   __  _    ______               _       _
-    // /  ___|| |    (_) / _|| |   | ___ \             (_)     | |
-    // \ `--. | |__   _ | |_ | |_  | |_/ /  ___   __ _  _  ___ | |_   ___  _ __
-    // `--. \| '_ \ | ||  _|| __| |    /  / _ \ / _` || |/ __|| __| / _ \| '__|
-    // /\__/ /| | | || || |  | |_  | |\ \ |  __/| (_| || |\__ \| |_ |  __/| |
-    // \____/ |_| |_||_||_|   \__| \_| \_| \___| \__, ||_||___/ \__| \___||_|
-    //                                           __/ |
-    //                                          |___/
-    // (configurable delay)
-
-    always @(posedge clk)
-    begin
-        outAccumShiftReg[0] <= new_out_accum;
-        resultShiftReg[0] <= new_result;
-        infShiftReg[0] <= new_inf;
-        zeroShiftReg[0] <= new_zero;
-        doneShiftReg[0] <= new_done;
-
-        for(i = 1; i < OUT_STAGES; i = i + 1)
+        if(rst)
         begin
-            outAccumShiftReg[i] <= outAccumShiftReg[i - 1];
-            resultShiftReg[i] <= resultShiftReg[i - 1];
-            infShiftReg[i] <= infShiftReg[i - 1];
-            zeroShiftReg[i] <= zeroShiftReg[i - 1];
-            doneShiftReg[i] <= doneShiftReg[i - 1];
+            r99_start <= '0;
+
+            r99_out_rounded_zero <= '0;
+
+            r99_sum.sign = '0;
+            r99_sum.scale = '0;
+            r99_sum.fraction = '0;
+            r99_sum.inf = '0;
+            r99_sum.zero = '1;
+
+            r99_signed_result_no_sign <= '0;
+        end
+        else
+        begin
+            r99_start <= r3b_start;
+
+            r99_out_rounded_zero <= r3b_out_rounded_zero;
+            r99_sum <= r3b_sum;
+            r99_signed_result_no_sign <= r3b_signed_result_no_sign;
         end
     end
 
@@ -460,10 +583,9 @@ module positaccum_8 (clk, rst, in1, start, result, inf, zero, done);
     // |_|  \_\  \___| |___/  \__,_| |_|  \__|
 
     // Final output
-    assign out_accum = outAccumShiftReg[OUT_STAGES - 1];
-    assign result = resultShiftReg[OUT_STAGES - 1];
-    assign inf = infShiftReg[OUT_STAGES - 1];
-    assign zero = zeroShiftReg[OUT_STAGES - 1];
-    assign done = doneShiftReg[OUT_STAGES - 1];
-
+    assign out_accum = r99_sum;
+    assign result = (r99_out_rounded_zero | r99_sum.zero | r99_sum.inf) ? {r99_sum.inf, {NBITS-1{1'b0}}} : {r99_sum.sign, r99_signed_result_no_sign[NBITS-2:0]};
+    assign inf = r99_sum.inf;
+    assign zero = ~r99_sum.inf & r99_sum.zero;
+    assign done = r99_start;
 endmodule

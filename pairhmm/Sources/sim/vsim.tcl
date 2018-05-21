@@ -24,6 +24,8 @@ proc r  {} {
   vlog -quiet ../cores/feedback_fifo/sim/feedback_fifo.v
   vlog -quiet ../cores/kernel_to_streaming_fifo/sim/kernel_to_streaming_fifo.v
   vlog -quiet ../cores/probabilities_fifo/sim/probabilities_fifo.v
+  # pipelined unsigned add/subtract
+  vcom -2008 ../cores/ADDSUB151_8/sim/ADDSUB151_8.vhd
 
   # compile posit units
   vlog -quiet ../afu/rtl/posit/DSR_left_N_S.v
@@ -36,9 +38,9 @@ proc r  {} {
   vlog -sv -quiet ../afu/rtl/posit/new/positmult_4.sv
   vlog -sv -quiet ../afu/rtl/posit/new/positadd_4.sv
   vlog -sv -quiet ../afu/rtl/posit/new/positadd_8.sv
-  # accumulator 32-2 8 cycles
+  # accumulator 32-2 16 cycles
   vlog -sv -quiet ../afu/rtl/posit/new/posit_extract_accum.sv
-  vlog -sv -quiet ../afu/rtl/posit/new/positaccum_8.sv
+  vlog -sv -quiet ../afu/rtl/posit/new/positaccum_16.sv
   # posit adder / multiplier 32-3
  # vlog -sv -quiet ../afu/rtl/posit/new/posit_defines_es3.sv
  # vlog -sv -quiet ../afu/rtl/posit/new/posit_extract_es3.sv

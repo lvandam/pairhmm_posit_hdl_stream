@@ -16,7 +16,7 @@ system work "afu/rtl/posit/new/positmult_4.sv"
 system work "afu/rtl/posit/new/positadd_4.sv"
 system work "afu/rtl/posit/new/positadd_8.sv"
 system work "afu/rtl/posit/new/posit_extract_accum.sv"
-system work "afu/rtl/posit/new/positaccum_8.sv"
+system work "afu/rtl/posit/new/positaccum_16.sv"
 
 #system work "afu/rtl/posit/new/posit_defines_es3.sv"
 #system work "afu/rtl/posit/new/posit_extract_es3.sv"

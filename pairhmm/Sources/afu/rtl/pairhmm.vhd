@@ -44,42 +44,17 @@ architecture logic of pairhmm is
   signal schedule_reg   : unsigned(PE_DEPTH_BITS-1 downto 0);
   signal x_reg          : bp_type;
   signal pe_y_data_regs : pe_y_data_regs_type := pe_y_data_regs_empty;
-
-  signal pe_out_reg : pe_out;
-
-  type result_array_type is array (0 to PE_DEPTH - 1) of prob;
-  type i_delay_type is array (0 to 4 * PE_ADD_CYCLES - 1) of prob;
-
-  signal delay_i, delay_m : prob;
-
-  signal i_delay       : i_delay_type;
-  signal i_valid_delay : std_logic_vector(6 * PE_ADD_CYCLES - 1 downto 0);
+  signal pe_out_reg     : pe_out;
 
   signal posit_infs : std_logic_vector(2 downto 0);
 
-  signal res_accum_in   : prob;
-  signal accum_schedule : std_logic;
+  signal addm_out       : prob;  -- Laurens: 1 extra delay (11 -> 12 cycles latency)
+  signal addm_out_valid : std_logic;
 
-  signal addm_ina                           : prob;
-  signal addm_ina_valid                     : std_logic;
-  signal addm_inb                           : prob;
-  signal addm_inb_valid                     : std_logic;
-  signal addm_out, addm_out_buf             : prob;  -- Laurens: 1 extra delay (11 -> 12 cycles latency)
-  signal addm_out_valid, addm_out_valid_buf : std_logic;
+  signal addi_out       : prob;
+  signal addi_out_valid : std_logic;
 
-  signal addi_ina                           : prob;
-  signal addi_ina_valid                     : std_logic;
-  signal addi_inb                           : prob;
-  signal addi_inb_valid                     : std_logic;
-  signal addi_out, addi_out_buf             : prob;
-  signal addi_out_valid, addi_out_valid_buf : std_logic;
-  signal resaccum_out                       : prob;
-  signal resaccum_out_valid                 : std_logic;
-
-  signal res_acc       : prob;
-  signal res_acc_valid : std_logic;
-
-  signal res_acc_zero : std_logic;
+  signal res_acc : prob;
 
   type res_array is array (0 to PAIRHMM_NUM_PES-1) of prob;
 
@@ -87,17 +62,12 @@ architecture logic of pairhmm is
   signal resm    : res_array;
   signal resi    : res_array;
 
-  signal resbusm : prob;
-  signal resbusi : prob;
+  signal resbusm, resbusi : prob;
 
-  signal acc       : acc_state := resetting;
   signal lastlast  : std_logic;
   signal lastlast1 : std_logic;
 
-  component positaccum_8
-    generic (
-      OUT_STAGES : integer := 7         -- 9 + 7 = 16
-      );
+  component positaccum_16
     port (
       clk    : in  std_logic;
       rst    : in  std_logic;
@@ -255,172 +225,229 @@ begin
     end if;
   end process;
 
-  -- gen_es2_add_m : if POSIT_ES = 2 generate
-  --   add_m : positadd_8 port map (
-  --     clk    => cr.clk,
-  --     in1    => addm_ina,
-  --     in2    => addm_inb,
-  --     start  => addm_ina_valid and addm_inb_valid,
-  --     result => addm_out,
-  --     inf    => posit_infs(0),
-  --     done   => addm_out_valid
-  --     );
-  -- end generate;
-  -- gen_es3_add_m : if POSIT_ES = 3 generate
-  --   add_m : positadd_8_es3 port map (
-  --     clk    => cr.clk,
-  --     in1    => addm_ina,
-  --     in2    => addm_inb,
-  --     start  => addm_ina_valid and addm_inb_valid,
-  --     result => addm_out,
-  --     inf    => posit_infs(0),
-  --     done   => addm_out_valid
-  --     );
-  -- end generate;
-  --
-  -- gen_es2_add_i : if POSIT_ES = 2 generate
-  --   add_i : positadd_8 port map (
-  --     clk    => cr.clk,
-  --     in1    => addi_ina,
-  --     in2    => addi_inb,
-  --     start  => addi_ina_valid and addi_inb_valid,
-  --     result => addi_out,
-  --     inf    => posit_infs(1),
-  --     done   => addi_out_valid
-  --     );
-  -- end generate;
-  -- gen_es3_add_i : if POSIT_ES = 3 generate
-  --   add_i : positadd_8_es3 port map (
-  --     clk    => cr.clk,
-  --     in1    => addi_ina,
-  --     in2    => addi_inb,
-  --     start  => addi_ina_valid and addi_inb_valid,
-  --     result => addi_out,
-  --     inf    => posit_infs(1),
-  --     done   => addi_out_valid
-  --     );
-  -- end generate;
 
+  gen_accumulator_wide : if POSIT_WIDE_ACCUMULATOR = 1 generate
+    signal resaccum_out       : prob;
+    signal resaccum_out_valid : std_logic;
 
-  resaccum_m : positaccum_8 generic map (
-    OUT_STAGES => 7
-    ) port map (
-      clk    => cr.clk,
-      rst    => res_rst,
-      in1    => resbusm,
-      start  => '1',
-      result => addm_out,
-      inf    => posit_infs(0),
-      done   => addm_out_valid
-      );
+    signal res_acc_zero : std_logic;
 
-  resaccum_i : positaccum_8 generic map (
-    OUT_STAGES => 7
-    ) port map (
-      clk    => cr.clk,
-      rst    => res_rst,
-      in1    => resbusi,
-      start  => '1',
-      result => addi_out,
-      inf    => posit_infs(1),
-      done   => addi_out_valid
-      );
+    type i_delay_type is array (0 to 4 * PE_ADD_CYCLES - 1) of prob;
+    signal i_delay       : i_delay_type;
+    signal i_valid_delay : std_logic_vector(6 * PE_ADD_CYCLES - 1 downto 0);
 
-  resaccum : positadd_8 port map (
-    clk    => cr.clk,
-    in1    => i_delay(4 * PE_ADD_CYCLES - 1),
-    in2    => addm_out,
-    start  => addm_out_valid and addi_out_valid,
-    result => resaccum_out,
-    inf    => posit_infs(2),
-    done   => resaccum_out_valid
-    );
+    signal acc : acc_state_wide := resetting;
 
+    gen_es2_add : if POSIT_ES = 2 generate
+      resaccum_m : positaccum_16 port map (
+        clk    => cr.clk,
+        rst    => res_rst,
+        in1    => resbusm,
+        start  => '1',
+        result => addm_out,
+        inf    => posit_infs(0),
+        done   => addm_out_valid
+        );
 
-  process(cr.clk)
-    variable rescounter   : integer range 0 to PE_DEPTH + PE_ADD_CYCLES := 0;
-    variable accumcounter : integer range 0 to 4*PE_ADD_CYCLES-1        := 0;
-    variable prevlast     : std_logic;
-  begin
-    if rising_edge(cr.clk) then
-      if cr.rst = '1' then
-        acc           <= resetting;
-        o.score_valid <= '0';
-        res_rst       <= '1';
-      else
-        -- Delayed signals:
-        i_delay(0) <= addi_out;
-        for K in 1 to 4 * PE_ADD_CYCLES - 1 loop
-          i_delay(K) <= i_delay(K-1);
-        end loop;
+      resaccum_i : positaccum_16 port map (
+        clk    => cr.clk,
+        rst    => res_rst,
+        in1    => resbusi,
+        start  => '1',
+        result => addi_out,
+        inf    => posit_infs(1),
+        done   => addi_out_valid
+        );
 
-        i_valid_delay(0) <= lastlast1;
-        for K in 1 to 6 * PE_ADD_CYCLES - 1 loop
-          i_valid_delay(K) <= i_valid_delay(K-1);
-        end loop;
+      resaccum : positadd_8 port map (
+        clk    => cr.clk,
+        in1    => i_delay(4 * PE_ADD_CYCLES - 1),
+        in2    => addm_out,
+        start  => addm_out_valid and addi_out_valid,
+        result => resaccum_out,
+        inf    => posit_infs(2),
+        done   => resaccum_out_valid
+        );
+    end generate;
 
-        case acc is
-          when adding =>
-            res_rst      <= '0';
-            res_acc_zero <= '0';
-            if lastlast = '0' and prevlast = '1' then
-              acc <= accumulating;
-            end if;
+    process(cr.clk)
+      variable rescounter   : integer range 0 to PE_DEPTH + PE_ADD_CYCLES := 0;
+      variable accumcounter : integer range 0 to 4 * PE_ADD_CYCLES - 1    := 0;
+      variable prevlast     : std_logic;
+    begin
+      if rising_edge(cr.clk) then
+        if cr.rst = '1' then
+          acc           <= resetting;
+          o.score_valid <= '0';
+          res_rst       <= '1';
+        else
+          -- Delayed signals:
+          i_delay(0) <= addi_out;
+          for K in 1 to 4 * PE_ADD_CYCLES - 1 loop
+            i_delay(K) <= i_delay(K-1);
+          end loop;
 
-          when accumulating =>
-            accumcounter := accumcounter + 1;
-            res_rst      <= '0';
-            res_acc_zero <= '0';
-            if accumcounter = 4*PE_ADD_CYCLES-1 then
-              accumcounter := 0;
-              acc          <= resetting;
-            end if;
+          i_valid_delay(0) <= lastlast1;
+          for K in 1 to 6 * PE_ADD_CYCLES - 1 loop
+            i_valid_delay(K) <= i_valid_delay(K-1);
+          end loop;
 
-          when resetting =>
-            rescounter   := rescounter + 1;
-            res_rst      <= '1';
-            res_acc_zero <= '0';
-            if rescounter >= 2 * PE_ADD_CYCLES + 1 then
-              res_acc_zero <= '1';
-            end if;
-            if rescounter >= PE_DEPTH + 1 then
-              res_rst <= '0';
-            end if;
-            if rescounter = PE_DEPTH + PE_ADD_CYCLES then
-              rescounter := 0;
-              acc        <= adding;
-            end if;
+          case acc is
+            when adding =>
+              res_rst      <= '0';
+              res_acc_zero <= '0';
+              if lastlast = '0' and prevlast = '1' then
+                acc <= accumulating;
+              end if;
 
-        end case;
+            when accumulating =>
+              accumcounter := accumcounter + 1;
+              res_rst      <= '0';
+              res_acc_zero <= '0';
+              if accumcounter = 4*PE_ADD_CYCLES-1 then
+                accumcounter := 0;
+                acc          <= resetting;
+              end if;
 
-        prevlast := lastlast1;
+            when resetting =>
+              rescounter   := rescounter + 1;
+              res_rst      <= '1';
+              res_acc_zero <= '0';
+              if rescounter >= 2 * PE_ADD_CYCLES + 1 then
+                res_acc_zero <= '1';
+              end if;
+              if rescounter >= PE_DEPTH + 1 then
+                res_rst <= '0';
+              end if;
+              if rescounter = PE_DEPTH + PE_ADD_CYCLES then
+                rescounter := 0;
+                acc        <= adding;
+              end if;
 
-        -- o.score       <= addi_out;
-        -- o.score_valid <= addi_out_valid;
-        o.score       <= res_acc;
-        o.score_valid <= i_valid_delay(6 * PE_ADD_CYCLES - 1);
+          end case;
+
+          prevlast := lastlast1;
+
+          o.score       <= res_acc;
+          o.score_valid <= i_valid_delay(6 * PE_ADD_CYCLES - 1);
+        end if;
       end if;
-    end if;
-  end process;
+    end process;
 
-  -- res_acc <= addi_out when res_rst = '0' else
-  --            (others => '0');
-  res_acc <= resaccum_out when res_acc_zero = '0' else
-             (others => '0');
+    res_acc <= resaccum_out when res_acc_zero = '0' else
+               (others => '0');
+  end generate;
 
-  -- addm_ina       <= res_acc;
-  -- addm_ina_valid <= '1';
-  --
-  -- addm_inb       <= resbusm;
-  -- addm_inb_valid <= '1';
-  --
-  -- addi_ina       <= addm_out;           -- For FP: addm_out_buf
-  -- addi_ina_valid <= addm_out_valid;     -- For FP: addm_out_valid_buf
-  --
-  -- addi_inb       <= i_delay(2*PE_ADD_CYCLES-1);
-  -- addi_inb_valid <= i_valid_delay(2*PE_ADD_CYCLES-1);
+  gen_accumulator : if POSIT_WIDE_ACCUMULATOR = 0 generate
+    signal addm_ina, addm_inb, addi_ina, addi_inb                         : prob;
+    signal addm_ina_valid, addm_inb_valid, addi_ina_valid, addi_inb_valid : std_logic;
 
+    type i_delay_type is array (0 to 2 * PE_ADD_CYCLES-1) of prob;
+    signal i_delay       : i_delay_type;
+    signal i_valid_delay : std_logic_vector(2 * PE_ADD_CYCLES - 1 downto 0);
 
+    signal acc : acc_state := resetting;
 
+    gen_es2_add : if POSIT_ES = 2 generate
+      add_m : positadd_8 port map (
+        clk    => cr.clk,
+        in1    => addm_ina,
+        in2    => addm_inb,
+        start  => addm_ina_valid and addm_inb_valid,
+        result => addm_out,
+        inf    => posit_infs(0),
+        done   => addm_out_valid
+        );
+      add_i : positadd_8 port map (
+        clk    => cr.clk,
+        in1    => addi_ina,
+        in2    => addi_inb,
+        start  => addi_ina_valid and addi_inb_valid,
+        result => addi_out,
+        inf    => posit_infs(1),
+        done   => addi_out_valid
+        );
+    end generate;
+
+    gen_es3_add : if POSIT_ES = 3 generate
+      add_m : positadd_8_es3 port map (
+        clk    => cr.clk,
+        in1    => addm_ina,
+        in2    => addm_inb,
+        start  => addm_ina_valid and addm_inb_valid,
+        result => addm_out,
+        inf    => posit_infs(0),
+        done   => addm_out_valid
+        );
+      add_i : positadd_8_es3 port map (
+        clk    => cr.clk,
+        in1    => addi_ina,
+        in2    => addi_inb,
+        start  => addi_ina_valid and addi_inb_valid,
+        result => addi_out,
+        inf    => posit_infs(1),
+        done   => addi_out_valid
+        );
+    end generate;
+
+    process(cr.clk)
+      variable rescounter : integer range 0 to PE_DEPTH := 0;
+      variable prevlast   : std_logic;
+    begin
+      if rising_edge(cr.clk) then
+        if cr.rst = '1' then
+          acc           <= resetting;
+          o.score_valid <= '0';
+        else
+          -- Delayed signals:
+          i_valid_delay(0) <= lastlast1;
+          i_delay(0)       <= resbusi;
+
+          for K in 1 to 2*PE_ADD_CYCLES - 1 loop
+            i_delay(K)       <= i_delay(K-1);
+            i_valid_delay(K) <= i_valid_delay(K-1);
+          end loop;
+
+          -- Small state machine:
+          case acc is
+            when adding =>
+              if lastlast = '0' and prevlast = '1' then
+                acc     <= resetting;
+                res_rst <= '1';
+              end if;
+
+            when resetting =>
+              rescounter := rescounter + 1;
+              if rescounter = PE_DEPTH then
+                rescounter := 0;
+                acc        <= adding;
+                res_rst    <= '0';
+              end if;
+
+          end case;
+
+          prevlast := lastlast1;
+
+          o.score       <= addi_out;
+          o.score_valid <= addi_out_valid;
+        end if;
+      end if;
+    end process;
+
+    res_acc <= addi_out when res_rst = '0' else
+               (others => '0');
+
+    addm_ina       <= res_acc;
+    addm_ina_valid <= '1';
+
+    addm_inb       <= resbusm;
+    addm_inb_valid <= '1';
+
+    addi_ina       <= addm_out;
+    addi_ina_valid <= addm_out_valid;
+
+    addi_inb       <= i_delay(2*PE_ADD_CYCLES-1);
+    addi_inb_valid <= i_valid_delay(2*PE_ADD_CYCLES-1);
+  end generate;
 
 end architecture logic;

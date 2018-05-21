@@ -80,6 +80,7 @@ set_attribute module $top    ip            [list    $coreDir/psl_to_kernel/psl_t
                                                     $coreDir/feedback_fifo/feedback_fifo.xci                        \
                                                     $coreDir/kernel_to_streaming_fifo/kernel_to_streaming_fifo.xci  \
                                                     $coreDir/probabilities_fifo/probabilities_fifo.xci              \
+                                                    $coreDir/ADDSUB151_8/ADDSUB151_8.xci                            \
                                            ]
 add_implementation $top
 set_attribute impl $top      top           $top
