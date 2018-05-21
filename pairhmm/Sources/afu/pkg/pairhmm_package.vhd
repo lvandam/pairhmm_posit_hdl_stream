@@ -93,6 +93,6 @@ package pairhmm_package is
   end record;
 
   type acc_state is (adding, resetting);
-  type acc_state_wide is (adding, accumulating, resetting);
+  type acc_state_wide is (adding, accumulating, reset_accumulator, resetting);
 
 end package;

@@ -280,6 +280,7 @@ begin
           acc           <= resetting;
           o.score_valid <= '0';
           res_rst       <= '1';
+          rescounter    := 0;
         else
           -- Delayed signals:
           i_delay(0) <= addi_out;
@@ -304,20 +305,23 @@ begin
               accumcounter := accumcounter + 1;
               res_rst      <= '0';
               res_acc_zero <= '0';
-              if accumcounter = 4*PE_ADD_CYCLES-1 then
+              if accumcounter = 4 * PE_ADD_CYCLES - 1 then
                 accumcounter := 0;
-                acc          <= resetting;
+                acc          <= reset_accumulator;
               end if;
 
-            when resetting =>
+            when reset_accumulator =>
               rescounter   := rescounter + 1;
               res_rst      <= '1';
               res_acc_zero <= '0';
+              acc          <= resetting;
+
+            when resetting =>
+              rescounter   := rescounter + 1;
+              res_rst      <= '0';
+              res_acc_zero <= '0';
               if rescounter >= 2 * PE_ADD_CYCLES + 1 then
                 res_acc_zero <= '1';
-              end if;
-              if rescounter >= PE_DEPTH + 1 then
-                res_rst <= '0';
               end if;
               if rescounter = PE_DEPTH + PE_ADD_CYCLES then
                 rescounter := 0;
