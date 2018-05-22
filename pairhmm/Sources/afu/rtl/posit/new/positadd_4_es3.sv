@@ -139,7 +139,6 @@ module positadd_4_es3 (clk, in1, in2, start, result, inf, zero, done);
         .out(r2_hidden_pos)
     );
 
-    logic signed [8:0] r2_scale_sum;
     assign r2_scale_sum = r2_fraction_sum_raw[ABITS-1] ? (r2_hi.scale + 1) : (~r2_fraction_sum_raw[ABITS-2] ? (r2_hi.scale - r2_hidden_pos + 1) : r2_hi.scale);
 
     logic [6:0] r2_regime_shift_amount;

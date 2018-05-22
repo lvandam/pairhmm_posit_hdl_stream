@@ -26,6 +26,7 @@ proc r  {} {
   vlog -quiet ../cores/probabilities_fifo/sim/probabilities_fifo.v
   # pipelined unsigned add/subtract
   vcom -2008 ../cores/ADDSUB151_8/sim/ADDSUB151_8.vhd
+  vcom -2008 ../cores/ADDSUB256_8/sim/ADDSUB256_8.vhd
 
   # compile posit units
   vlog -quiet ../afu/rtl/posit/DSR_left_N_S.v
@@ -33,20 +34,23 @@ proc r  {} {
   vlog -quiet ../afu/rtl/posit/LOD_N.v
   vlog -quiet ../afu/rtl/posit/LZD_N.v
   # posit adder / multiplier 32-2
-  vlog -sv -quiet ../afu/rtl/posit/new/posit_defines.sv
-  vlog -sv -quiet ../afu/rtl/posit/new/posit_extract.sv
-  vlog -sv -quiet ../afu/rtl/posit/new/positmult_4.sv
-  vlog -sv -quiet ../afu/rtl/posit/new/positadd_4.sv
-  vlog -sv -quiet ../afu/rtl/posit/new/positadd_8.sv
+  #vlog -sv -quiet ../afu/rtl/posit/new/posit_defines.sv
+  #vlog -sv -quiet ../afu/rtl/posit/new/posit_extract.sv
+  #vlog -sv -quiet ../afu/rtl/posit/new/positmult_4.sv
+  #vlog -sv -quiet ../afu/rtl/posit/new/positadd_4.sv
+  #vlog -sv -quiet ../afu/rtl/posit/new/positadd_8.sv
   # accumulator 32-2 16 cycles
-  vlog -sv -quiet ../afu/rtl/posit/new/posit_extract_accum.sv
-  vlog -sv -quiet ../afu/rtl/posit/new/positaccum_16.sv
+  #vlog -sv -quiet ../afu/rtl/posit/new/posit_extract_accum.sv
+  #vlog -sv -quiet ../afu/rtl/posit/new/positaccum_16.sv
   # posit adder / multiplier 32-3
- # vlog -sv -quiet ../afu/rtl/posit/new/posit_defines_es3.sv
- # vlog -sv -quiet ../afu/rtl/posit/new/posit_extract_es3.sv
- # vlog -sv -quiet ../afu/rtl/posit/new/positmult_4_es3.sv
- # vlog -sv -quiet ../afu/rtl/posit/new/positadd_4_es3.sv
- # vlog -sv -quiet ../afu/rtl/posit/new/positadd_8_es3.sv
+ vlog -sv -quiet ../afu/rtl/posit/new/posit_defines_es3.sv
+ vlog -sv -quiet ../afu/rtl/posit/new/posit_extract_es3.sv
+ vlog -sv -quiet ../afu/rtl/posit/new/positmult_4_es3.sv
+ vlog -sv -quiet ../afu/rtl/posit/new/positadd_4_es3.sv
+ vlog -sv -quiet ../afu/rtl/posit/new/positadd_8_es3.sv
+ # accumulator 32-3 16 cycles
+ vlog -sv -quiet ../afu/rtl/posit/new/posit_extract_accum_es3.sv
+ vlog -sv -quiet ../afu/rtl/posit/new/positaccum_16_es3.sv
 
   # compile rtl
   echo "Compiling rtl"

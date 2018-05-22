@@ -80,6 +80,19 @@ architecture logic of pairhmm is
       );
   end component;
 
+  component positaccum_16_es3
+    port (
+      clk    : in  std_logic;
+      rst    : in  std_logic;
+      in1    : in  std_logic_vector(31 downto 0);
+      start  : in  std_logic;
+      result : out std_logic_vector(31 downto 0);
+      inf    : out std_logic;
+      zero   : out std_logic;
+      done   : out std_logic
+      );
+  end component;
+
   component positadd_8
     port (
       clk    : in  std_logic;
@@ -260,6 +273,38 @@ begin
         );
 
       resaccum : positadd_8 port map (
+        clk    => cr.clk,
+        in1    => i_delay(4 * PE_ADD_CYCLES - 1),
+        in2    => addm_out,
+        start  => addm_out_valid and addi_out_valid,
+        result => resaccum_out,
+        inf    => posit_infs(2),
+        done   => resaccum_out_valid
+        );
+    end generate;
+
+    gen_es3_add : if POSIT_ES = 3 generate
+      resaccum_m : positaccum_16_es3 port map (
+        clk    => cr.clk,
+        rst    => res_rst,
+        in1    => resbusm,
+        start  => '1',
+        result => addm_out,
+        inf    => posit_infs(0),
+        done   => addm_out_valid
+        );
+
+      resaccum_i : positaccum_16_es3 port map (
+        clk    => cr.clk,
+        rst    => res_rst,
+        in1    => resbusi,
+        start  => '1',
+        result => addi_out,
+        inf    => posit_infs(1),
+        done   => addi_out_valid
+        );
+
+      resaccum : positadd_8_es3 port map (
         clk    => cr.clk,
         in1    => i_delay(4 * PE_ADD_CYCLES - 1),
         in2    => addm_out,
