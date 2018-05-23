@@ -17,14 +17,16 @@ const char YDATA[] = "ATTGTCTGCCTCCACCACCTTGAATCGTAAATCGAGCACGATCACCCGTACGGTTATC
 
 posit<NBITS, ES> random_number(float offset, float dev) {
     float num_float;
-    posit<NBITS, ES> num_posit;
+    posit<NBITS, 2> num_posit_2;
+    posit<NBITS, 3> num_posit_3;
 
     do {
         num_float = offset + (rand() * dev / RAND_MAX);
-        num_posit = num_float;
-    } while (num_posit != num_float);
+        num_posit_2 = num_float;
+        num_posit_3 = num_float;
+    } while (num_posit_2 != num_float || num_posit_3 != num_float);
 
-    return num_posit;
+    return posit<NBITS, ES>(num_float);
 }
 
 void fill_batch(t_batch *batch, int x, int y, float initial) {
