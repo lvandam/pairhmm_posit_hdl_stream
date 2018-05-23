@@ -61,10 +61,10 @@ public:
                     result_sw_m[i * PIPE_DEPTH + j][0] += M[x][c];
                     result_sw_i[i * PIPE_DEPTH + j][0] += I[x][c];
 
-                    if(i * PIPE_DEPTH + j == 0) {
-                        cout << (i*PIPE_DEPTH+j) <<" SUM M " << hexstring(M[x][c].get()) << " -- " << hexstring(result_sw_m[i * PIPE_DEPTH + j][0].get()) << endl;
-                        cout << (i*PIPE_DEPTH+j) <<" SUM I " << hexstring(I[x][c].get()) << " -- " << hexstring(result_sw_i[i * PIPE_DEPTH + j][0].get()) << endl;
-                    }
+                    //if(i * PIPE_DEPTH + j == 0) {
+                    //    cout << (i*PIPE_DEPTH+j) <<" SUM M " << hexstring(M[x][c].get()) << " -- " << hexstring(result_sw_m[i * PIPE_DEPTH + j][0].get()) << endl;
+                    //    cout << (i*PIPE_DEPTH+j) <<" SUM I " << hexstring(I[x][c].get()) << " -- " << hexstring(result_sw_i[i * PIPE_DEPTH + j][0].get()) << endl;
+                    //}
                 }
 
                 result_sw[i*PIPE_DEPTH+j][0] = result_sw_m[i * PIPE_DEPTH + j][0] + result_sw_i[i * PIPE_DEPTH + j][0];
