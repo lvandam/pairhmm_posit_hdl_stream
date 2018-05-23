@@ -93,6 +93,32 @@ architecture logic of pairhmm is
       );
   end component;
 
+  component positadd_4
+    port (
+      clk    : in  std_logic;
+      in1    : in  std_logic_vector(31 downto 0);
+      in2    : in  std_logic_vector(31 downto 0);
+      start  : in  std_logic;
+      result : out std_logic_vector(31 downto 0);
+      inf    : out std_logic;
+      zero   : out std_logic;
+      done   : out std_logic
+      );
+  end component;
+
+  component positadd_4_es3
+    port (
+      clk    : in  std_logic;
+      in1    : in  std_logic_vector(31 downto 0);
+      in2    : in  std_logic_vector(31 downto 0);
+      start  : in  std_logic;
+      result : out std_logic_vector(31 downto 0);
+      inf    : out std_logic;
+      zero   : out std_logic;
+      done   : out std_logic
+      );
+  end component;
+
   component positadd_8
     port (
       clk    : in  std_logic;
@@ -247,7 +273,7 @@ begin
 
     type i_delay_type is array (0 to 4 * PE_ADD_CYCLES - 1) of prob;
     signal i_delay       : i_delay_type;
-    signal i_valid_delay : std_logic_vector(6 * PE_ADD_CYCLES - 1 downto 0);
+    signal i_valid_delay : std_logic_vector(5 * PE_ADD_CYCLES - 1 downto 0);
 
     signal acc : acc_state_wide := resetting;
   begin
@@ -272,7 +298,7 @@ begin
         done   => addi_out_valid
         );
 
-      resaccum : positadd_8 port map (
+      resaccum : positadd_4 port map (
         clk    => cr.clk,
         in1    => i_delay(4 * PE_ADD_CYCLES - 1),
         in2    => addm_out,
@@ -304,7 +330,7 @@ begin
         done   => addi_out_valid
         );
 
-      resaccum : positadd_8_es3 port map (
+      resaccum : positadd_4_es3 port map (
         clk    => cr.clk,
         in1    => i_delay(4 * PE_ADD_CYCLES - 1),
         in2    => addm_out,
@@ -334,7 +360,7 @@ begin
           end loop;
 
           i_valid_delay(0) <= lastlast1;
-          for K in 1 to 6 * PE_ADD_CYCLES - 1 loop
+          for K in 1 to 5 * PE_ADD_CYCLES - 1 loop
             i_valid_delay(K) <= i_valid_delay(K-1);
           end loop;
 
@@ -365,10 +391,10 @@ begin
               rescounter   := rescounter + 1;
               res_rst      <= '0';
               res_acc_zero <= '0';
-              if rescounter >= 2 * PE_ADD_CYCLES + 1 then
+              if rescounter >= PE_ADD_CYCLES + 1 then
                 res_acc_zero <= '1';
               end if;
-              if rescounter = PE_DEPTH + PE_ADD_CYCLES then
+              if rescounter = PE_DEPTH then
                 rescounter := 0;
                 acc        <= adding;
               end if;
@@ -378,7 +404,7 @@ begin
           prevlast := lastlast1;
 
           o.score       <= res_acc;
-          o.score_valid <= i_valid_delay(6 * PE_ADD_CYCLES - 1);
+          o.score_valid <= i_valid_delay(5 * PE_ADD_CYCLES - 1);
         end if;
       end if;
     end process;
