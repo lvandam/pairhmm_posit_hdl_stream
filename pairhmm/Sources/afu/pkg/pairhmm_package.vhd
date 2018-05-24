@@ -67,17 +67,13 @@ package pairhmm_package is
     ybus     : ybus_type;
     x        : bp_type;
     schedule : unsigned(PE_DEPTH_BITS-1 downto 0);
-    en       : std_logic;
-    fb       : std_logic;
   end record;
 
   constant pairhmm_in_empty : pairhmm_in := (
     first    => pe_in_empty,
     ybus     => ybus_empty,
     x        => BP_IGNORE,
-    schedule => (others => '0'),
-    en       => '0',
-    fb       => '0'
+    schedule => (others => '0')
     );
 
   type pairhmm_out is record
