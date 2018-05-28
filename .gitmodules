@@ -1,3 +1,6 @@
 [submodule "pairhmm/Sources/sim/pslse"]
 	path = pairhmm/Sources/sim/pslse
 	url = git://github.com/ibm-capi/pslse
+[submodule "pairhmm/fletcher"]
+	path = pairhmm/fletcher
+	url = git://github.com/johanpel/fletcher

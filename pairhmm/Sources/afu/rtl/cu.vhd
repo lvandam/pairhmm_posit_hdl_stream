@@ -25,7 +25,6 @@ architecture logic of cu is
   signal if_rv : unsigned(31 downto 0) := (others => '0');
   signal of_wa : unsigned(31 downto 0) := (others => '0');
 
-
   component probabilities_fifo
     port (
       rst       : in  std_logic;

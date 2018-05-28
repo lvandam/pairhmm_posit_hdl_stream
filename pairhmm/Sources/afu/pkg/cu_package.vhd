@@ -19,8 +19,8 @@ package cu_package is
   constant CU_RAM_ADDRS_PER_BATCH     : natural := PAIRHMM_MAX_SIZE / CU_BPS_PER_RAM_ADDR;
   constant CU_RESULT_SIZE             : natural := 4 * PE_DW;
   constant CU_BATCH_RESULT_CACHELINES : natural := 16 * CU_RESULT_SIZE / DMA_DATA_WIDTH;
-  constant CU_CACHELINES_PER_PROB     : natural := PE_DEPTH * PE_DW * 8 / DMA_DATA_WIDTH;
-  constant CU_BASES_PER_CACHELINE     : natural := DMA_DATA_WIDTH / (PE_DEPTH * 8);
+  constant CU_CACHELINES_PER_PROB     : natural := PE_DEPTH * PE_DW * 8 / DMA_DATA_WIDTH; -- *8 because we have 8 probabilities
+  constant CU_BASES_PER_CACHELINE     : natural := DMA_DATA_WIDTH / (PE_DEPTH * 8); -- each base is 8 bits
 ----------------------------------------------------------------------------------------------------------------------- io
 
   type pairhmm_mmio_regs_in is record
@@ -84,13 +84,13 @@ package cu_package is
     dout        : std_logic_vector(PAIRHMM_BITS_PER_PROB - 1 downto 0);
     c           : fifo_controls;
   end record;
-  
+
   type outfifo_item is record
     din         : std_logic_vector(127 downto 0);
     dout        : std_logic_vector(DMA_DATA_WIDTH - 1 downto 0);
     c           : fifo_controls;
   end record;
-  
+
   type fbfifo_item is record
     din         : std_logic_vector(386 downto 0);
     dout        : std_logic_vector(386 downto 0);
@@ -119,8 +119,8 @@ package cu_package is
     launch,
     done
   );
-  
-  type cu_inits is record 
+
+  type cu_inits is record
     loaded      : std_logic;
     batch_bytes : unsigned(31 downto 0);
     x_size      : unsigned(31 downto 0);
@@ -168,11 +168,11 @@ package cu_package is
     p_fifo_en             : std_logic;
     p_fifo_en1            : std_logic;
     p_fifo_en2            : std_logic;
-    
+
     p_fifodata            : readdata_array;
-    
+
     resultcachelines      : unsigned(31 downto 0);
-    
+
   end record;
 
   type cu_sched_state is (
@@ -220,9 +220,9 @@ package cu_package is
     ybus_addr1            : unsigned(log2e(PAIRHMM_NUM_PES) downto 0);
     ybus_en               : std_logic;
     ybus_en1              : std_logic;
-    
+
     core_schedule         : unsigned(PE_DEPTH_BITS-1 downto 0);
-    
+
     initial_array          : initial_array_type;
   end record;
 
@@ -322,9 +322,9 @@ package body cu_package is
     r.fifos_rst             <= '1';
 
     r.p_fifo_en             <= '0';
-    
+
     r.ram                   <= '1';
-    
+
   end procedure cu_reset;
 
 end package body cu_package;

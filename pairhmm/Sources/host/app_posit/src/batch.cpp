@@ -77,7 +77,7 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
 
             eta = random_number(0.5, 0.1);
             zeta = random_number(0.125, 0.05);
-            upsilon = random_number(0.5, 0.1);
+            epsilon = random_number(0.5, 0.1);
             delta = random_number(0.125, 0.05);
             beta = random_number(0.5, 0.1);
             alpha = random_number(0.125, 0.05);
@@ -86,7 +86,7 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
 
             prob[i * PIPE_DEPTH + k].p[0].b = (int) eta.collect().to_ulong();
             prob[i * PIPE_DEPTH + k].p[1].b = (int) zeta.collect().to_ulong();
-            prob[i * PIPE_DEPTH + k].p[2].b = (int) upsilon.collect().to_ulong();
+            prob[i * PIPE_DEPTH + k].p[2].b = (int) epsilon.collect().to_ulong();
             prob[i * PIPE_DEPTH + k].p[3].b = (int) delta.collect().to_ulong();
             prob[i * PIPE_DEPTH + k].p[4].b = (int) beta.collect().to_ulong();
             prob[i * PIPE_DEPTH + k].p[5].b = (int) alpha.collect().to_ulong();
