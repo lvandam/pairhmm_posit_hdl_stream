@@ -1,7 +1,0 @@
-Schema {
-    reads: Struct {
-        X: Char                 // base pairs
-        probs: List<Int32>      // emission/transmission probabilities
-    }
-    haplos: Char                // base pairs
-}
