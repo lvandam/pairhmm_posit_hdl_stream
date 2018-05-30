@@ -515,7 +515,8 @@ begin
       BUS_BURST_STEP_LEN => BOTTOM_BURST_STEP_LEN,
       BUS_BURST_MAX_LEN  => BOTTOM_BURST_MAX_LEN,
       INDEX_WIDTH        => 32,
-      CFG                => "prim(8)",  -- char
+      CFG                => "listprim(8)",  -- char array (haplos)
+      -- CFG                => "list(struct(prim(8),prim(256)))",  -- struct array (reads)
       CMD_TAG_ENABLE     => false,
       CMD_TAG_WIDTH      => 1
       )
