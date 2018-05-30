@@ -1,0 +1,11 @@
+Schema {
+    reads: Struct {
+        read: List<Char>        // base pair (length: X)
+                                // char = 8 bit, could be 3 bit?
+
+        probs: List<List<Int32>>      // emission/transmission probabilities (8 per read)
+                                      // Int32 correct to store 32-bit posit?
+    }
+
+    haplos: List<Char>                // base pairs (length: Y)
+}
