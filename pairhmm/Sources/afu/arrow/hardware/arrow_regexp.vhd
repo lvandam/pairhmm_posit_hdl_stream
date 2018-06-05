@@ -169,7 +169,7 @@ architecture arrow_regexp of arrow_regexp is
 
   -- The offsets of the bits to signal start and reset to each of the units
   constant CONTROL_START_OFFSET : natural := 0;
-  constant CONTROL_RESET_OFFSET : natural := 0;
+  constant CONTROL_RESET_OFFSET : natural := 1;
 
   -- Memory mapped register file
   type mm_regs_t is array (0 to NUM_FLETCHER_REGS-1) of std_logic_vector(SLV_BUS_DATA_WIDTH-1 downto 0);
@@ -202,12 +202,12 @@ architecture arrow_regexp of arrow_regexp is
   -----------------------------------------------------------------------------
   constant OFFSET_WIDTH       : natural := 32;
   constant VALUE_ELEM_WIDTH   : natural := 8;
-  constant VALUES_PER_CYCLE   : natural := 1;  -- burst size of 1 -> 1 (was 4) ?
+  constant VALUES_PER_CYCLE   : natural := 4;  -- burst size of 1 -> 1 (was 4) ?
   constant NUM_STREAMS        : natural := 2;  -- only 1 stream for char
   constant VALUES_WIDTH       : natural := VALUE_ELEM_WIDTH * VALUES_PER_CYCLE;
   constant VALUES_COUNT_WIDTH : natural := log2ceil(VALUES_PER_CYCLE)+1;
   constant OUT_DATA_WIDTH     : natural := OFFSET_WIDTH + VALUES_WIDTH + VALUES_COUNT_WIDTH;
-  
+
     signal out_valid              : std_logic_vector(NUM_STREAMS-1 downto 0);
   signal out_ready              : std_logic_vector(NUM_STREAMS-1 downto 0);
   signal out_last               : std_logic_vector(NUM_STREAMS-1 downto 0);
@@ -230,7 +230,7 @@ architecture arrow_regexp of arrow_regexp is
     last                        : std_logic;
     data                        : std_logic_vector(OFFSET_WIDTH-1 downto 0);
   end record;
-  
+
   type utf8_stream_in_t is record
     valid  : std_logic;
     dvalid : std_logic;
@@ -262,7 +262,7 @@ architecture arrow_regexp of arrow_regexp is
     type len_stream_out_t is record
     ready                       : std_logic;
   end record;
-  
+
   type utf8_stream_out_t is record
     ready : std_logic;
   end record;
@@ -282,7 +282,7 @@ architecture arrow_regexp of arrow_regexp is
 
   signal str_elem_in            : str_elem_in_t;
   signal str_elem_out           : str_elem_out_t;
-  
+
     type regex_in_t is record
     valid                       : std_logic;
     data                        : std_logic_vector(VALUES_WIDTH-1 downto 0);
@@ -357,7 +357,7 @@ architecture arrow_regexp of arrow_regexp is
   signal usercore_done        : std_logic;
   signal usercore_reset       : std_logic;
   signal usercore_reset_start : std_logic;
-  
+
     -----------------------------------------------------------------------------
   -- Application constants
   -----------------------------------------------------------------------------
@@ -366,8 +366,8 @@ architecture arrow_regexp of arrow_regexp is
   constant ELEMENT_COUNT_MAX    : natural := 64;
   constant ELEMENT_COUNT_WIDTH  : natural := log2ceil(ELEMENT_COUNT_MAX+1);
 
-  constant BUS_BURST_STEP_LEN   : natural := 1;
-  constant BUS_BURST_MAX_LEN    : natural := 16;
+  constant BUS_BURST_STEP_LEN   : natural := BOTTOM_BURST_STEP_LEN;
+  constant BUS_BURST_MAX_LEN    : natural := BOTTOM_BURST_MAX_LEN;
   -----------------------------------------------------------------------------
   -- String stream generator helper constants and signals
   -----------------------------------------------------------------------------
@@ -387,7 +387,7 @@ architecture arrow_regexp of arrow_regexp is
     0 => INDEX_WIDTH                         -- len data
     ));
 
-  constant BUS_LEN_WIDTH : natural := 9;  -- 1 more than AXI
+  constant BUS_LEN_WIDTH : natural := BOTTOM_LEN_WIDTH;  -- 1 more than AXI
 
   constant CTRL_WIDTH : natural := 2*BUS_ADDR_WIDTH;
   constant TAG_WIDTH  : natural := 1;
@@ -401,7 +401,7 @@ architecture arrow_regexp of arrow_regexp is
 
 begin
   reset                         <= '1' when reset_n = '0' else '0';
-  
+
   -----------------------------------------------------------------------------
   -- Memory Mapped Slave Registers
   -----------------------------------------------------------------------------
@@ -746,7 +746,7 @@ begin
       m_axi_rvalid    => axi_top.rvalid,
       m_axi_rready    => axi_top.rready
       );
-  
+
   -----------------------------------------------------------------------------
   -- ColumnReader
   -----------------------------------------------------------------------------
@@ -758,7 +758,7 @@ begin
       BUS_BURST_STEP_LEN => BUS_BURST_STEP_LEN,
       BUS_BURST_MAX_LEN  => BUS_BURST_MAX_LEN,
       INDEX_WIDTH        => INDEX_WIDTH,
-      CFG                => "listprim(8)",  -- char array (haplos)
+      CFG                => "listprim(8;epc=4)",  -- char array (haplos)
       -- CFG                => "list(struct(prim(8),prim(256)))",  -- struct array (reads)
       CMD_TAG_ENABLE     => false,
       CMD_TAG_WIDTH      => 1
@@ -768,28 +768,28 @@ begin
       bus_reset => reset_n,
       acc_clk   => clk,
       acc_reset => reset_n,
-  
+
       cmd_valid    => cmd_valid,
       cmd_ready    => cmd_ready,
       cmd_firstIdx => cmd_firstIdx,
       cmd_lastIdx  => cmd_lastIdx,
       cmd_ctrl     => cmd_ctrl,
       cmd_tag      => (others => '0'),  -- CMD_TAG_ENABLE is false
-  
+
       unlock_valid => open,
       unlock_ready => '1',
       unlock_tag   => open,
-  
+
       busReq_valid => req_valid,
       busReq_ready => req_ready,
       busReq_addr  => req_addr,
       busReq_len   => req_len,
-  
+
       busResp_valid => rsp_valid,
       busResp_ready => rsp_ready,
       busResp_data  => rsp_data,
       busResp_last  => rsp_last,
-  
+
       out_valid  => out_valid,
       out_ready  => out_ready,
       out_last   => out_last,
@@ -801,25 +801,25 @@ begin
   begin
     if rising_edge(clk) then
       r <= d;
-  
+
       r_control_reset <= control_reset;
       r_control_start <= control_start;
-	 
+
  	  r_firstidx <= mm_regs(REG_FIRST_IDX);
       r_lastidx  <= mm_regs(REG_LAST_IDX);
-  
+
       r_off_hi <= mm_regs(REG_OFF_ADDR_HI);
       r_off_lo <= mm_regs(REG_OFF_ADDR_LO);
-  
+
       r_utf8_hi <= mm_regs(REG_UTF8_ADDR_HI);
       r_utf8_lo <= mm_regs(REG_UTF8_ADDR_LO);
-  
+
       if control_reset = '1' then
         r.state <= STATE_IDLE;
       end if;
     end if;
   end process;
-  
+
   sm_comb : process(r,
                     cmd_ready,
                     str_elem_in,
@@ -840,43 +840,43 @@ begin
     v.command.ready := cmd_ready;
     v.str_elem_in   := str_elem_in;
     v.regex.output  := regex_output;
-  
+
     -- Default outputs:
     v.command.valid := '0';
-  
+
     v.str_elem_out.len.ready  := '0';
     v.str_elem_out.utf8.ready := '0';
-  
+
     v.regex.input.valid := '0';
     v.regex.input.last  := '0';
-  
+
     case v.state is
       when STATE_IDLE =>
         v.cs.busy        := '0';
         v.cs.done        := '0';
         v.cs.reset_start := '0';
-  
+
         v.processed := (others => '0');
         v.matches   := (others => '0');
-  
+
         if control_start = '1' then
           v.state          := STATE_RESET_START;
           v.cs.reset_start := '1';
         end if;
-  
+
       when STATE_RESET_START =>
         v.cs.busy := '1';
         v.cs.done := '0';
-  
+
         if control_start = '0' then
           v.state := STATE_REQUEST;
         end if;
-  
+
       when STATE_REQUEST =>
         v.cs.done        := '0';
         v.cs.busy        := '1';
         v.cs.reset_start := '0';
-  
+
         -- First four argument registers are buffer addresses
         -- MSBs are index buffer address
         v.command.ctrl(127 downto 96) := r_off_hi;
@@ -884,14 +884,14 @@ begin
         -- LSBs are data buffer address
         v.command.ctrl(63 downto 32)  := r_utf8_hi;
         v.command.ctrl(31 downto 0)   := r_utf8_lo;
-  
+
         -- Next two argument registers are first and last index
         v.command.firstIdx := r_firstidx;
         v.command.lastIdx  := r_lastidx;
-  
+
         -- Make command valid
         v.command.valid := '1';
-  
+
         -- Wait for command accepted
         if v.command.ready = '1' then
           dumpStdOut("RegExp unit requested strings: " &
@@ -900,15 +900,15 @@ begin
                      & integer'image(int(v.command.lastIdx)));
           v.state := STATE_BUSY;
         end if;
-  
+
       when STATE_BUSY =>
         v.cs.done        := '0';
         v.cs.busy        := '1';
         v.cs.reset_start := '0';
-  
+
         -- Always ready to receive length
         v.str_elem_out.len.ready := '1';
-  
+
         if v.str_elem_in.len.valid = '1' then
         -- Do something when this is the last string
         end if;
@@ -918,28 +918,28 @@ begin
           dumpStdOut("RegEx unit is done");
           v.state := STATE_DONE;
         end if;
-  
+
         -- Always ready to receive utf8 char
         v.str_elem_out.utf8.ready := '1';
-  
+
         if v.str_elem_in.utf8.valid = '1' then
         -- Do something for every utf8 char
         end if;
-  
+
         if v.str_elem_in.utf8.last = '1' then
         -- Do something when this is the last utf8 char
         end if;
-  
+
       when STATE_DONE =>
         v.cs.done        := '1';
         v.cs.busy        := '0';
         v.cs.reset_start := '0';
-  
+
         if r_control_reset = '1' or r_control_start = '1' then
           v.state := STATE_IDLE;
         end if;
     end case;
-  
+
     d <= v;
   end process;
 
