@@ -107,7 +107,7 @@ entity arrow_regexp is
 end arrow_regexp;
 
 architecture arrow_regexp of arrow_regexp is
-  signal reset                  : std_logic;
+  signal reset : std_logic;
 
   -----------------------------------------------------------------------------
   -- Memory Mapped Input/Output
@@ -186,16 +186,12 @@ architecture arrow_regexp of arrow_regexp is
   -- Register all ports to ease timing
   signal r_control_reset : std_logic;
   signal r_control_start : std_logic;
-  signal r_reset_start   : std_logic;
-  signal r_busy          : std_logic;
-  signal r_done          : std_logic;
   signal r_firstidx      : std_logic_vector(REG_WIDTH-1 downto 0);
   signal r_lastidx       : std_logic_vector(REG_WIDTH-1 downto 0);
   signal r_off_hi        : std_logic_vector(REG_WIDTH-1 downto 0);
   signal r_off_lo        : std_logic_vector(REG_WIDTH-1 downto 0);
   signal r_utf8_hi       : std_logic_vector(REG_WIDTH-1 downto 0);
   signal r_utf8_lo       : std_logic_vector(REG_WIDTH-1 downto 0);
-  signal r_matches       : std_logic_vector(1*REG_WIDTH-1 downto 0);  --NUM_REGEX=1
 
   -----------------------------------------------------------------------------
   -- ColumnReader Interface
@@ -208,11 +204,11 @@ architecture arrow_regexp of arrow_regexp is
   constant VALUES_COUNT_WIDTH : natural := log2ceil(VALUES_PER_CYCLE)+1;
   constant OUT_DATA_WIDTH     : natural := OFFSET_WIDTH + VALUES_WIDTH + VALUES_COUNT_WIDTH;
 
-    signal out_valid              : std_logic_vector(NUM_STREAMS-1 downto 0);
-  signal out_ready              : std_logic_vector(NUM_STREAMS-1 downto 0);
-  signal out_last               : std_logic_vector(NUM_STREAMS-1 downto 0);
-  signal out_dvalid             : std_logic_vector(NUM_STREAMS-1 downto 0);
-  signal out_data               : std_logic_vector(OUT_DATA_WIDTH-1 downto 0);
+  signal out_valid  : std_logic_vector(NUM_STREAMS-1 downto 0);
+  signal out_ready  : std_logic_vector(NUM_STREAMS-1 downto 0);
+  signal out_last   : std_logic_vector(NUM_STREAMS-1 downto 0);
+  signal out_dvalid : std_logic_vector(NUM_STREAMS-1 downto 0);
+  signal out_data   : std_logic_vector(OUT_DATA_WIDTH-1 downto 0);
 
   -- Command Stream
   type command_t is record
@@ -225,10 +221,10 @@ architecture arrow_regexp of arrow_regexp is
 
   -- Output Streams
   type len_stream_in_t is record
-    valid                       : std_logic;
-    dvalid                      : std_logic;
-    last                        : std_logic;
-    data                        : std_logic_vector(OFFSET_WIDTH-1 downto 0);
+    valid  : std_logic;
+    dvalid : std_logic;
+    last   : std_logic;
+    data   : std_logic_vector(OFFSET_WIDTH-1 downto 0);
   end record;
 
   type utf8_stream_in_t is record
@@ -240,7 +236,7 @@ architecture arrow_regexp of arrow_regexp is
   end record;
 
   type str_elem_in_t is record
-    len                         : len_stream_in_t;
+    len  : len_stream_in_t;
     utf8 : utf8_stream_in_t;
   end record;
 
@@ -252,15 +248,20 @@ architecture arrow_regexp of arrow_regexp is
     signal str_elem_in : out str_elem_in_t
     ) is
   begin
+    str_elem_in.len.data        <= data  (OFFSET_WIDTH-1 downto 0);
+    str_elem_in.len.valid       <= valid (0);
+    str_elem_in.len.dvalid      <= dvalid(0);
+    str_elem_in.len.last        <= last  (0);
+
     str_elem_in.utf8.count  <= data(VALUES_COUNT_WIDTH + VALUES_WIDTH + OFFSET_WIDTH - 1 downto VALUES_WIDTH + OFFSET_WIDTH);
     str_elem_in.utf8.data   <= data(VALUES_WIDTH + OFFSET_WIDTH - 1 downto OFFSET_WIDTH);
-    str_elem_in.utf8.valid  <= valid(0);
-    str_elem_in.utf8.dvalid <= dvalid(0);
-    str_elem_in.utf8.last   <= last(0);
+    str_elem_in.utf8.valid  <= valid(1);
+    str_elem_in.utf8.dvalid <= dvalid(1);
+    str_elem_in.utf8.last   <= last(1);
   end procedure;
 
-    type len_stream_out_t is record
-    ready                       : std_logic;
+  type len_stream_out_t is record
+    ready : std_logic;
   end record;
 
   type utf8_stream_out_t is record
@@ -268,7 +269,7 @@ architecture arrow_regexp of arrow_regexp is
   end record;
 
   type str_elem_out_t is record
-    len                         : len_stream_out_t;
+    len  : len_stream_out_t;
     utf8 : utf8_stream_out_t;
   end record;
 
@@ -277,34 +278,35 @@ architecture arrow_regexp of arrow_regexp is
     signal out_ready    : out std_logic_vector(NUM_STREAMS-1 downto 0)
     ) is
   begin
-    out_ready(0) <= str_elem_out.utf8.ready;
+    out_ready(0)                <= str_elem_out.len.ready;
+    out_ready(1)                <= str_elem_out.utf8.ready;
   end procedure;
 
-  signal str_elem_in            : str_elem_in_t;
-  signal str_elem_out           : str_elem_out_t;
+  signal str_elem_in  : str_elem_in_t;
+  signal str_elem_out : str_elem_out_t;
 
-    type regex_in_t is record
-    valid                       : std_logic;
-    data                        : std_logic_vector(VALUES_WIDTH-1 downto 0);
-    mask                        : std_logic_vector(VALUES_PER_CYCLE-1 downto 0);
-    last                        : std_logic;
+  type regex_in_t is record
+    valid : std_logic;
+    data  : std_logic_vector(VALUES_WIDTH-1 downto 0);
+    mask  : std_logic_vector(VALUES_PER_CYCLE-1 downto 0);
+    last  : std_logic;
   end record;
 
   type regex_out_t is record
-    valid                       : std_logic;
-    match                       : std_logic;
-    error                       : std_logic;
+    valid : std_logic;
+    match : std_logic;
+    error : std_logic;
   end record;
 
   type regex_t is record
-    input                       : regex_in_t;
-    output                      : regex_out_t;
+    input  : regex_in_t;
+    output : regex_out_t;
   end record;
 
-  signal regex_input_r          : regex_in_t;
-  signal regex_output_r         : regex_out_t;
-  signal regex_input            : regex_in_t;
-  signal regex_output           : regex_out_t;
+  signal regex_input_r  : regex_in_t;
+  signal regex_output_r : regex_out_t;
+  signal regex_input    : regex_in_t;
+  signal regex_output   : regex_out_t;
 
   -----------------------------------------------------------------------------
   -- UserCore
@@ -358,49 +360,18 @@ architecture arrow_regexp of arrow_regexp is
   signal usercore_reset       : std_logic;
   signal usercore_reset_start : std_logic;
 
-    -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
   -- Application constants
   -----------------------------------------------------------------------------
-  constant INDEX_WIDTH          : natural := 32;
-  constant ELEMENT_WIDTH        : natural := 8;
-  constant ELEMENT_COUNT_MAX    : natural := 64;
-  constant ELEMENT_COUNT_WIDTH  : natural := log2ceil(ELEMENT_COUNT_MAX+1);
+  constant INDEX_WIDTH         : natural := 32;
 
-  constant BUS_BURST_STEP_LEN   : natural := BOTTOM_BURST_STEP_LEN;
-  constant BUS_BURST_MAX_LEN    : natural := BOTTOM_BURST_MAX_LEN;
-  -----------------------------------------------------------------------------
-  -- String stream generator helper constants and signals
-  -----------------------------------------------------------------------------
-  constant LEN_WIDTH            : natural := 8;
-
-  -----------------------------------------------------------------------------
-  -- ColumnWriter helper constants and signals
-  -----------------------------------------------------------------------------
-  constant CW_DATA_WIDTH : natural := INDEX_WIDTH +
-                                      ELEMENT_WIDTH*ELEMENT_COUNT_MAX +
-                                      ELEMENT_COUNT_WIDTH;
-
-  -- Get the serialization indices for in_data
-  constant ISI : nat_array := cumulative((
-    2 => ELEMENT_COUNT_WIDTH,                --
-    1 => ELEMENT_WIDTH * ELEMENT_COUNT_MAX,  -- utf8 data
-    0 => INDEX_WIDTH                         -- len data
-    ));
+  constant BUS_BURST_STEP_LEN : natural := BOTTOM_BURST_STEP_LEN;
+  constant BUS_BURST_MAX_LEN  : natural := BOTTOM_BURST_MAX_LEN;
 
   constant BUS_LEN_WIDTH : natural := BOTTOM_LEN_WIDTH;  -- 1 more than AXI
 
-  constant CTRL_WIDTH : natural := 2*BUS_ADDR_WIDTH;
-  constant TAG_WIDTH  : natural := 1;
-
-  signal cmd_valid    : std_logic;
-  signal cmd_ready    : std_logic;
-  signal cmd_firstIdx : std_logic_vector(INDEX_WIDTH-1 downto 0);
-  signal cmd_lastIdx  : std_logic_vector(INDEX_WIDTH-1 downto 0);
-  signal cmd_ctrl     : std_logic_vector(CTRL_WIDTH-1 downto 0);
-  signal cmd_tag      : std_logic_vector(TAG_WIDTH-1 downto 0);
-
 begin
-  reset                         <= '1' when reset_n = '0' else '0';
+  reset <= '1' when reset_n = '0' else '0';
 
   -----------------------------------------------------------------------------
   -- Memory Mapped Slave Registers
@@ -525,173 +496,6 @@ begin
   end process;
 
   -----------------------------------------------------------------------------
--- Global control state machine
------------------------------------------------------------------------------
-  -- global_sm : block is
-    -- type state_type is (IDLE, STRINGGEN, COLUMNWRITER, UNLOCK);
-
-    -- type reg_record is record
-      -- busy        : std_logic;
-      -- done        : std_logic;
-      -- reset_start : std_logic;
-      -- state       : state_type;
-    -- end record;
-
-    -- type cmd_record is record
-      -- valid    : std_logic;
-      -- firstIdx : std_logic_vector(INDEX_WIDTH-1 downto 0);
-      -- lastIdx  : std_logic_vector(INDEX_WIDTH-1 downto 0);
-      -- ctrl     : std_logic_vector(CTRL_WIDTH-1 downto 0);
-      -- tag      : std_logic_vector(TAG_WIDTH-1 downto 0);
-    -- end record;
-
-    -- type str_record is record
-      -- valid : std_logic;
-      -- len   : std_logic_vector(INDEX_WIDTH-1 downto 0);
-      -- min   : std_logic_vector(LEN_WIDTH-1 downto 0);
-      -- mask  : std_logic_vector(LEN_WIDTH-1 downto 0);
-    -- end record;
-
-    -- type unl_record is record
-      -- ready : std_logic;
-    -- end record;
-
-    -- type out_record is record
-      -- cmd : cmd_record;
-      -- str : str_record;
-      -- unl : unl_record;
-    -- end record;
-
-    -- signal r : reg_record;
-    -- signal d : reg_record;
-  -- begin
-    -- seq_proc : process(clk) is
-    -- begin
-      -- if rising_edge(clk) then
-        -- r <= d;
-
-        -- -- Reset
-        -- if reset = '1' then
-          -- r.state       <= IDLE;
-          -- r.reset_start <= '0';
-          -- r.busy        <= '0';
-          -- r.done        <= '0';
-        -- end if;
-      -- end if;
-    -- end process;
-
-    -- comb_proc : process(r,
-                        -- usercore_start,
-                        -- mm_regs(REG_OFF_ADDR_HI), mm_regs(REG_OFF_ADDR_LO),
-                        -- mm_regs(REG_UTF8_ADDR_HI), mm_regs(REG_UTF8_ADDR_LO),
-                        -- cmd_ready,
-                        -- ssg_cmd_ready,
-                        -- unlock_valid, unlock_tag
-                        -- ) is
-      -- variable v : reg_record;
-      -- variable o : out_record;
-    -- begin
-      -- v := r;
-
-      -- -- Disable command streams by default
-      -- o.cmd.valid := '0';
-      -- o.str.valid := '0';
-      -- o.unl.ready := '0';
-
-      -- -- Default outputs
-      -- o.cmd.firstIdx := mm_regs(REG_FIRST_IDX);
-      -- o.cmd.lastIdx  := mm_regs(REG_LAST_IDX);
-      -- -- Values buffer at LSBs
-      -- o.cmd.ctrl(BUS_ADDR_WIDTH-1 downto 0)
-        -- := mm_regs(REG_UTF8_ADDR_HI) & mm_regs(REG_UTF8_ADDR_LO);
-      -- -- Index buffer at MSBs
-      -- o.cmd.ctrl(2*BUS_ADDR_WIDTH-1 downto BUS_ADDR_WIDTH)
-        -- := mm_regs(REG_OFF_ADDR_HI) & mm_regs(REG_OFF_ADDR_LO);
-
-      -- o.cmd.tag := (0 => '1', others => '0');
-
-      -- -- We use the last index to determine how many strings have to be
-      -- -- generated. This assumes firstIdx is 0.
-      -- -- o.str.len  := mm_regs(REG_LAST_IDX);
-      -- -- o.str.min  := mm_regs(REG_STRLEN_MIN)(LEN_WIDTH-1 downto 0);
-      -- -- o.str.mask := mm_regs(REG_PRNG_MASK)(LEN_WIDTH-1 downto 0);
-      -- -- Note: string lengths that are generated will be:
-      -- -- (minimum string length) + ((PRNG output) bitwise and (PRNG mask))
-      -- -- Set STRLEN_MIN to 0 and PRNG_MASK to all 1's (strongly not
-      -- -- recommended) to generate all possible string lengths.
-
-      -- -- Reset start is low by default.
-      -- v.reset_start := '0';
-
-      -- case r.state is
-        -- when IDLE =>
-          -- if usercore_start = '1' then
-            -- v.reset_start := '1';
-            -- v.state       := STRINGGEN;
-            -- v.busy        := '1';
-            -- v.done        := '0';
-          -- end if;
-
-        -- when STRINGGEN =>
-          -- -- Validate command:
-          -- -- o.str.valid := '1';
-
-          -- if ssg_cmd_ready = '1' then
-            -- -- Command is accepted, start the ColumnWriter
-            -- v.state := COLUMNWRITER;
-          -- end if;
-
-        -- when COLUMNWRITER =>
-          -- -- Validate command:
-          -- o.cmd.valid := '1';
-
-          -- if cmd_ready = '1' then
-            -- -- Command is accepted, wait for unlock.
-            -- v.state := UNLOCK;
-          -- end if;
-
-        -- when UNLOCK =>
-          -- o.unl.ready := '1';
-
-          -- if unlock_valid = '1' then
-            -- v.state := IDLE;
-            -- -- Make done and reset busy
-            -- v.done  := '1';
-            -- v.busy  := '0';
-          -- end if;
-
-      -- end case;
-
-      -- -- Registered outputs
-      -- d <= v;
-
-      -- -- Combinatorial outputs
-      -- cmd_valid    <= o.cmd.valid;
-      -- cmd_firstIdx <= o.cmd.firstIdx;
-      -- cmd_lastIdx  <= o.cmd.lastIdx;
-      -- cmd_ctrl     <= o.cmd.ctrl;
-      -- cmd_tag      <= o.cmd.tag;
-
-      -- ssg_cmd_valid      <= o.str.valid;
-      -- ssg_cmd_len        <= o.str.len;
-      -- ssg_cmd_prng_mask  <= o.str.mask;
-      -- ssg_cmd_strlen_min <= o.str.min;
-
-      -- unlock_ready <= o.unl.ready;
-
-    -- end process;
-
-    -- -- Registered output
-    -- usercore_reset_start <= r.reset_start;
-    -- usercore_busy        <= r.busy;
-    -- usercore_done        <= r.done;
-
-  -- end block;
-
-
-
-
-  -----------------------------------------------------------------------------
   -- Master
   -----------------------------------------------------------------------------
   -- Read address channel
@@ -765,15 +569,15 @@ begin
       )
     port map (
       bus_clk   => clk,
-      bus_reset => reset_n,
+      bus_reset => reset,
       acc_clk   => clk,
-      acc_reset => reset_n,
+      acc_reset => reset,
 
-      cmd_valid    => cmd_valid,
-      cmd_ready    => cmd_ready,
-      cmd_firstIdx => cmd_firstIdx,
-      cmd_lastIdx  => cmd_lastIdx,
-      cmd_ctrl     => cmd_ctrl,
+      cmd_valid    => d.command.valid,
+      cmd_ready    => d.command.ready,
+      cmd_firstIdx => d.command.firstIdx,
+      cmd_lastIdx  => d.command.lastIdx,
+      cmd_ctrl     => d.command.ctrl,
       cmd_tag      => (others => '0'),  -- CMD_TAG_ENABLE is false
 
       unlock_valid => open,
@@ -805,7 +609,7 @@ begin
       r_control_reset <= control_reset;
       r_control_start <= control_start;
 
- 	  r_firstidx <= mm_regs(REG_FIRST_IDX);
+      r_firstidx <= mm_regs(REG_FIRST_IDX);
       r_lastidx  <= mm_regs(REG_LAST_IDX);
 
       r_off_hi <= mm_regs(REG_OFF_ADDR_HI);
@@ -820,8 +624,7 @@ begin
     end if;
   end process;
 
-  sm_comb : process(r,
-                    cmd_ready,
+  sm_comb : process(r,--d.command.ready,
                     str_elem_in,
                     regex_output,
                     r_firstidx,
@@ -837,7 +640,7 @@ begin
   begin
     v               := r;
     -- Inputs:
-    v.command.ready := cmd_ready;
+    v.command.ready := d.command.ready;
     v.str_elem_in   := str_elem_in;
     v.regex.output  := regex_output;
 
