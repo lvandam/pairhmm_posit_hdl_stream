@@ -120,8 +120,8 @@ architecture arrow_regexp of arrow_regexp is
   --   1 control (uint64)       =  2
   --   1 return (uint64)        =  2
   ----------------------------------- Buffer addresses
-  --   1 index buf address      =  2
-  --   1 data  buf address      =  2
+  --   1 offsets buf address      =  2
+  --   1 data  buf address        =  2
   ----------------------------------- Custom registers
   --   1 first idx              =  1
   --   1 last idx               =  1
@@ -156,6 +156,7 @@ architecture arrow_regexp of arrow_regexp is
   constant REG_UTF8_ADDR_HI : natural := 8;
   constant REG_UTF8_ADDR_LO : natural := 9;
 
+  -- START OF ARGUMENTS (REGISTER 5)
   -- Register offsets to indices for each RegExp unit to work on
   constant REG_FIRST_IDX : natural := 10;
   constant REG_LAST_IDX  : natural := 11;
@@ -307,9 +308,6 @@ architecture arrow_regexp of arrow_regexp is
     output : regex_out_t;
   end record;
 
-  signal regex_input_r  : regex_in_t;
-  signal regex_output_r : regex_out_t;
-  signal regex_input    : regex_in_t;
   signal regex_output   : regex_out_t;
 
   -----------------------------------------------------------------------------
@@ -674,7 +672,6 @@ begin
   sm_comb : process(r,
                     cmd_ready,
                     str_elem_in,
-                    regex_output,
                     r_firstidx,
                     r_lastidx,
                     r_off_hi,
@@ -690,7 +687,6 @@ begin
     -- Inputs:
     v.command.ready := cmd_ready;
     v.str_elem_in   := str_elem_in;
-    v.regex.output  := regex_output;
 
     -- Default outputs:
     v.command.valid := '0';
@@ -768,6 +764,7 @@ begin
 
         if v.str_elem_in.len.valid = '1' then
         -- Do something when this is the last string
+          dumpStdOut("LAST STRING");
         end if;
         if (v.str_elem_in.len.last = '1') and
           (v.processed = u(v.command.lastIdx) - u(v.command.firstIdx))
@@ -781,10 +778,12 @@ begin
 
         if v.str_elem_in.utf8.valid = '1' then
         -- Do something for every utf8 char
+          dumpStdOut("UTF CHAR: " & integer'image(to_integer(unsigned(v.str_elem_in.utf8.data))));
         end if;
 
         if v.str_elem_in.utf8.last = '1' then
         -- Do something when this is the last utf8 char
+          dumpStdOut("LAST CHAR");
         end if;
 
       when STATE_DONE =>
