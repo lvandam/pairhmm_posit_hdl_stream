@@ -184,25 +184,29 @@ architecture arrow_regexp of arrow_regexp is
   signal axi_top : axi_top_t;
 
   -- Register all ports to ease timing
-  signal r_control_reset : std_logic;
-  signal r_control_start : std_logic;
-  signal r_firstidx      : std_logic_vector(REG_WIDTH-1 downto 0);
-  signal r_lastidx       : std_logic_vector(REG_WIDTH-1 downto 0);
-  signal r_off_hi        : std_logic_vector(REG_WIDTH-1 downto 0);
-  signal r_off_lo        : std_logic_vector(REG_WIDTH-1 downto 0);
-  signal r_utf8_hi       : std_logic_vector(REG_WIDTH-1 downto 0);
-  signal r_utf8_lo       : std_logic_vector(REG_WIDTH-1 downto 0);
+  signal busy, done, reset_start : std_logic;
+  signal r_control_reset         : std_logic;
+  signal r_control_start         : std_logic;
+  signal r_reset_start           : std_logic;
+  signal r_busy                  : std_logic;
+  signal r_done                  : std_logic;
+  signal r_firstidx              : std_logic_vector(REG_WIDTH-1 downto 0);
+  signal r_lastidx               : std_logic_vector(REG_WIDTH-1 downto 0);
+  signal r_off_hi                : std_logic_vector(REG_WIDTH-1 downto 0);
+  signal r_off_lo                : std_logic_vector(REG_WIDTH-1 downto 0);
+  signal r_utf8_hi               : std_logic_vector(REG_WIDTH-1 downto 0);
+  signal r_utf8_lo               : std_logic_vector(REG_WIDTH-1 downto 0);
 
   -----------------------------------------------------------------------------
   -- ColumnReader Interface
   -----------------------------------------------------------------------------
-  constant OFFSET_WIDTH       : natural := 32;
+  constant INDEX_WIDTH        : natural := 32;
   constant VALUE_ELEM_WIDTH   : natural := 8;
   constant VALUES_PER_CYCLE   : natural := 4;  -- burst size of 1 -> 1 (was 4) ?
   constant NUM_STREAMS        : natural := 2;  -- only 1 stream for char
   constant VALUES_WIDTH       : natural := VALUE_ELEM_WIDTH * VALUES_PER_CYCLE;
   constant VALUES_COUNT_WIDTH : natural := log2ceil(VALUES_PER_CYCLE)+1;
-  constant OUT_DATA_WIDTH     : natural := OFFSET_WIDTH + VALUES_WIDTH + VALUES_COUNT_WIDTH;
+  constant OUT_DATA_WIDTH     : natural := INDEX_WIDTH + VALUES_WIDTH + VALUES_COUNT_WIDTH;
 
   signal out_valid  : std_logic_vector(NUM_STREAMS-1 downto 0);
   signal out_ready  : std_logic_vector(NUM_STREAMS-1 downto 0);
@@ -214,8 +218,8 @@ architecture arrow_regexp of arrow_regexp is
   type command_t is record
     valid    : std_logic;
     ready    : std_logic;
-    firstIdx : std_logic_vector(OFFSET_WIDTH - 1 downto 0);
-    lastIdx  : std_logic_vector(OFFSET_WIDTH - 1 downto 0);
+    firstIdx : std_logic_vector(INDEX_WIDTH - 1 downto 0);
+    lastIdx  : std_logic_vector(INDEX_WIDTH - 1 downto 0);
     ctrl     : std_logic_vector(2 * BUS_ADDR_WIDTH - 1 downto 0);
   end record;
 
@@ -224,7 +228,7 @@ architecture arrow_regexp of arrow_regexp is
     valid  : std_logic;
     dvalid : std_logic;
     last   : std_logic;
-    data   : std_logic_vector(OFFSET_WIDTH-1 downto 0);
+    data   : std_logic_vector(INDEX_WIDTH-1 downto 0);
   end record;
 
   type utf8_stream_in_t is record
@@ -248,13 +252,13 @@ architecture arrow_regexp of arrow_regexp is
     signal str_elem_in : out str_elem_in_t
     ) is
   begin
-    str_elem_in.len.data        <= data  (OFFSET_WIDTH-1 downto 0);
-    str_elem_in.len.valid       <= valid (0);
-    str_elem_in.len.dvalid      <= dvalid(0);
-    str_elem_in.len.last        <= last  (0);
+    str_elem_in.len.data   <= data (INDEX_WIDTH-1 downto 0);
+    str_elem_in.len.valid  <= valid (0);
+    str_elem_in.len.dvalid <= dvalid(0);
+    str_elem_in.len.last   <= last (0);
 
-    str_elem_in.utf8.count  <= data(VALUES_COUNT_WIDTH + VALUES_WIDTH + OFFSET_WIDTH - 1 downto VALUES_WIDTH + OFFSET_WIDTH);
-    str_elem_in.utf8.data   <= data(VALUES_WIDTH + OFFSET_WIDTH - 1 downto OFFSET_WIDTH);
+    str_elem_in.utf8.count  <= data(VALUES_COUNT_WIDTH + VALUES_WIDTH + INDEX_WIDTH - 1 downto VALUES_WIDTH + INDEX_WIDTH);
+    str_elem_in.utf8.data   <= data(VALUES_WIDTH + INDEX_WIDTH - 1 downto INDEX_WIDTH);
     str_elem_in.utf8.valid  <= valid(1);
     str_elem_in.utf8.dvalid <= dvalid(1);
     str_elem_in.utf8.last   <= last(1);
@@ -278,8 +282,8 @@ architecture arrow_regexp of arrow_regexp is
     signal out_ready    : out std_logic_vector(NUM_STREAMS-1 downto 0)
     ) is
   begin
-    out_ready(0)                <= str_elem_out.len.ready;
-    out_ready(1)                <= str_elem_out.utf8.ready;
+    out_ready(0) <= str_elem_out.len.ready;
+    out_ready(1) <= str_elem_out.utf8.ready;
   end procedure;
 
   signal str_elem_in  : str_elem_in_t;
@@ -333,6 +337,8 @@ architecture arrow_regexp of arrow_regexp is
 
     processed : unsigned(REG_WIDTH-1 downto 0);
     matches   : unsigned(REG_WIDTH-1 downto 0);
+
+    reset_units : std_logic;
   end record;
 
   signal r : reg;
@@ -354,21 +360,23 @@ architecture arrow_regexp of arrow_regexp is
   signal bus_rsp_resp                   : std_logic_vector(1 downto 0);
   signal rsp_ready, rsp_last, rsp_valid : std_logic;
 
-  signal usercore_start       : std_logic;
-  signal usercore_busy        : std_logic;
-  signal usercore_done        : std_logic;
-  signal usercore_reset       : std_logic;
   signal usercore_reset_start : std_logic;
 
   -----------------------------------------------------------------------------
   -- Application constants
   -----------------------------------------------------------------------------
-  constant INDEX_WIDTH         : natural := 32;
-
   constant BUS_BURST_STEP_LEN : natural := BOTTOM_BURST_STEP_LEN;
   constant BUS_BURST_MAX_LEN  : natural := BOTTOM_BURST_MAX_LEN;
 
   constant BUS_LEN_WIDTH : natural := BOTTOM_LEN_WIDTH;  -- 1 more than AXI
+
+  constant CTRL_WIDTH : natural := 2*BUS_ADDR_WIDTH;
+  constant TAG_WIDTH  : natural := 1;
+
+  signal cmd_ready : std_logic;
+
+  signal s_cmd_tmp : std_logic_vector(2 * BUS_ADDR_WIDTH + 2 * INDEX_WIDTH - 1 downto 0);
+  signal s_cmd     : command_t;
 
 begin
   reset <= '1' when reset_n = '0' else '0';
@@ -453,9 +461,9 @@ begin
       -- Status registers
       mm_regs(REG_STATUS_HI) <= (others => '0');
 
-      mm_regs(REG_STATUS_LO)(SLV_BUS_DATA_WIDTH - 1 downto STATUS_DONE_OFFSET) <= (others => '0');
-      mm_regs(REG_STATUS_LO)(STATUS_BUSY_OFFSET)                               <= '1';  -- TODO Laurens: fill this in
-      mm_regs(REG_STATUS_LO)(STATUS_DONE_OFFSET)                               <= '0';  -- TODO Laurens: fill this in
+      mm_regs(REG_STATUS_LO)(SLV_BUS_DATA_WIDTH - 1 downto STATUS_DONE_OFFSET + 1) <= (others => '0');
+      mm_regs(REG_STATUS_LO)(STATUS_DONE_OFFSET)                                   <= done;  -- TODO Laurens: fill this in
+      mm_regs(REG_STATUS_LO)(STATUS_BUSY_OFFSET)                                   <= busy;  -- TODO Laurens: fill this in
 
       -- Return registers
       mm_regs(REG_RETURN_HI) <= (others => '0');
@@ -490,8 +498,8 @@ begin
   begin
     if rising_edge(clk) then
       -- Control bits
-      usercore_start <= mm_regs(REG_CONTROL_LO)(0);
-      usercore_reset <= mm_regs(REG_CONTROL_LO)(1);
+      control_start <= mm_regs(REG_CONTROL_LO)(CONTROL_START_OFFSET);
+      control_reset <= mm_regs(REG_CONTROL_LO)(CONTROL_RESET_OFFSET);
     end if;
   end process;
 
@@ -552,6 +560,28 @@ begin
       );
 
   -----------------------------------------------------------------------------
+  -- Command Stream Slice
+  -----------------------------------------------------------------------------
+  slice_inst : StreamSlice
+    generic map (
+      DATA_WIDTH => 2 * BUS_ADDR_WIDTH + 2 * INDEX_WIDTH
+      ) port map (
+        clk       => clk,
+        reset     => d.reset_units,
+        in_valid  => d.command.valid,
+        in_ready  => cmd_ready,
+        in_data   => d.command.firstIdx & d.command.lastIdx & d.command.ctrl,
+        out_valid => s_cmd.valid,
+        out_ready => s_cmd.ready,
+        out_data  => s_cmd_tmp
+        );
+
+  s_cmd.ctrl     <= s_cmd_tmp(2 * BUS_ADDR_WIDTH-1 downto 0);
+  s_cmd.lastIdx  <= s_cmd_tmp(2 * BUS_ADDR_WIDTH + INDEX_WIDTH - 1 downto 2 * BUS_ADDR_WIDTH);
+  s_cmd.firstIdx <= s_cmd_tmp(2 * BUS_ADDR_WIDTH + 2 * INDEX_WIDTH - 1 downto 2 * BUS_ADDR_WIDTH + INDEX_WIDTH);
+
+
+  -----------------------------------------------------------------------------
   -- ColumnReader
   -----------------------------------------------------------------------------
   hapl_cr : ColumnReader
@@ -569,15 +599,15 @@ begin
       )
     port map (
       bus_clk   => clk,
-      bus_reset => reset,
+      bus_reset => r.reset_units,
       acc_clk   => clk,
-      acc_reset => reset,
+      acc_reset => r.reset_units,
 
-      cmd_valid    => d.command.valid,
-      cmd_ready    => d.command.ready,
-      cmd_firstIdx => d.command.firstIdx,
-      cmd_lastIdx  => d.command.lastIdx,
-      cmd_ctrl     => d.command.ctrl,
+      cmd_valid    => s_cmd.valid,
+      cmd_ready    => s_cmd.ready,
+      cmd_firstIdx => s_cmd.firstIdx,
+      cmd_lastIdx  => s_cmd.lastIdx,
+      cmd_ctrl     => s_cmd.ctrl,
       cmd_tag      => (others => '0'),  -- CMD_TAG_ENABLE is false
 
       unlock_valid => open,
@@ -601,6 +631,18 @@ begin
       out_data   => out_data
       );
 
+  -- Output
+  str_elem_out <= d.str_elem_out;
+
+  -- Convert the stream inputs and outputs to something readable
+  conv_streams_in(out_valid, out_dvalid, out_last, out_data, str_elem_in);
+  conv_streams_out(str_elem_out, out_ready);
+
+  -- Control & Status
+  r_reset_start <= r.cs.reset_start;
+  r_done        <= r.cs.done;
+  r_busy        <= r.cs.busy;
+
   sm_seq : process(clk) is
   begin
     if rising_edge(clk) then
@@ -608,6 +650,10 @@ begin
 
       r_control_reset <= control_reset;
       r_control_start <= control_start;
+      reset_start     <= r_reset_start;
+
+      busy <= r_busy;
+      done <= r_done;
 
       r_firstidx <= mm_regs(REG_FIRST_IDX);
       r_lastidx  <= mm_regs(REG_LAST_IDX);
@@ -619,12 +665,14 @@ begin
       r_utf8_lo <= mm_regs(REG_UTF8_ADDR_LO);
 
       if control_reset = '1' then
-        r.state <= STATE_IDLE;
+        r.state       <= STATE_IDLE;
+        r.reset_units <= '1';
       end if;
     end if;
   end process;
 
-  sm_comb : process(r,--d.command.ready,
+  sm_comb : process(r,
+                    cmd_ready,
                     str_elem_in,
                     regex_output,
                     r_firstidx,
@@ -640,7 +688,7 @@ begin
   begin
     v               := r;
     -- Inputs:
-    v.command.ready := d.command.ready;
+    v.command.ready := cmd_ready;
     v.str_elem_in   := str_elem_in;
     v.regex.output  := regex_output;
 
@@ -655,9 +703,11 @@ begin
 
     case v.state is
       when STATE_IDLE =>
-        v.cs.busy        := '0';
         v.cs.done        := '0';
+        v.cs.busy        := '0';
         v.cs.reset_start := '0';
+
+        v.reset_units := '1';
 
         v.processed := (others => '0');
         v.matches   := (others => '0');
@@ -668,8 +718,10 @@ begin
         end if;
 
       when STATE_RESET_START =>
-        v.cs.busy := '1';
         v.cs.done := '0';
+        v.cs.busy := '1';
+
+        v.reset_units := '0';
 
         if control_start = '0' then
           v.state := STATE_REQUEST;
@@ -679,6 +731,7 @@ begin
         v.cs.done        := '0';
         v.cs.busy        := '1';
         v.cs.reset_start := '0';
+        v.reset_units    := '0';
 
         -- First four argument registers are buffer addresses
         -- MSBs are index buffer address
@@ -708,6 +761,7 @@ begin
         v.cs.done        := '0';
         v.cs.busy        := '1';
         v.cs.reset_start := '0';
+        v.reset_units    := '0';
 
         -- Always ready to receive length
         v.str_elem_out.len.ready := '1';
@@ -737,6 +791,7 @@ begin
         v.cs.done        := '1';
         v.cs.busy        := '0';
         v.cs.reset_start := '0';
+        v.reset_units    := '0';  -- See issue #4, otherwise this could be '1'
 
         if r_control_reset = '1' or r_control_start = '1' then
           v.state := STATE_IDLE;
