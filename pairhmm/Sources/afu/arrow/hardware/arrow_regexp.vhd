@@ -107,8 +107,6 @@ entity arrow_regexp is
 end arrow_regexp;
 
 architecture arrow_regexp of arrow_regexp is
-  signal reset : std_logic;
-
   -----------------------------------------------------------------------------
   -- Memory Mapped Input/Output
   -----------------------------------------------------------------------------
@@ -120,15 +118,14 @@ architecture arrow_regexp of arrow_regexp is
   --   1 control (uint64)       =  2
   --   1 return (uint64)        =  2
   ----------------------------------- Buffer addresses
-  --   1 offsets buf address      =  2
-  --   1 data  buf address        =  2
+  --   1 offsets buf address    =  2
+  --   1 data  buf address      =  2
   ----------------------------------- Custom registers
-  --   1 first idx              =  1
-  --   1 last idx               =  1
-  --   1 results                =  1
+  --   1 first idx & last idx   =  2
+  --   1 results                =  2
   -----------------------------------
-  -- Total:                       13 regs
-  constant NUM_FLETCHER_REGS : natural := 13;
+  -- Total:                       14 regs
+  constant NUM_FLETCHER_REGS : natural := 14;
 
   -- The LSB index in the slave address
   constant SLV_ADDR_LSB : natural := log2floor(SLV_BUS_DATA_WIDTH / 4) - 1;
@@ -173,11 +170,11 @@ architecture arrow_regexp of arrow_regexp is
   constant CONTROL_RESET_OFFSET : natural := 1;
 
   -- Memory mapped register file
-  type mm_regs_t is array (0 to NUM_FLETCHER_REGS-1) of std_logic_vector(SLV_BUS_DATA_WIDTH-1 downto 0);
+  type mm_regs_t is array (0 to NUM_FLETCHER_REGS - 1) of std_logic_vector(SLV_BUS_DATA_WIDTH - 1 downto 0);
   signal mm_regs : mm_regs_t;
 
   -- Helper signals to do handshaking on the slave port
-  signal read_address    : natural range 0 to NUM_FLETCHER_REGS-1;
+  signal read_address    : natural range 0 to NUM_FLETCHER_REGS - 1;
   signal write_valid     : std_logic;
   signal read_valid      : std_logic := '0';
   signal write_processed : std_logic;
@@ -191,29 +188,29 @@ architecture arrow_regexp of arrow_regexp is
   signal r_reset_start           : std_logic;
   signal r_busy                  : std_logic;
   signal r_done                  : std_logic;
-  signal r_firstidx              : std_logic_vector(REG_WIDTH-1 downto 0);
-  signal r_lastidx               : std_logic_vector(REG_WIDTH-1 downto 0);
-  signal r_off_hi                : std_logic_vector(REG_WIDTH-1 downto 0);
-  signal r_off_lo                : std_logic_vector(REG_WIDTH-1 downto 0);
-  signal r_utf8_hi               : std_logic_vector(REG_WIDTH-1 downto 0);
-  signal r_utf8_lo               : std_logic_vector(REG_WIDTH-1 downto 0);
+  signal r_firstidx              : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_lastidx               : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_off_hi                : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_off_lo                : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_utf8_hi               : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_utf8_lo               : std_logic_vector(REG_WIDTH - 1 downto 0);
 
   -----------------------------------------------------------------------------
-  -- ColumnReader Interface
+  -- Haplotype ColumnReader Interface
   -----------------------------------------------------------------------------
   constant INDEX_WIDTH        : natural := 32;
   constant VALUE_ELEM_WIDTH   : natural := 8;
-  constant VALUES_PER_CYCLE   : natural := 4;  -- burst size of 1 -> 1 (was 4) ?
-  constant NUM_STREAMS        : natural := 2;  -- only 1 stream for char
+  constant VALUES_PER_CYCLE   : natural := 8;  -- burst size of 8
+  constant NUM_STREAMS        : natural := 2;  -- index stream, data stream
   constant VALUES_WIDTH       : natural := VALUE_ELEM_WIDTH * VALUES_PER_CYCLE;
-  constant VALUES_COUNT_WIDTH : natural := log2ceil(VALUES_PER_CYCLE)+1;
+  constant VALUES_COUNT_WIDTH : natural := log2ceil(VALUES_PER_CYCLE) + 1;
   constant OUT_DATA_WIDTH     : natural := INDEX_WIDTH + VALUES_WIDTH + VALUES_COUNT_WIDTH;
 
-  signal out_valid  : std_logic_vector(NUM_STREAMS-1 downto 0);
-  signal out_ready  : std_logic_vector(NUM_STREAMS-1 downto 0);
-  signal out_last   : std_logic_vector(NUM_STREAMS-1 downto 0);
-  signal out_dvalid : std_logic_vector(NUM_STREAMS-1 downto 0);
-  signal out_data   : std_logic_vector(OUT_DATA_WIDTH-1 downto 0);
+  signal out_valid  : std_logic_vector(NUM_STREAMS - 1 downto 0);
+  signal out_ready  : std_logic_vector(NUM_STREAMS - 1 downto 0);
+  signal out_last   : std_logic_vector(NUM_STREAMS - 1 downto 0);
+  signal out_dvalid : std_logic_vector(NUM_STREAMS - 1 downto 0);
+  signal out_data   : std_logic_vector(OUT_DATA_WIDTH - 1 downto 0);
 
   -- Command Stream
   type command_t is record
@@ -229,15 +226,15 @@ architecture arrow_regexp of arrow_regexp is
     valid  : std_logic;
     dvalid : std_logic;
     last   : std_logic;
-    data   : std_logic_vector(INDEX_WIDTH-1 downto 0);
+    data   : std_logic_vector(INDEX_WIDTH - 1 downto 0);
   end record;
 
   type utf8_stream_in_t is record
     valid  : std_logic;
     dvalid : std_logic;
     last   : std_logic;
-    count  : std_logic_vector(VALUES_COUNT_WIDTH-1 downto 0);
-    data   : std_logic_vector(VALUES_WIDTH-1 downto 0);
+    count  : std_logic_vector(VALUES_COUNT_WIDTH - 1 downto 0);
+    data   : std_logic_vector(VALUES_WIDTH - 1 downto 0);
   end record;
 
   type str_elem_in_t is record
@@ -246,10 +243,10 @@ architecture arrow_regexp of arrow_regexp is
   end record;
 
   procedure conv_streams_in (
-    signal valid       : in  std_logic_vector(NUM_STREAMS-1 downto 0);
-    signal dvalid      : in  std_logic_vector(NUM_STREAMS-1 downto 0);
-    signal last        : in  std_logic_vector(NUM_STREAMS-1 downto 0);
-    signal data        : in  std_logic_vector(OUT_DATA_WIDTH-1 downto 0);
+    signal valid       : in  std_logic_vector(NUM_STREAMS - 1 downto 0);
+    signal dvalid      : in  std_logic_vector(NUM_STREAMS - 1 downto 0);
+    signal last        : in  std_logic_vector(NUM_STREAMS - 1 downto 0);
+    signal data        : in  std_logic_vector(OUT_DATA_WIDTH - 1 downto 0);
     signal str_elem_in : out str_elem_in_t
     ) is
   begin
@@ -280,7 +277,7 @@ architecture arrow_regexp of arrow_regexp is
 
   procedure conv_streams_out (
     signal str_elem_out : in  str_elem_out_t;
-    signal out_ready    : out std_logic_vector(NUM_STREAMS-1 downto 0)
+    signal out_ready    : out std_logic_vector(NUM_STREAMS - 1 downto 0)
     ) is
   begin
     out_ready(0) <= str_elem_out.len.ready;
@@ -292,8 +289,8 @@ architecture arrow_regexp of arrow_regexp is
 
   type regex_in_t is record
     valid : std_logic;
-    data  : std_logic_vector(VALUES_WIDTH-1 downto 0);
-    mask  : std_logic_vector(VALUES_PER_CYCLE-1 downto 0);
+    data  : std_logic_vector(VALUES_WIDTH - 1 downto 0);
+    mask  : std_logic_vector(VALUES_PER_CYCLE - 1 downto 0);
     last  : std_logic;
   end record;
 
@@ -308,7 +305,7 @@ architecture arrow_regexp of arrow_regexp is
     output : regex_out_t;
   end record;
 
-  signal regex_output   : regex_out_t;
+  signal regex_output : regex_out_t;
 
   -----------------------------------------------------------------------------
   -- UserCore
@@ -334,7 +331,6 @@ architecture arrow_regexp of arrow_regexp is
     str_elem_in  : str_elem_in_t;
 
     processed : unsigned(REG_WIDTH-1 downto 0);
-    matches   : unsigned(REG_WIDTH-1 downto 0);
 
     reset_units : std_logic;
   end record;
@@ -365,11 +361,7 @@ architecture arrow_regexp of arrow_regexp is
   -----------------------------------------------------------------------------
   constant BUS_BURST_STEP_LEN : natural := BOTTOM_BURST_STEP_LEN;
   constant BUS_BURST_MAX_LEN  : natural := BOTTOM_BURST_MAX_LEN;
-
-  constant BUS_LEN_WIDTH : natural := BOTTOM_LEN_WIDTH;  -- 1 more than AXI
-
-  constant CTRL_WIDTH : natural := 2*BUS_ADDR_WIDTH;
-  constant TAG_WIDTH  : natural := 1;
+  constant BUS_LEN_WIDTH      : natural := BOTTOM_LEN_WIDTH;  -- 1 more than AXI
 
   signal cmd_ready : std_logic;
 
@@ -377,8 +369,6 @@ architecture arrow_regexp of arrow_regexp is
   signal s_cmd     : command_t;
 
 begin
-  reset <= '1' when reset_n = '0' else '0';
-
   -----------------------------------------------------------------------------
   -- Memory Mapped Slave Registers
   -----------------------------------------------------------------------------
@@ -460,8 +450,8 @@ begin
       mm_regs(REG_STATUS_HI) <= (others => '0');
 
       mm_regs(REG_STATUS_LO)(SLV_BUS_DATA_WIDTH - 1 downto STATUS_DONE_OFFSET + 1) <= (others => '0');
-      mm_regs(REG_STATUS_LO)(STATUS_DONE_OFFSET)                                   <= done;  -- TODO Laurens: fill this in
-      mm_regs(REG_STATUS_LO)(STATUS_BUSY_OFFSET)                                   <= busy;  -- TODO Laurens: fill this in
+      mm_regs(REG_STATUS_LO)(STATUS_DONE_OFFSET)                                   <= done;
+      mm_regs(REG_STATUS_LO)(STATUS_BUSY_OFFSET)                                   <= busy;
 
       -- Return registers
       mm_regs(REG_RETURN_HI) <= (others => '0');
@@ -590,7 +580,7 @@ begin
       BUS_BURST_STEP_LEN => BUS_BURST_STEP_LEN,
       BUS_BURST_MAX_LEN  => BUS_BURST_MAX_LEN,
       INDEX_WIDTH        => INDEX_WIDTH,
-      CFG                => "listprim(8;epc=4)",  -- char array (haplos)
+      CFG                => "listprim(8;epc=8)",  -- char array (haplos), 8 per cycle
       -- CFG                => "list(struct(prim(8),prim(256)))",  -- struct array (reads)
       CMD_TAG_ENABLE     => false,
       CMD_TAG_WIDTH      => 1
@@ -706,7 +696,6 @@ begin
         v.reset_units := '1';
 
         v.processed := (others => '0');
-        v.matches   := (others => '0');
 
         if control_start = '1' then
           v.state          := STATE_RESET_START;
@@ -746,10 +735,7 @@ begin
 
         -- Wait for command accepted
         if v.command.ready = '1' then
-          dumpStdOut("RegExp unit requested strings: " &
-                     integer'image(int(v.command.firstIdx)) &
-                     " ... "
-                     & integer'image(int(v.command.lastIdx)));
+          dumpStdOut("Requested haplotype arrays: " & integer'image(int(v.command.firstIdx)) & " ... " & integer'image(int(v.command.lastIdx)));
           v.state := STATE_BUSY;
         end if;
 
@@ -763,26 +749,33 @@ begin
         v.str_elem_out.len.ready := '1';
 
         if v.str_elem_in.len.valid = '1' then
-        -- Do something when this is the last string
+          -- Do something when this is the last string
           dumpStdOut("LAST STRING");
         end if;
-        if (v.str_elem_in.len.last = '1') and
-          (v.processed = u(v.command.lastIdx) - u(v.command.firstIdx))
+        if (v.str_elem_in.len.last = '1')  -- and (v.processed = u(v.command.lastIdx) - u(v.command.firstIdx)) -- TODO Laurens: add another condition to finish
         then
-          dumpStdOut("RegEx unit is done");
+          dumpStdOut("Pair HMM unit is done");
           v.state := STATE_DONE;
         end if;
 
-        -- Always ready to receive utf8 char
+        -- Always ready to receive utf8 char (haplo basepair)
         v.str_elem_out.utf8.ready := '1';
 
         if v.str_elem_in.utf8.valid = '1' then
-        -- Do something for every utf8 char
-          dumpStdOut("UTF CHAR: " & integer'image(to_integer(unsigned(v.str_elem_in.utf8.data))));
+          -- Do something for every utf8 char (haplo basepair)
+          dumpStdOut(slv8char(v.str_elem_in.utf8.data(7 downto 0)) &
+                     slv8char(v.str_elem_in.utf8.data(15 downto 8)) &
+                     slv8char(v.str_elem_in.utf8.data(23 downto 16)) &
+                     slv8char(v.str_elem_in.utf8.data(31 downto 24)) &
+                     slv8char(v.str_elem_in.utf8.data(39 downto 32)) &
+                     slv8char(v.str_elem_in.utf8.data(47 downto 40)) &
+                     slv8char(v.str_elem_in.utf8.data(55 downto 48)) &
+                     slv8char(v.str_elem_in.utf8.data(63 downto 56))
+                     );
         end if;
 
         if v.str_elem_in.utf8.last = '1' then
-        -- Do something when this is the last utf8 char
+          -- Do something when this is the last utf8 char
           dumpStdOut("LAST CHAR");
         end if;
 
