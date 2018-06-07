@@ -32,6 +32,11 @@ package arrow_regexp_pkg is
   constant TOP_WSTRB_WIDTH : natural := 64;
   constant TOP_ID_WIDTH    : natural := 8;
 
+  constant MID_ADDR_WIDTH  : natural := 64;
+  constant MID_DATA_WIDTH  : natural := 512;
+  constant MID_WSTRB_WIDTH : natural := 64;
+  constant MID_ID_WIDTH    : natural := 1;
+
   -----------------------------------------------------------------------------
   -- Arrow pair HMM top-level
   -----------------------------------------------------------------------------
@@ -75,6 +80,49 @@ package arrow_regexp_pkg is
     arready      : std_logic;
     rid          : std_logic_vector(TOP_ID_WIDTH-1 downto 0);
     rdata        : std_logic_vector(TOP_DATA_WIDTH-1 downto 0);
+    rresp        : std_logic_vector(1 downto 0);
+    rlast        : std_logic;
+    rvalid       : std_logic;
+    rready       : std_logic;
+  end record;
+
+  -- Mid (read converters to interconnect)
+  type axi_mid_t is record
+    areset_out_n : std_logic;
+    aclk         : std_logic;
+    awid         : std_logic_vector(MID_ID_WIDTH-1 downto 0);
+    awaddr       : std_logic_vector(MID_ADDR_WIDTH-1 downto 0);
+    awlen        : std_logic_vector(7 downto 0);
+    awsize       : std_logic_vector(2 downto 0);
+    awburst      : std_logic_vector(1 downto 0);
+    awlock       : std_logic;
+    awcache      : std_logic_vector(3 downto 0);
+    awprot       : std_logic_vector(2 downto 0);
+    awqos        : std_logic_vector(3 downto 0);
+    awvalid      : std_logic;
+    awready      : std_logic;
+    wdata        : std_logic_vector(MID_DATA_WIDTH-1 downto 0);
+    wstrb        : std_logic_vector(MID_WSTRB_WIDTH-1 downto 0);
+    wlast        : std_logic;
+    wvalid       : std_logic;
+    wready       : std_logic;
+    bid          : std_logic_vector(MID_ID_WIDTH-1 downto 0);
+    bresp        : std_logic_vector(1 downto 0);
+    bvalid       : std_logic;
+    bready       : std_logic;
+    arid         : std_logic_vector(MID_ID_WIDTH-1 downto 0);
+    araddr       : std_logic_vector(MID_ADDR_WIDTH-1 downto 0);
+    arlen        : std_logic_vector(7 downto 0);
+    arsize       : std_logic_vector(2 downto 0);
+    arburst      : std_logic_vector(1 downto 0);
+    arlock       : std_logic;
+    arcache      : std_logic_vector(3 downto 0);
+    arprot       : std_logic_vector(2 downto 0);
+    arqos        : std_logic_vector(3 downto 0);
+    arvalid      : std_logic;
+    arready      : std_logic;
+    rid          : std_logic_vector(MID_ID_WIDTH-1 downto 0);
+    rdata        : std_logic_vector(MID_DATA_WIDTH-1 downto 0);
     rresp        : std_logic_vector(1 downto 0);
     rlast        : std_logic;
     rvalid       : std_logic;
@@ -126,7 +174,7 @@ package arrow_regexp_pkg is
 end package;
 
 package body arrow_regexp_pkg is
-    
+
   function slv8char (a : in std_logic_vector(7 downto 0)) return character is
   begin
     case a is
