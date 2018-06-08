@@ -114,23 +114,22 @@ architecture arrow_regexp of arrow_regexp is
   -----------------------------------
   -- Fletcher registers
   ----------------------------------- Default registers
-  --   1 status (uint64)        =  2
-  --   1 control (uint64)       =  2
-  --   1 return (uint64)        =  2
-  ----------------------------------- Haplotype column
-  --   1 offsets buf address    =  2
-  --   1 data  buf address      =  2
-  --   1 first idx & last idx   =  2
-  ----------------------------------- Read column
-  --   1 offsets buf address    =  2
-  --   1 data  buf address      =  2
-  --   1 first idx & last idx   =  2
-
+  --   1 status (uint64)          =  2
+  --   1 control (uint64)         =  2
+  --   1 return (uint64)          =  2
+  ----------------------------------- Buffer addresses
+  --   1 haplo offsets address    =  2
+  --   1 haplo data address       =  2
+  ----------------------------------- Buffer addresses
+  --   1 read offsets address     =  2
+  --   1 item bp data address     =  2
+  --   1 item probs data address  =  2
   ----------------------------------- Custom registers
-  --   1 results                =  2
+  --   1 first idx & last idx     =  2
+  --   1 results                  =  2
   -----------------------------------
-  -- Total:                       14 regs
-  constant NUM_FLETCHER_REGS : natural := 18;
+  -- Total:                       20 regs
+  constant NUM_FLETCHER_REGS : natural := 20;
 
   -- The LSB index in the slave address
   constant SLV_ADDR_LSB : natural := log2floor(SLV_BUS_DATA_WIDTH / 4) - 1;
@@ -163,17 +162,8 @@ architecture arrow_regexp of arrow_regexp is
   constant REG_FIRST_IDX : natural := 10;
   constant REG_LAST_IDX  : natural := 11;
 
-  -- READS
-  constant REG_READ_FIRST_IDX1 : natural := 12;
-  constant REG_READ_LAST_IDX1  : natural := 13;
-
-  constant REG_READ_FIRST_IDX2 : natural := 14;
-  constant REG_READ_LAST_IDX2  : natural := 15;
-
-
-
   -- Register offset for each RegExp unit to put its result
-  constant REG_RESULT : natural := 16;
+  constant REG_RESULT : natural := 12;
 
   -- The offsets of the bits to signal busy and done for each of the units
   constant STATUS_BUSY_OFFSET : natural := 0;
@@ -320,80 +310,6 @@ architecture arrow_regexp of arrow_regexp is
   end record;
 
   signal regex_output : regex_out_t;
-
-  -----------------------------------------------------------------------------
-  -- READS ColumnReader Interface
-  -----------------------------------------------------------------------------
-  constant INDEX_WIDTH_READS        : natural := 32;
-  constant VALUE_ELEM_WIDTH_READS   : natural := 8;
-  constant VALUES_PER_CYCLE_READS   : natural := 1;  -- burst size of 1
-  constant NUM_STREAMS_READS        : natural := 3;  -- len, read, prob
-  constant VALUES_WIDTH_READ       : natural := VALUE_ELEM_WIDTH_READS * VALUES_PER_CYCLE_READS;
-  constant VALUES_COUNT_WIDTH_READS : natural := log2ceil(VALUES_PER_CYCLE_READS) + 1;
-  constant OUT_DATA_WIDTH_READS     : natural := INDEX_WIDTH_READS + VALUES_WIDTH_READ + VALUES_COUNT_WIDTH_READS;
-
-  constant VALUES_WIDTH_PROBS_READS       : natural := 8 * 32; -- 8 probabilities of 32 bit
-
-  -- signal out_valid  : std_logic_vector(NUM_STREAMS - 1 downto 0);
-  -- signal out_ready  : std_logic_vector(NUM_STREAMS - 1 downto 0);
-  -- signal out_last   : std_logic_vector(NUM_STREAMS - 1 downto 0);
-  -- signal out_dvalid : std_logic_vector(NUM_STREAMS - 1 downto 0);
-  -- signal out_data   : std_logic_vector(OUT_DATA_WIDTH - 1 downto 0);
-  type len_stream_reads_in_t is record
-    valid  : std_logic;
-    dvalid : std_logic;
-    last   : std_logic;
-    data   : std_logic_vector(INDEX_WIDTH - 1 downto 0);
-  end record;
-
-  type readbp_stream_in_t is record
-    valid  : std_logic;
-    dvalid : std_logic;
-    last   : std_logic;
-    count  : std_logic_vector(VALUES_COUNT_WIDTH - 1 downto 0);
-    data   : std_logic_vector(VALUES_WIDTH - 1 downto 0);
-  end record;
-
-  type probs_stream_in_t is record
-    valid  : std_logic;
-    dvalid : std_logic;
-    last   : std_logic;
-    count  : std_logic_vector(VALUES_COUNT_WIDTH - 1 downto 0);
-    data   : std_logic_vector(VALUES_WIDTH - 1 downto 0);
-  end record;
-
-  type str_reads_in_t is record
-    len    : len_stream_reads_in_t;
-    readbp : readbp_stream_in_t;
-    probs  : probs_stream_in_t;
-  end record;
-
-  signal str_reads_in : str_reads_in_t;
-  procedure conv_streams_reads_in (
-    signal valid        : in  std_logic_vector(NUM_STREAMS_READS - 1 downto 0);
-    signal dvalid       : in  std_logic_vector(NUM_STREAMS_READS - 1 downto 0);
-    signal last         : in  std_logic_vector(NUM_STREAMS_READS - 1 downto 0);
-    signal data         : in  std_logic_vector(OUT_DATA_WIDTH - 1 downto 0);
-    signal str_reads_in : out str_reads_in_t
-    ) is
-  begin
-    str_reads_in.len.data   <= data (INDEX_WIDTH-1 downto 0);
-    str_reads_in.len.valid  <= valid (0);
-    str_reads_in.len.dvalid <= dvalid(0);
-    str_reads_in.len.last   <= last (0);
-
-    str_reads_in.readbp.count  <= data(VALUES_COUNT_WIDTH + VALUES_WIDTH + INDEX_WIDTH - 1 downto VALUES_WIDTH + INDEX_WIDTH);
-    str_reads_in.readbp.data   <= data(VALUES_WIDTH_READ + INDEX_WIDTH - 1 downto INDEX_WIDTH);
-    str_reads_in.readbp.valid  <= valid(1);
-    str_reads_in.readbp.dvalid <= dvalid(1);
-    str_reads_in.readbp.last   <= last(1);
-
-    str_reads_in.probs.count  <= data(VALUES_COUNT_WIDTH + VALUES_WIDTH + INDEX_WIDTH - 1 downto VALUES_WIDTH + INDEX_WIDTH);
-    str_reads_in.probs.data   <= data(VALUES_WIDTH + INDEX_WIDTH - 1 downto INDEX_WIDTH);
-    str_reads_in.probs.valid  <= valid(2);
-    str_reads_in.probs.dvalid <= dvalid(2);
-    str_reads_in.probs.last   <= last(2);
-  end procedure;
 
   -----------------------------------------------------------------------------
   -- UserCore
@@ -658,7 +574,7 @@ begin
 
 
   -----------------------------------------------------------------------------
-  -- ColumnReader Haplotypes
+  -- ColumnReader
   -----------------------------------------------------------------------------
   hapl_cr : ColumnReader
     generic map (
@@ -840,7 +756,7 @@ begin
           -- Do something when this is the last string
           dumpStdOut("LAST STRING");
         end if;
-        if (v.str_elem_in.len.last = '1')  -- and (v.processed = u(v.command.lastIdx) - u(v.command.firstIdx)) -- TODO Laurens: add another condition to finish
+        if (v.str_elem_in.len.last = '1' and (v.processed = u(v.command.lastIdx) - u(v.command.firstIdx))) -- TODO Laurens: add another condition to finish
         then
           dumpStdOut("Pair HMM unit is done");
           v.state := STATE_DONE;
