@@ -44,8 +44,8 @@ entity pairhmm_unit is
     off_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
     off_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
 
-    utf8_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
-    utf8_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
+    hapl_bp_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
+    hapl_bp_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
 
     ---------------------------------------------------------------------------
     -- Master bus Haplotype
@@ -92,8 +92,8 @@ architecture pairhmm_unit of pairhmm_unit is
   signal r_lastidx       : std_logic_vector(REG_WIDTH - 1 downto 0);
   signal r_off_hi        : std_logic_vector(REG_WIDTH - 1 downto 0);
   signal r_off_lo        : std_logic_vector(REG_WIDTH - 1 downto 0);
-  signal r_utf8_hi       : std_logic_vector(REG_WIDTH - 1 downto 0);
-  signal r_utf8_lo       : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_hapl_bp_hi    : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_hapl_bp_lo    : std_logic_vector(REG_WIDTH - 1 downto 0);
 
   -----------------------------------------------------------------------------
   -- HAPLO STREAMS
@@ -263,7 +263,7 @@ architecture pairhmm_unit of pairhmm_unit is
 
     str_read_elem_in.data.count      <= data(VALUES_COUNT_WIDTH_READ + VALUES_WIDTH_READ + INDEX_WIDTH_READ - 1 downto VALUES_WIDTH_READ + INDEX_WIDTH_READ);
     str_read_elem_in.data.data_probs <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 downto INDEX_WIDTH_READ);
-    str_read_elem_in.data.data_bp    <= data(VALUE_ELEM_WIDTH_READ_BP + VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 downto VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ); -- TODO switch BP and probs order???
+    str_read_elem_in.data.data_bp    <= data(VALUE_ELEM_WIDTH_READ_BP + VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 downto VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ);  -- TODO switch BP and probs order???
     str_read_elem_in.data.valid      <= valid(1);
     str_read_elem_in.data.dvalid     <= dvalid(1);
     str_read_elem_in.data.last       <= last(1);
@@ -541,8 +541,8 @@ begin
       r_off_hi <= off_hi;
       r_off_lo <= off_lo;
 
-      r_utf8_hi <= utf8_hi;
-      r_utf8_lo <= utf8_lo;
+      r_hapl_bp_hi <= hapl_bp_hi;
+      r_hapl_bp_lo <= hapl_bp_lo;
 
       if control_reset = '1' then
         r.state       <= STATE_IDLE;
@@ -560,8 +560,8 @@ begin
                     r_lastidx,
                     r_off_hi,
                     r_off_lo,
-                    r_utf8_hi,
-                    r_utf8_lo,
+                    r_hapl_bp_hi,
+                    r_hapl_bp_lo,
                     r_control_start,
                     r_control_reset)
     is
@@ -626,8 +626,8 @@ begin
         v.command_read.ctrl(127 downto 96) := (others => '0');  -- TODO
         v.command_read.ctrl(95 downto 64)  := (others => '0');  -- TODO
         -- LSBs are data buffer address
-        v.command_hapl.ctrl(63 downto 32)  := r_utf8_hi;
-        v.command_hapl.ctrl(31 downto 0)   := r_utf8_lo;
+        v.command_hapl.ctrl(63 downto 32)  := r_hapl_bp_hi;
+        v.command_hapl.ctrl(31 downto 0)   := r_hapl_bp_lo;
         v.command_read.ctrl(63 downto 32)  := (others => '0');  -- TODO
         v.command_read.ctrl(31 downto 0)   := (others => '0');  -- TODO
 

@@ -112,7 +112,7 @@ end arrow_regexp;
 architecture arrow_regexp of arrow_regexp is
   signal reset : std_logic;
   -- Bottom buses
-  constant BB  : natural := 16;
+  constant BB  : natural := 16;  -- Dependent on the number of ports on the BusArbiter
 
   -----------------------------------------------------------------------------
   -- Memory Mapped Input/Output
@@ -128,9 +128,9 @@ architecture arrow_regexp of arrow_regexp is
   --   1 haplo offsets address    =  2
   --   1 haplo data address       =  2
   ----------------------------------- Buffer addresses
-  --   1 read offsets address     =  2
-  --   1 item bp data address     =  2
-  --   1 item probs data address  =  2
+  --   1 offs read address           =  2
+  --   1 data basepairs address      =  2
+  --   1 data probabilities address  =  2
   ----------------------------------- Custom registers
   --   1 first idx & last idx     =  2
   --   1 results                  =  2
@@ -161,16 +161,27 @@ architecture arrow_regexp of arrow_regexp is
   constant REG_OFF_ADDR_LO : natural := 7;
 
   -- Data buffer address
-  constant REG_UTF8_ADDR_HI : natural := 8;
-  constant REG_UTF8_ADDR_LO : natural := 9;
+  constant REG_HAPL_BP_ADDR_HI : natural := 8;
+  constant REG_HAPL_BP_ADDR_LO : natural := 9;
 
-  -- START OF ARGUMENTS (REGISTER 5)
-  -- Register offsets to indices for each RegExp unit to work on
-  constant REG_FIRST_IDX : natural := 10;
-  constant REG_LAST_IDX  : natural := 11;
+  -- READ offsets address
+  constant REG_READ_OFF_ADDR_HI : natural := 10;
+  constant REG_READ_OFF_ADDR_LO : natural := 11;
+
+  -- READ data basepairs address
+  constant REG_READ_BP_ADDR_HI : natural := 12;
+  constant REG_READ_BP_ADDR_LO : natural := 13;
+
+  -- READ data probabilities address
+  constant REG_READ_PROBS_ADDR_HI : natural := 14;
+  constant REG_READ_PROBS_ADDR_LO : natural := 15;
+
+  -- First/Last index haplotypes
+  constant REG_FIRST_IDX : natural := 16;
+  constant REG_LAST_IDX  : natural := 17;
 
   -- Register offset for each RegExp unit to put its result
-  constant REG_RESULT : natural := 12;
+  constant REG_RESULT : natural := 18;
 
   -- The offsets of the bits to signal busy and done for each of the units
   constant STATUS_BUSY_OFFSET : natural := 0;
@@ -209,12 +220,12 @@ architecture arrow_regexp of arrow_regexp is
   -----------------------------------------------------------------------------
   type reg_array_t is array (0 to CORES-1) of std_logic_vector(31 downto 0);
 
-  signal reg_array_firstidx : reg_array_t;
-  signal reg_array_lastidx  : reg_array_t;
-  signal reg_array_off_hi   : reg_array_t;
-  signal reg_array_off_lo   : reg_array_t;
-  signal reg_array_utf8_hi  : reg_array_t;
-  signal reg_array_utf8_lo  : reg_array_t;
+  signal reg_array_firstidx   : reg_array_t;
+  signal reg_array_lastidx    : reg_array_t;
+  signal reg_array_off_hi     : reg_array_t;
+  signal reg_array_off_lo     : reg_array_t;
+  signal reg_array_hapl_bp_hi : reg_array_t;
+  signal reg_array_hapl_bp_lo : reg_array_t;
 
   signal bit_array_control_reset : std_logic_vector(CORES-1 downto 0);
   signal bit_array_control_start : std_logic_vector(CORES-1 downto 0);
@@ -354,13 +365,13 @@ begin
       -- Registers
       reg_gen : for I in 0 to CORES-1 loop
         -- Local
-        reg_array_firstidx(I) <= mm_regs(REG_FIRST_IDX + I);
-        reg_array_lastidx(I)  <= mm_regs(REG_LAST_IDX + I);
-        -- Global
-        reg_array_off_hi (I)  <= mm_regs(REG_OFF_ADDR_HI);
-        reg_array_off_lo (I)  <= mm_regs(REG_OFF_ADDR_LO);
-        reg_array_utf8_hi(I)  <= mm_regs(REG_UTF8_ADDR_HI);
-        reg_array_utf8_lo(I)  <= mm_regs(REG_UTF8_ADDR_LO);
+        reg_array_firstidx(I)   <= mm_regs(REG_FIRST_IDX + I);
+        reg_array_lastidx(I)    <= mm_regs(REG_LAST_IDX + I);
+        -- Global Haplos
+        reg_array_off_hi (I)    <= mm_regs(REG_OFF_ADDR_HI);
+        reg_array_off_lo (I)    <= mm_regs(REG_OFF_ADDR_LO);
+        reg_array_hapl_bp_hi(I) <= mm_regs(REG_HAPL_BP_ADDR_HI);
+        reg_array_hapl_bp_lo(I) <= mm_regs(REG_HAPL_BP_ADDR_LO);
       end loop;
     end if;
   end process;
@@ -477,12 +488,12 @@ begin
         busy          => bit_array_busy (I),
         done          => bit_array_done (I),
 
-        firstidx => reg_array_firstidx (I),
-        lastidx  => reg_array_lastidx (I),
-        off_hi   => reg_array_off_hi (I),
-        off_lo   => reg_array_off_lo (I),
-        utf8_hi  => reg_array_utf8_hi (I),
-        utf8_lo  => reg_array_utf8_lo (I),
+        firstidx   => reg_array_firstidx (I),
+        lastidx    => reg_array_lastidx (I),
+        off_hi     => reg_array_off_hi (I),
+        off_lo     => reg_array_off_lo (I),
+        hapl_bp_hi => reg_array_hapl_bp_hi (I),
+        hapl_bp_lo => reg_array_hapl_bp_lo (I),
 
         bus_hapl_req_addr  => bus_haplo_array(I).req_addr,
         bus_hapl_req_len   => bus_haplo_array(I).req_len,

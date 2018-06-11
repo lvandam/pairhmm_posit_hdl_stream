@@ -238,8 +238,8 @@ package arrow_regexp_pkg is
       off_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
       off_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
 
-      utf8_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
-      utf8_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
+      hapl_bp_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
+      hapl_bp_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
 
       ---------------------------------------------------------------------------
       -- Master bus Haplotype
