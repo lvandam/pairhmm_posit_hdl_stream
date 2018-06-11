@@ -455,7 +455,7 @@ begin
         m_axi_rready  => axi_mid_array(I*2+1).rready
         );
 
-    -- utf8 regular expression matcher generation
+    -- Pair-HMM unit
     pairhmm_inst : pairhmm_unit generic map (
       BUS_ADDR_WIDTH     => BUS_ADDR_WIDTH,
       BUS_DATA_WIDTH     => BOTTOM_DATA_WIDTH,

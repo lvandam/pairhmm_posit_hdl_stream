@@ -209,7 +209,6 @@ package arrow_regexp_pkg is
       clk     : in std_logic;
       reset_n : in std_logic;
 
-
       control_reset : in  std_logic;
       control_start : in  std_logic;
       reset_start   : out std_logic;
@@ -226,22 +225,37 @@ package arrow_regexp_pkg is
       utf8_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
       utf8_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
 
-
       ---------------------------------------------------------------------------
-      -- Master bus
+      -- Master bus Haplotype
       ---------------------------------------------------------------------------
       -- Read request channel
-      bus_req_addr  : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      bus_req_len   : out std_logic_vector(BUS_LEN_WIDTH-1 downto 0);
-      bus_req_valid : out std_logic;
-      bus_req_ready : in  std_logic;
+      bus_hapl_req_addr  : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      bus_hapl_req_len   : out std_logic_vector(BUS_LEN_WIDTH-1 downto 0);
+      bus_hapl_req_valid : out std_logic;
+      bus_hapl_req_ready : in  std_logic;
 
       -- Read response channel
-      bus_rsp_data  : in  std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-      bus_rsp_resp  : in  std_logic_vector(1 downto 0);
-      bus_rsp_last  : in  std_logic;
-      bus_rsp_valid : in  std_logic;
-      bus_rsp_ready : out std_logic
+      bus_hapl_rsp_data  : in  std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+      bus_hapl_rsp_resp  : in  std_logic_vector(1 downto 0);
+      bus_hapl_rsp_last  : in  std_logic;
+      bus_hapl_rsp_valid : in  std_logic;
+      bus_hapl_rsp_ready : out std_logic;
+
+      ---------------------------------------------------------------------------
+      -- Master bus Reads
+      ---------------------------------------------------------------------------
+      -- Read request channel
+      bus_read_req_addr  : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      bus_read_req_len   : out std_logic_vector(BUS_LEN_WIDTH-1 downto 0);
+      bus_read_req_valid : out std_logic;
+      bus_read_req_ready : in  std_logic;
+
+      -- Read response channel
+      bus_read_rsp_data  : in  std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+      bus_read_rsp_resp  : in  std_logic_vector(1 downto 0);
+      bus_read_rsp_last  : in  std_logic;
+      bus_read_rsp_valid : in  std_logic;
+      bus_read_rsp_ready : out std_logic
       );
   end component;
 
