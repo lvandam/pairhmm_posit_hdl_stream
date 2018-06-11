@@ -249,7 +249,7 @@ architecture pairhmm_unit of pairhmm_unit is
   type str_read_elem_out_t is record
     len  : len_stream_out_t;
     -- utf8 : utf8_stream_out_t;
-    data : utf8_stream_out_t;
+    data : read_data_stream_out_t;
   end record;
 
   procedure conv_streams_read_in (
