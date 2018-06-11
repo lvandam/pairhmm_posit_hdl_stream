@@ -193,12 +193,16 @@ architecture arrow_regexp of arrow_regexp is
   -----------------------------------------------------------------------------
   -- AXI Interconnect Master Ports
   -----------------------------------------------------------------------------
-  type bus_haplotype_array_t is array (0 to BB-1) of bus_bottom_t;
-  type axi_mid_array_t is array (0 to BB-1) of axi_mid_t;
+  type bus_haplo_array_t is array (0 to CORES-1) of bus_bottom_haplo_t;
+  signal bus_haplo_array : bus_haplo_array_t;
 
-  signal bus_haplotype_array : bus_haplotype_array_t;
-  signal axi_mid_array       : axi_mid_array_t;
-  signal axi_top             : axi_top_t;
+  type bus_read_array_t is array (0 to CORES-1) of bus_bottom_read_t;
+  signal bus_read_array : bus_read_array_t;
+
+  type axi_mid_array_t is array (0 to BB-1) of axi_mid_t;
+  signal axi_mid_array : axi_mid_array_t;
+
+  signal axi_top : axi_top_t;
 
   -----------------------------------------------------------------------------
   -- Registers
@@ -344,8 +348,8 @@ begin
   begin
     if rising_edge(clk) then
       -- Control bits
-      bit_array_control_start <= mm_regs(REG_CONTROL_LO)(CONTROL_START_OFFSET + CORES -1 downto CONTROL_START_OFFSET);
-      bit_array_control_reset <= mm_regs(REG_CONTROL_LO)(CONTROL_RESET_OFFSET + CORES -1 downto CONTROL_RESET_OFFSET);
+      bit_array_control_start <= mm_regs(REG_CONTROL_LO)(CONTROL_START_OFFSET + CORES - 1 downto CONTROL_START_OFFSET);
+      bit_array_control_reset <= mm_regs(REG_CONTROL_LO)(CONTROL_RESET_OFFSET + CORES - 1 downto CONTROL_RESET_OFFSET);
 
       -- Registers
       reg_gen : for I in 0 to CORES-1 loop
@@ -402,14 +406,14 @@ begin
       port map (
         clk             => clk,
         reset_n         => reset_n,
-        s_bus_req_addr  => bus_haplotype_array(I).req_addr,
-        s_bus_req_len   => bus_haplotype_array(I).req_len,
-        s_bus_req_valid => bus_haplotype_array(I).req_valid,
-        s_bus_req_ready => bus_haplotype_array(I).req_ready,
-        s_bus_rsp_data  => bus_haplotype_array(I).rsp_data,
-        s_bus_rsp_last  => bus_haplotype_array(I).rsp_last,
-        s_bus_rsp_valid => bus_haplotype_array(I).rsp_valid,
-        s_bus_rsp_ready => bus_haplotype_array(I).rsp_ready,
+        s_bus_req_addr  => bus_haplo_array(I).req_addr,
+        s_bus_req_len   => bus_haplo_array(I).req_len,
+        s_bus_req_valid => bus_haplo_array(I).req_valid,
+        s_bus_req_ready => bus_haplo_array(I).req_ready,
+        s_bus_rsp_data  => bus_haplo_array(I).rsp_data,
+        s_bus_rsp_last  => bus_haplo_array(I).rsp_last,
+        s_bus_rsp_valid => bus_haplo_array(I).rsp_valid,
+        s_bus_rsp_ready => bus_haplo_array(I).rsp_ready,
 
         m_axi_araddr  => axi_mid_array(I*2).araddr,
         m_axi_arlen   => axi_mid_array(I*2).arlen,
@@ -480,15 +484,15 @@ begin
         utf8_hi  => reg_array_utf8_hi (I),
         utf8_lo  => reg_array_utf8_lo (I),
 
-        bus_hapl_req_addr  => bus_haplotype_array(I).req_addr,
-        bus_hapl_req_len   => bus_haplotype_array(I).req_len,
-        bus_hapl_req_valid => bus_haplotype_array(I).req_valid,
-        bus_hapl_req_ready => bus_haplotype_array(I).req_ready,
-        bus_hapl_rsp_data  => bus_haplotype_array(I).rsp_data,
-        bus_hapl_rsp_resp  => bus_haplotype_array(I).rsp_resp,
-        bus_hapl_rsp_last  => bus_haplotype_array(I).rsp_last,
-        bus_hapl_rsp_valid => bus_haplotype_array(I).rsp_valid,
-        bus_hapl_rsp_ready => bus_haplotype_array(I).rsp_ready,
+        bus_hapl_req_addr  => bus_haplo_array(I).req_addr,
+        bus_hapl_req_len   => bus_haplo_array(I).req_len,
+        bus_hapl_req_valid => bus_haplo_array(I).req_valid,
+        bus_hapl_req_ready => bus_haplo_array(I).req_ready,
+        bus_hapl_rsp_data  => bus_haplo_array(I).rsp_data,
+        bus_hapl_rsp_resp  => bus_haplo_array(I).rsp_resp,
+        bus_hapl_rsp_last  => bus_haplo_array(I).rsp_last,
+        bus_hapl_rsp_valid => bus_haplo_array(I).rsp_valid,
+        bus_hapl_rsp_ready => bus_haplo_array(I).rsp_ready,
 
         bus_read_req_addr  => bus_read_array(I).req_addr,
         bus_read_req_len   => bus_read_array(I).req_len,
@@ -544,6 +548,14 @@ begin
       bm0_resp_ready  => axi_mid_array(0).rready,
       bm0_resp_data   => axi_mid_array(0).rdata,
       bm0_resp_last   => axi_mid_array(0).rlast,
+      -- bm1_req_valid   => open,
+      -- bm1_req_ready   => open,
+      -- bm1_req_addr    => open,
+      -- bm1_req_len     => open,
+      -- bm1_resp_valid  => open,
+      -- bm1_resp_ready  => open,
+      -- bm1_resp_data   => open,
+      -- bm1_resp_last   => open,
       bm1_req_valid   => axi_mid_array(1).arvalid,
       bm1_req_ready   => axi_mid_array(1).arready,
       bm1_req_addr    => axi_mid_array(1).araddr,

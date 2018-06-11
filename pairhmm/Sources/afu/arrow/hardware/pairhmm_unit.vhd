@@ -297,15 +297,15 @@ begin
       unlock_ready => '1',
       unlock_tag   => open,
 
-      busReq_valid => bus_req_valid,
-      busReq_ready => bus_req_ready,
-      busReq_addr  => bus_req_addr,
-      busReq_len   => bus_req_len,
+      busReq_valid => bus_hapl_req_valid,
+      busReq_ready => bus_hapl_req_ready,
+      busReq_addr  => bus_hapl_req_addr,
+      busReq_len   => bus_hapl_req_len,
 
-      busResp_valid => bus_rsp_valid,
-      busResp_ready => bus_rsp_ready,
-      busResp_data  => bus_rsp_data,
-      busResp_last  => bus_rsp_last,
+      busResp_valid => bus_hapl_rsp_valid,
+      busResp_ready => bus_hapl_rsp_ready,
+      busResp_data  => bus_hapl_rsp_data,
+      busResp_last  => bus_hapl_rsp_last,
 
       out_valid  => out_valid,
       out_ready  => out_ready,

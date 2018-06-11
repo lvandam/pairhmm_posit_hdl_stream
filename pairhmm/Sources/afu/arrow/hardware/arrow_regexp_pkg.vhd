@@ -48,9 +48,25 @@ package arrow_regexp_pkg is
   -- Internal buses
   -----------------------------------------------------------------------------
 
-  -- Bottom (regex matchers to read converters)
+  -- Bottom haplotype columnreader to read converters
   -- All signals have the same definition as in AXI4, except len which is axi_len + 1
-  type bus_bottom_t is record
+  type bus_bottom_haplo_t is record
+    req_id    : std_logic_vector(BOTTOM_ID_WIDTH-1 downto 0);
+    req_addr  : std_logic_vector(BOTTOM_ADDR_WIDTH-1 downto 0);
+    req_len   : std_logic_vector(BOTTOM_LEN_WIDTH-1 downto 0);
+    req_valid : std_logic;
+    req_ready : std_logic;
+    rsp_id    : std_logic_vector(BOTTOM_ID_WIDTH-1 downto 0);
+    rsp_data  : std_logic_vector(BOTTOM_DATA_WIDTH-1 downto 0);
+    rsp_resp  : std_logic_vector(1 downto 0);
+    rsp_last  : std_logic;
+    rsp_valid : std_logic;
+    rsp_ready : std_logic;
+  end record;
+
+  -- Bottom haplotype columnreader to read converters
+  -- All signals have the same definition as in AXI4, except len which is axi_len + 1
+  type bus_bottom_read_t is record
     req_id    : std_logic_vector(BOTTOM_ID_WIDTH-1 downto 0);
     req_addr  : std_logic_vector(BOTTOM_ADDR_WIDTH-1 downto 0);
     req_len   : std_logic_vector(BOTTOM_LEN_WIDTH-1 downto 0);
