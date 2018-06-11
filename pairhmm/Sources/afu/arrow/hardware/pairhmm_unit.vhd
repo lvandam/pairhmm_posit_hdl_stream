@@ -31,7 +31,6 @@ entity pairhmm_unit is
     clk     : in std_logic;
     reset_n : in std_logic;
 
-
     control_reset : in  std_logic;
     control_start : in  std_logic;
     reset_start   : out std_logic;
@@ -47,7 +46,6 @@ entity pairhmm_unit is
 
     utf8_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
     utf8_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
-
 
     ---------------------------------------------------------------------------
     -- Master bus

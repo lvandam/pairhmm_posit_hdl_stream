@@ -193,12 +193,12 @@ architecture arrow_regexp of arrow_regexp is
   -----------------------------------------------------------------------------
   -- AXI Interconnect Master Ports
   -----------------------------------------------------------------------------
-  type bus_bottom_array_t is array (0 to BB-1) of bus_bottom_t;
+  type bus_haplotype_array_t is array (0 to BB-1) of bus_bottom_t;
   type axi_mid_array_t is array (0 to BB-1) of axi_mid_t;
 
-  signal bus_bottom_array : bus_bottom_array_t;
-  signal axi_mid_array    : axi_mid_array_t;
-  signal axi_top          : axi_top_t;
+  signal bus_haplotype_array : bus_haplotype_array_t;
+  signal axi_mid_array       : axi_mid_array_t;
+  signal axi_top             : axi_top_t;
 
   -----------------------------------------------------------------------------
   -- Registers
@@ -382,8 +382,6 @@ begin
   axi_top.rresp  <= m_axi_rresp;
   axi_top.rlast  <= m_axi_rlast;
 
-
-
   -----------------------------------------------------------------------------
   -- Bottom layer
   -----------------------------------------------------------------------------
@@ -391,7 +389,7 @@ begin
     -- Convert axi read address channel and read response channel
     -- Scales "len" and "size" according to the master data width
     -- and converts the Fletcher bus "len" to AXI bus "len"
-    read_converter_inst : axi_read_converter generic map (
+    read_converter_inst_hapl : axi_read_converter generic map (
       ADDR_WIDTH        => BUS_ADDR_WIDTH,
       ID_WIDTH          => 1,
       MASTER_DATA_WIDTH => BUS_DATA_WIDTH,
@@ -404,23 +402,57 @@ begin
       port map (
         clk             => clk,
         reset_n         => reset_n,
-        s_bus_req_addr  => bus_bottom_array(I).req_addr,
-        s_bus_req_len   => bus_bottom_array(I).req_len,
-        s_bus_req_valid => bus_bottom_array(I).req_valid,
-        s_bus_req_ready => bus_bottom_array(I).req_ready,
-        s_bus_rsp_data  => bus_bottom_array(I).rsp_data,
-        s_bus_rsp_last  => bus_bottom_array(I).rsp_last,
-        s_bus_rsp_valid => bus_bottom_array(I).rsp_valid,
-        s_bus_rsp_ready => bus_bottom_array(I).rsp_ready,
-        m_axi_araddr    => axi_mid_array(I).araddr,
-        m_axi_arlen     => axi_mid_array(I).arlen,
-        m_axi_arvalid   => axi_mid_array(I).arvalid,
-        m_axi_arready   => axi_mid_array(I).arready,
-        m_axi_arsize    => axi_mid_array(I).arsize,
-        m_axi_rdata     => axi_mid_array(I).rdata,
-        m_axi_rlast     => axi_mid_array(I).rlast,
-        m_axi_rvalid    => axi_mid_array(I).rvalid,
-        m_axi_rready    => axi_mid_array(I).rready
+        s_bus_req_addr  => bus_haplotype_array(I).req_addr,
+        s_bus_req_len   => bus_haplotype_array(I).req_len,
+        s_bus_req_valid => bus_haplotype_array(I).req_valid,
+        s_bus_req_ready => bus_haplotype_array(I).req_ready,
+        s_bus_rsp_data  => bus_haplotype_array(I).rsp_data,
+        s_bus_rsp_last  => bus_haplotype_array(I).rsp_last,
+        s_bus_rsp_valid => bus_haplotype_array(I).rsp_valid,
+        s_bus_rsp_ready => bus_haplotype_array(I).rsp_ready,
+
+        m_axi_araddr  => axi_mid_array(I*2).araddr,
+        m_axi_arlen   => axi_mid_array(I*2).arlen,
+        m_axi_arvalid => axi_mid_array(I*2).arvalid,
+        m_axi_arready => axi_mid_array(I*2).arready,
+        m_axi_arsize  => axi_mid_array(I*2).arsize,
+        m_axi_rdata   => axi_mid_array(I*2).rdata,
+        m_axi_rlast   => axi_mid_array(I*2).rlast,
+        m_axi_rvalid  => axi_mid_array(I*2).rvalid,
+        m_axi_rready  => axi_mid_array(I*2).rready
+        );
+
+    read_converter_inst_read : axi_read_converter generic map (
+      ADDR_WIDTH        => BUS_ADDR_WIDTH,
+      ID_WIDTH          => 1,
+      MASTER_DATA_WIDTH => BUS_DATA_WIDTH,
+      MASTER_LEN_WIDTH  => 8,
+      SLAVE_DATA_WIDTH  => BUS_DATA_WIDTH,
+      SLAVE_LEN_WIDTH   => BOTTOM_LEN_WIDTH,
+      SLAVE_MAX_BURST   => BOTTOM_BURST_MAX_LEN,
+      ENABLE_FIFO       => false
+      )
+      port map (
+        clk             => clk,
+        reset_n         => reset_n,
+        s_bus_req_addr  => bus_read_array(I).req_addr,
+        s_bus_req_len   => bus_read_array(I).req_len,
+        s_bus_req_valid => bus_read_array(I).req_valid,
+        s_bus_req_ready => bus_read_array(I).req_ready,
+        s_bus_rsp_data  => bus_read_array(I).rsp_data,
+        s_bus_rsp_last  => bus_read_array(I).rsp_last,
+        s_bus_rsp_valid => bus_read_array(I).rsp_valid,
+        s_bus_rsp_ready => bus_read_array(I).rsp_ready,
+
+        m_axi_araddr  => axi_mid_array(I*2+1).araddr,
+        m_axi_arlen   => axi_mid_array(I*2+1).arlen,
+        m_axi_arvalid => axi_mid_array(I*2+1).arvalid,
+        m_axi_arready => axi_mid_array(I*2+1).arready,
+        m_axi_arsize  => axi_mid_array(I*2+1).arsize,
+        m_axi_rdata   => axi_mid_array(I*2+1).rdata,
+        m_axi_rlast   => axi_mid_array(I*2+1).rlast,
+        m_axi_rvalid  => axi_mid_array(I*2+1).rvalid,
+        m_axi_rready  => axi_mid_array(I*2+1).rready
         );
 
     -- utf8 regular expression matcher generation
@@ -448,20 +480,30 @@ begin
         utf8_hi  => reg_array_utf8_hi (I),
         utf8_lo  => reg_array_utf8_lo (I),
 
-        bus_req_addr  => bus_bottom_array(I).req_addr,
-        bus_req_len   => bus_bottom_array(I).req_len,
-        bus_req_valid => bus_bottom_array(I).req_valid,
-        bus_req_ready => bus_bottom_array(I).req_ready,
-        bus_rsp_data  => bus_bottom_array(I).rsp_data,
-        bus_rsp_resp  => bus_bottom_array(I).rsp_resp,
-        bus_rsp_last  => bus_bottom_array(I).rsp_last,
-        bus_rsp_valid => bus_bottom_array(I).rsp_valid,
-        bus_rsp_ready => bus_bottom_array(I).rsp_ready
+        bus_hapl_req_addr  => bus_haplotype_array(I).req_addr,
+        bus_hapl_req_len   => bus_haplotype_array(I).req_len,
+        bus_hapl_req_valid => bus_haplotype_array(I).req_valid,
+        bus_hapl_req_ready => bus_haplotype_array(I).req_ready,
+        bus_hapl_rsp_data  => bus_haplotype_array(I).rsp_data,
+        bus_hapl_rsp_resp  => bus_haplotype_array(I).rsp_resp,
+        bus_hapl_rsp_last  => bus_haplotype_array(I).rsp_last,
+        bus_hapl_rsp_valid => bus_haplotype_array(I).rsp_valid,
+        bus_hapl_rsp_ready => bus_haplotype_array(I).rsp_ready,
+
+        bus_read_req_addr  => bus_read_array(I).req_addr,
+        bus_read_req_len   => bus_read_array(I).req_len,
+        bus_read_req_valid => bus_read_array(I).req_valid,
+        bus_read_req_ready => bus_read_array(I).req_ready,
+        bus_read_rsp_data  => bus_read_array(I).rsp_data,
+        bus_read_rsp_resp  => bus_read_array(I).rsp_resp,
+        bus_read_rsp_last  => bus_read_array(I).rsp_last,
+        bus_read_rsp_valid => bus_read_array(I).rsp_valid,
+        bus_read_rsp_ready => bus_read_array(I).rsp_ready
         );
   end generate;
 
   -- Tie off unused ports, if any
-  unused_gen : for I in CORES to BB-1 generate
+  unused_gen : for I in CORES*2 to BB-1 generate
     axi_mid_array(I).araddr  <= (others => '0');
     axi_mid_array(I).arlen   <= (others => '0');
     axi_mid_array(I).arvalid <= '0';
@@ -502,22 +544,14 @@ begin
       bm0_resp_ready  => axi_mid_array(0).rready,
       bm0_resp_data   => axi_mid_array(0).rdata,
       bm0_resp_last   => axi_mid_array(0).rlast,
-      bm1_req_valid   => open,
-      bm1_req_ready   => open,
-      bm1_req_addr    => open,
-      bm1_req_len     => open,
-      bm1_resp_valid  => open,
-      bm1_resp_ready  => open,
-      bm1_resp_data   => open,
-      bm1_resp_last   => open,
-      -- bm1_req_valid               => axi_mid_array(1 ).arvalid,
-      -- bm1_req_ready               => axi_mid_array(1 ).arready,
-      -- bm1_req_addr                => axi_mid_array(1 ).araddr,
-      -- bm1_req_len                 => axi_mid_array(1 ).arlen,
-      -- bm1_resp_valid              => axi_mid_array(1 ).rvalid,
-      -- bm1_resp_ready              => axi_mid_array(1 ).rready,
-      -- bm1_resp_data               => axi_mid_array(1 ).rdata,
-      -- bm1_resp_last               => axi_mid_array(1 ).rlast,
+      bm1_req_valid   => axi_mid_array(1).arvalid,
+      bm1_req_ready   => axi_mid_array(1).arready,
+      bm1_req_addr    => axi_mid_array(1).araddr,
+      bm1_req_len     => axi_mid_array(1).arlen,
+      bm1_resp_valid  => axi_mid_array(1).rvalid,
+      bm1_resp_ready  => axi_mid_array(1).rready,
+      bm1_resp_data   => axi_mid_array(1).rdata,
+      bm1_resp_last   => axi_mid_array(1).rlast,
       bm2_req_valid   => open,
       bm2_req_ready   => open,
       bm2_req_addr    => open,
