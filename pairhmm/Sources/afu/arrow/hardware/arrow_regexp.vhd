@@ -36,6 +36,9 @@ use work.arrow_regexp_pkg.all;
 
 entity arrow_regexp is
   generic (
+    -- Number of pair HMM units. Must be a natural multiple of 2
+    CORES : natural := 1;
+
     -- Host bus properties
     BUS_ADDR_WIDTH : natural := 64;
     BUS_DATA_WIDTH : natural := 512;
@@ -107,6 +110,10 @@ entity arrow_regexp is
 end arrow_regexp;
 
 architecture arrow_regexp of arrow_regexp is
+  signal reset : std_logic;
+  -- Bottom buses
+  constant BB  : natural := 16;
+
   -----------------------------------------------------------------------------
   -- Memory Mapped Input/Output
   -----------------------------------------------------------------------------
@@ -183,196 +190,37 @@ architecture arrow_regexp of arrow_regexp is
   signal read_valid      : std_logic := '0';
   signal write_processed : std_logic;
 
-  signal axi_top : axi_top_t;
-
-  -- Register all ports to ease timing
-  signal busy, done, reset_start : std_logic;
-  signal r_control_reset         : std_logic;
-  signal r_control_start         : std_logic;
-  signal r_reset_start           : std_logic;
-  signal r_busy                  : std_logic;
-  signal r_done                  : std_logic;
-  signal r_firstidx              : std_logic_vector(REG_WIDTH - 1 downto 0);
-  signal r_lastidx               : std_logic_vector(REG_WIDTH - 1 downto 0);
-  signal r_off_hi                : std_logic_vector(REG_WIDTH - 1 downto 0);
-  signal r_off_lo                : std_logic_vector(REG_WIDTH - 1 downto 0);
-  signal r_utf8_hi               : std_logic_vector(REG_WIDTH - 1 downto 0);
-  signal r_utf8_lo               : std_logic_vector(REG_WIDTH - 1 downto 0);
-
   -----------------------------------------------------------------------------
-  -- Haplotype ColumnReader Interface
+  -- AXI Interconnect Master Ports
   -----------------------------------------------------------------------------
-  constant INDEX_WIDTH        : natural := 32;
-  constant VALUE_ELEM_WIDTH   : natural := 8;
-  constant VALUES_PER_CYCLE   : natural := 8;  -- burst size of 8
-  constant NUM_STREAMS        : natural := 2;  -- index stream, data stream
-  constant VALUES_WIDTH       : natural := VALUE_ELEM_WIDTH * VALUES_PER_CYCLE;
-  constant VALUES_COUNT_WIDTH : natural := log2ceil(VALUES_PER_CYCLE) + 1;
-  constant OUT_DATA_WIDTH     : natural := INDEX_WIDTH + VALUES_WIDTH + VALUES_COUNT_WIDTH;
+  type bus_bottom_array_t is array (0 to BB-1) of bus_bottom_t;
+  type axi_mid_array_t is array (0 to BB-1) of axi_mid_t;
 
-  signal out_valid  : std_logic_vector(NUM_STREAMS - 1 downto 0);
-  signal out_ready  : std_logic_vector(NUM_STREAMS - 1 downto 0);
-  signal out_last   : std_logic_vector(NUM_STREAMS - 1 downto 0);
-  signal out_dvalid : std_logic_vector(NUM_STREAMS - 1 downto 0);
-  signal out_data   : std_logic_vector(OUT_DATA_WIDTH - 1 downto 0);
-
-  -- Command Stream
-  type command_t is record
-    valid    : std_logic;
-    ready    : std_logic;
-    firstIdx : std_logic_vector(INDEX_WIDTH - 1 downto 0);
-    lastIdx  : std_logic_vector(INDEX_WIDTH - 1 downto 0);
-    ctrl     : std_logic_vector(2 * BUS_ADDR_WIDTH - 1 downto 0);
-  end record;
-
-  -- Output Streams
-  type len_stream_in_t is record
-    valid  : std_logic;
-    dvalid : std_logic;
-    last   : std_logic;
-    data   : std_logic_vector(INDEX_WIDTH - 1 downto 0);
-  end record;
-
-  type utf8_stream_in_t is record
-    valid  : std_logic;
-    dvalid : std_logic;
-    last   : std_logic;
-    count  : std_logic_vector(VALUES_COUNT_WIDTH - 1 downto 0);
-    data   : std_logic_vector(VALUES_WIDTH - 1 downto 0);
-  end record;
-
-  type str_elem_in_t is record
-    len  : len_stream_in_t;
-    utf8 : utf8_stream_in_t;
-  end record;
-
-  procedure conv_streams_in (
-    signal valid       : in  std_logic_vector(NUM_STREAMS - 1 downto 0);
-    signal dvalid      : in  std_logic_vector(NUM_STREAMS - 1 downto 0);
-    signal last        : in  std_logic_vector(NUM_STREAMS - 1 downto 0);
-    signal data        : in  std_logic_vector(OUT_DATA_WIDTH - 1 downto 0);
-    signal str_elem_in : out str_elem_in_t
-    ) is
-  begin
-    str_elem_in.len.data   <= data (INDEX_WIDTH-1 downto 0);
-    str_elem_in.len.valid  <= valid (0);
-    str_elem_in.len.dvalid <= dvalid(0);
-    str_elem_in.len.last   <= last (0);
-
-    str_elem_in.utf8.count  <= data(VALUES_COUNT_WIDTH + VALUES_WIDTH + INDEX_WIDTH - 1 downto VALUES_WIDTH + INDEX_WIDTH);
-    str_elem_in.utf8.data   <= data(VALUES_WIDTH + INDEX_WIDTH - 1 downto INDEX_WIDTH);
-    str_elem_in.utf8.valid  <= valid(1);
-    str_elem_in.utf8.dvalid <= dvalid(1);
-    str_elem_in.utf8.last   <= last(1);
-  end procedure;
-
-  type len_stream_out_t is record
-    ready : std_logic;
-  end record;
-
-  type utf8_stream_out_t is record
-    ready : std_logic;
-  end record;
-
-  type str_elem_out_t is record
-    len  : len_stream_out_t;
-    utf8 : utf8_stream_out_t;
-  end record;
-
-  procedure conv_streams_out (
-    signal str_elem_out : in  str_elem_out_t;
-    signal out_ready    : out std_logic_vector(NUM_STREAMS - 1 downto 0)
-    ) is
-  begin
-    out_ready(0) <= str_elem_out.len.ready;
-    out_ready(1) <= str_elem_out.utf8.ready;
-  end procedure;
-
-  signal str_elem_in  : str_elem_in_t;
-  signal str_elem_out : str_elem_out_t;
-
-  type regex_in_t is record
-    valid : std_logic;
-    data  : std_logic_vector(VALUES_WIDTH - 1 downto 0);
-    mask  : std_logic_vector(VALUES_PER_CYCLE - 1 downto 0);
-    last  : std_logic;
-  end record;
-
-  type regex_out_t is record
-    valid : std_logic;
-    match : std_logic;
-    error : std_logic;
-  end record;
-
-  type regex_t is record
-    input  : regex_in_t;
-    output : regex_out_t;
-  end record;
-
-  signal regex_output : regex_out_t;
-
-  -----------------------------------------------------------------------------
-  -- UserCore
-  -----------------------------------------------------------------------------
-  type state_t is (STATE_IDLE, STATE_RESET_START, STATE_REQUEST, STATE_BUSY, STATE_DONE);
-
-  -- Control and status bits
-  type cs_t is record
-    reset_start : std_logic;
-    done        : std_logic;
-    busy        : std_logic;
-  end record;
-
-  type reg is record
-    state : state_t;
-    cs    : cs_t;
-
-    command : command_t;
-
-    regex : regex_t;
-
-    str_elem_out : str_elem_out_t;
-    str_elem_in  : str_elem_in_t;
-
-    processed : unsigned(REG_WIDTH-1 downto 0);
-
-    reset_units : std_logic;
-  end record;
-
-  signal r : reg;
-  signal d : reg;
+  signal bus_bottom_array : bus_bottom_array_t;
+  signal axi_mid_array    : axi_mid_array_t;
+  signal axi_top          : axi_top_t;
 
   -----------------------------------------------------------------------------
   -- Registers
   -----------------------------------------------------------------------------
-  signal control_reset : std_logic;
-  signal control_start : std_logic;
+  type reg_array_t is array (0 to CORES-1) of std_logic_vector(31 downto 0);
 
-  -- Read request channel
-  signal req_addr             : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-  signal req_len              : std_logic_vector(BOTTOM_LEN_WIDTH-1 downto 0);
-  signal req_valid, req_ready : std_logic;
+  signal reg_array_firstidx : reg_array_t;
+  signal reg_array_lastidx  : reg_array_t;
+  signal reg_array_off_hi   : reg_array_t;
+  signal reg_array_off_lo   : reg_array_t;
+  signal reg_array_utf8_hi  : reg_array_t;
+  signal reg_array_utf8_lo  : reg_array_t;
 
-  -- Read response channel
-  signal rsp_data                       : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-  signal bus_rsp_resp                   : std_logic_vector(1 downto 0);
-  signal rsp_ready, rsp_last, rsp_valid : std_logic;
-
-  signal usercore_reset_start : std_logic;
-
-  -----------------------------------------------------------------------------
-  -- Application constants
-  -----------------------------------------------------------------------------
-  constant BUS_BURST_STEP_LEN : natural := BOTTOM_BURST_STEP_LEN;
-  constant BUS_BURST_MAX_LEN  : natural := BOTTOM_BURST_MAX_LEN;
-  constant BUS_LEN_WIDTH      : natural := BOTTOM_LEN_WIDTH;  -- 1 more than AXI
-
-  signal cmd_ready : std_logic;
-
-  signal s_cmd_tmp : std_logic_vector(2 * BUS_ADDR_WIDTH + 2 * INDEX_WIDTH - 1 downto 0);
-  signal s_cmd     : command_t;
+  signal bit_array_control_reset : std_logic_vector(CORES-1 downto 0);
+  signal bit_array_control_start : std_logic_vector(CORES-1 downto 0);
+  signal bit_array_reset_start   : std_logic_vector(CORES-1 downto 0);
+  signal bit_array_busy          : std_logic_vector(CORES-1 downto 0);
+  signal bit_array_done          : std_logic_vector(CORES-1 downto 0);
 
 begin
+  reset <= '1' when reset_n = '0' else '0';
+
   -----------------------------------------------------------------------------
   -- Memory Mapped Slave Registers
   -----------------------------------------------------------------------------
@@ -443,9 +291,12 @@ begin
             mm_regs(address) <= s_axi_wdata;
         end case;
       else
-        if usercore_reset_start = '1' then
-          mm_regs(REG_CONTROL_LO)(0) <= '0';
-        end if;
+        -- Control register is also resettable by individual units
+        for I in 0 to CORES-1 loop
+          if bit_array_reset_start(I) = '1' then
+            mm_regs(REG_CONTROL_LO)(CONTROL_START_OFFSET + I) <= '0';
+          end if;
+        end loop;
       end if;
 
       -- Read only register values:
@@ -453,14 +304,17 @@ begin
       -- Status registers
       mm_regs(REG_STATUS_HI) <= (others => '0');
 
-      mm_regs(REG_STATUS_LO)(SLV_BUS_DATA_WIDTH - 1 downto STATUS_DONE_OFFSET + 1) <= (others => '0');
-      mm_regs(REG_STATUS_LO)(STATUS_DONE_OFFSET)                                   <= done;
-      mm_regs(REG_STATUS_LO)(STATUS_BUSY_OFFSET)                                   <= busy;
+      if CORES /= 16 then
+        mm_regs(REG_STATUS_LO)(SLV_BUS_DATA_WIDTH-1 downto STATUS_DONE_OFFSET + CORES) <= (others => '0');
+      end if;
+      mm_regs(REG_STATUS_LO)(STATUS_BUSY_OFFSET + CORES - 1 downto STATUS_BUSY_OFFSET) <= bit_array_busy;
+      mm_regs(REG_STATUS_LO)(STATUS_DONE_OFFSET + CORES - 1 downto STATUS_DONE_OFFSET) <= bit_array_done;
 
       -- Return registers
       mm_regs(REG_RETURN_HI) <= (others => '0');
       mm_regs(REG_RETURN_LO) <= (others => '1');  -- result here
-      mm_regs(REG_RESULT)    <= (others => '1');  -- result here
+
+      mm_regs(REG_RESULT) <= (others => '1');  -- result here
 
       if reset_n = '0' then
         mm_regs(REG_CONTROL_LO) <= (others => '0');
@@ -485,13 +339,25 @@ begin
     end if;
   end process;
 
-  -- Slice up (without backpressure) the control signals
+  -- Some registers between paths to units
   reg_settings : process(clk)
   begin
     if rising_edge(clk) then
       -- Control bits
-      control_start <= mm_regs(REG_CONTROL_LO)(CONTROL_START_OFFSET);
-      control_reset <= mm_regs(REG_CONTROL_LO)(CONTROL_RESET_OFFSET);
+      bit_array_control_start <= mm_regs(REG_CONTROL_LO)(CONTROL_START_OFFSET + CORES -1 downto CONTROL_START_OFFSET);
+      bit_array_control_reset <= mm_regs(REG_CONTROL_LO)(CONTROL_RESET_OFFSET + CORES -1 downto CONTROL_RESET_OFFSET);
+
+      -- Registers
+      reg_gen : for I in 0 to CORES-1 loop
+        -- Local
+        reg_array_firstidx(I) <= mm_regs(REG_FIRST_IDX + I);
+        reg_array_lastidx(I)  <= mm_regs(REG_LAST_IDX + I);
+        -- Global
+        reg_array_off_hi (I)  <= mm_regs(REG_OFF_ADDR_HI);
+        reg_array_off_lo (I)  <= mm_regs(REG_OFF_ADDR_LO);
+        reg_array_utf8_hi(I)  <= mm_regs(REG_UTF8_ADDR_HI);
+        reg_array_utf8_lo(I)  <= mm_regs(REG_UTF8_ADDR_LO);
+      end loop;
     end if;
   end process;
 
@@ -516,285 +382,254 @@ begin
   axi_top.rresp  <= m_axi_rresp;
   axi_top.rlast  <= m_axi_rlast;
 
-  -- Convert axi read address channel and read response channel
-  -- Scales "len" and "size" according to the master data width
-  -- and converts the Fletcher bus "len" to AXI bus "len"
-  read_converter_inst : axi_read_converter generic map (
-    ADDR_WIDTH        => BUS_ADDR_WIDTH,
-    ID_WIDTH          => 1,
-    MASTER_DATA_WIDTH => BUS_DATA_WIDTH,
-    MASTER_LEN_WIDTH  => 8,
-    SLAVE_DATA_WIDTH  => BUS_DATA_WIDTH,
-    SLAVE_LEN_WIDTH   => BUS_LEN_WIDTH,
-    SLAVE_MAX_BURST   => BUS_BURST_MAX_LEN,
-    ENABLE_FIFO       => false
+
+
+  -----------------------------------------------------------------------------
+  -- Bottom layer
+  -----------------------------------------------------------------------------
+  pairhmm_gen : for I in 0 to CORES-1 generate
+    -- Convert axi read address channel and read response channel
+    -- Scales "len" and "size" according to the master data width
+    -- and converts the Fletcher bus "len" to AXI bus "len"
+    read_converter_inst : axi_read_converter generic map (
+      ADDR_WIDTH        => BUS_ADDR_WIDTH,
+      ID_WIDTH          => 1,
+      MASTER_DATA_WIDTH => BUS_DATA_WIDTH,
+      MASTER_LEN_WIDTH  => 8,
+      SLAVE_DATA_WIDTH  => BUS_DATA_WIDTH,
+      SLAVE_LEN_WIDTH   => BOTTOM_LEN_WIDTH,
+      SLAVE_MAX_BURST   => BOTTOM_BURST_MAX_LEN,
+      ENABLE_FIFO       => false
+      )
+      port map (
+        clk             => clk,
+        reset_n         => reset_n,
+        s_bus_req_addr  => bus_bottom_array(I).req_addr,
+        s_bus_req_len   => bus_bottom_array(I).req_len,
+        s_bus_req_valid => bus_bottom_array(I).req_valid,
+        s_bus_req_ready => bus_bottom_array(I).req_ready,
+        s_bus_rsp_data  => bus_bottom_array(I).rsp_data,
+        s_bus_rsp_last  => bus_bottom_array(I).rsp_last,
+        s_bus_rsp_valid => bus_bottom_array(I).rsp_valid,
+        s_bus_rsp_ready => bus_bottom_array(I).rsp_ready,
+        m_axi_araddr    => axi_mid_array(I).araddr,
+        m_axi_arlen     => axi_mid_array(I).arlen,
+        m_axi_arvalid   => axi_mid_array(I).arvalid,
+        m_axi_arready   => axi_mid_array(I).arready,
+        m_axi_arsize    => axi_mid_array(I).arsize,
+        m_axi_rdata     => axi_mid_array(I).rdata,
+        m_axi_rlast     => axi_mid_array(I).rlast,
+        m_axi_rvalid    => axi_mid_array(I).rvalid,
+        m_axi_rready    => axi_mid_array(I).rready
+        );
+
+    -- utf8 regular expression matcher generation
+    pairhmm_inst : pairhmm_unit generic map (
+      BUS_ADDR_WIDTH     => BUS_ADDR_WIDTH,
+      BUS_DATA_WIDTH     => BOTTOM_DATA_WIDTH,
+      BUS_LEN_WIDTH      => BOTTOM_LEN_WIDTH,
+      BUS_BURST_STEP_LEN => BOTTOM_BURST_STEP_LEN,
+      BUS_BURST_MAX_LEN  => BOTTOM_BURST_MAX_LEN,
+      REG_WIDTH          => 32
+      ) port map (
+        clk     => clk,
+        reset_n => reset_n,
+
+        control_reset => bit_array_control_reset(I),
+        control_start => bit_array_control_start(I),
+        reset_start   => bit_array_reset_start (I),
+        busy          => bit_array_busy (I),
+        done          => bit_array_done (I),
+
+        firstidx => reg_array_firstidx (I),
+        lastidx  => reg_array_lastidx (I),
+        off_hi   => reg_array_off_hi (I),
+        off_lo   => reg_array_off_lo (I),
+        utf8_hi  => reg_array_utf8_hi (I),
+        utf8_lo  => reg_array_utf8_lo (I),
+
+        bus_req_addr  => bus_bottom_array(I).req_addr,
+        bus_req_len   => bus_bottom_array(I).req_len,
+        bus_req_valid => bus_bottom_array(I).req_valid,
+        bus_req_ready => bus_bottom_array(I).req_ready,
+        bus_rsp_data  => bus_bottom_array(I).rsp_data,
+        bus_rsp_resp  => bus_bottom_array(I).rsp_resp,
+        bus_rsp_last  => bus_bottom_array(I).rsp_last,
+        bus_rsp_valid => bus_bottom_array(I).rsp_valid,
+        bus_rsp_ready => bus_bottom_array(I).rsp_ready
+        );
+  end generate;
+
+  -- Tie off unused ports, if any
+  unused_gen : for I in CORES to BB-1 generate
+    axi_mid_array(I).araddr  <= (others => '0');
+    axi_mid_array(I).arlen   <= (others => '0');
+    axi_mid_array(I).arvalid <= '0';
+    axi_mid_array(I).arsize  <= (others => '0');
+    axi_mid_array(I).rready  <= '0';
+    axi_mid_array(I).aclk    <= clk;
+  end generate;
+
+  mid_interconnect : BusArbiter generic map (
+    BUS_ADDR_WIDTH  => BUS_ADDR_WIDTH,
+    BUS_LEN_WIDTH   => 8,
+    BUS_DATA_WIDTH  => BUS_DATA_WIDTH,
+    NUM_MASTERS     => 2,               -- 2 masters for 1 pair HMM core
+    ARB_METHOD      => "ROUND-ROBIN",
+    MAX_OUTSTANDING => 32,
+    RAM_CONFIG      => "",
+    REQ_IN_SLICES   => false,
+    REQ_OUT_SLICE   => false,
+    RESP_IN_SLICE   => false,
+    RESP_OUT_SLICES => false
     )
     port map (
       clk             => clk,
-      reset_n         => reset_n,
-      s_bus_req_addr  => req_addr,
-      s_bus_req_len   => req_len,
-      s_bus_req_valid => req_valid,
-      s_bus_req_ready => req_ready,
-      s_bus_rsp_data  => rsp_data,
-      s_bus_rsp_last  => rsp_last,
-      s_bus_rsp_valid => rsp_valid,
-      s_bus_rsp_ready => rsp_ready,
-      m_axi_araddr    => axi_top.araddr,
-      m_axi_arlen     => axi_top.arlen,
-      m_axi_arvalid   => axi_top.arvalid,
-      m_axi_arready   => axi_top.arready,
-      m_axi_arsize    => axi_top.arsize,
-      m_axi_rdata     => axi_top.rdata,
-      m_axi_rlast     => axi_top.rlast,
-      m_axi_rvalid    => axi_top.rvalid,
-      m_axi_rready    => axi_top.rready
+      reset           => reset,
+      slv_req_valid   => axi_top.arvalid,
+      slv_req_ready   => axi_top.arready,
+      slv_req_addr    => axi_top.araddr,
+      slv_req_len     => axi_top.arlen,
+      slv_resp_valid  => axi_top.rvalid,
+      slv_resp_ready  => axi_top.rready,
+      slv_resp_data   => axi_top.rdata,
+      slv_resp_last   => axi_top.rlast,
+      bm0_req_valid   => axi_mid_array(0).arvalid,
+      bm0_req_ready   => axi_mid_array(0).arready,
+      bm0_req_addr    => axi_mid_array(0).araddr,
+      bm0_req_len     => axi_mid_array(0).arlen,
+      bm0_resp_valid  => axi_mid_array(0).rvalid,
+      bm0_resp_ready  => axi_mid_array(0).rready,
+      bm0_resp_data   => axi_mid_array(0).rdata,
+      bm0_resp_last   => axi_mid_array(0).rlast,
+      bm1_req_valid   => open,
+      bm1_req_ready   => open,
+      bm1_req_addr    => open,
+      bm1_req_len     => open,
+      bm1_resp_valid  => open,
+      bm1_resp_ready  => open,
+      bm1_resp_data   => open,
+      bm1_resp_last   => open,
+      -- bm1_req_valid               => axi_mid_array(1 ).arvalid,
+      -- bm1_req_ready               => axi_mid_array(1 ).arready,
+      -- bm1_req_addr                => axi_mid_array(1 ).araddr,
+      -- bm1_req_len                 => axi_mid_array(1 ).arlen,
+      -- bm1_resp_valid              => axi_mid_array(1 ).rvalid,
+      -- bm1_resp_ready              => axi_mid_array(1 ).rready,
+      -- bm1_resp_data               => axi_mid_array(1 ).rdata,
+      -- bm1_resp_last               => axi_mid_array(1 ).rlast,
+      bm2_req_valid   => open,
+      bm2_req_ready   => open,
+      bm2_req_addr    => open,
+      bm2_req_len     => open,
+      bm2_resp_valid  => open,
+      bm2_resp_ready  => open,
+      bm2_resp_data   => open,
+      bm2_resp_last   => open,
+      bm3_req_valid   => open,
+      bm3_req_ready   => open,
+      bm3_req_addr    => open,
+      bm3_req_len     => open,
+      bm3_resp_valid  => open,
+      bm3_resp_ready  => open,
+      bm3_resp_data   => open,
+      bm3_resp_last   => open,
+      bm4_req_valid   => open,
+      bm4_req_ready   => open,
+      bm4_req_addr    => open,
+      bm4_req_len     => open,
+      bm4_resp_valid  => open,
+      bm4_resp_ready  => open,
+      bm4_resp_data   => open,
+      bm4_resp_last   => open,
+      bm5_req_valid   => open,
+      bm5_req_ready   => open,
+      bm5_req_addr    => open,
+      bm5_req_len     => open,
+      bm5_resp_valid  => open,
+      bm5_resp_ready  => open,
+      bm5_resp_data   => open,
+      bm5_resp_last   => open,
+      bm6_req_valid   => open,
+      bm6_req_ready   => open,
+      bm6_req_addr    => open,
+      bm6_req_len     => open,
+      bm6_resp_valid  => open,
+      bm6_resp_ready  => open,
+      bm6_resp_data   => open,
+      bm6_resp_last   => open,
+      bm7_req_valid   => open,
+      bm7_req_ready   => open,
+      bm7_req_addr    => open,
+      bm7_req_len     => open,
+      bm7_resp_valid  => open,
+      bm7_resp_ready  => open,
+      bm7_resp_data   => open,
+      bm7_resp_last   => open,
+      bm8_req_valid   => open,
+      bm8_req_ready   => open,
+      bm8_req_addr    => open,
+      bm8_req_len     => open,
+      bm8_resp_valid  => open,
+      bm8_resp_ready  => open,
+      bm8_resp_data   => open,
+      bm8_resp_last   => open,
+      bm9_req_valid   => open,
+      bm9_req_ready   => open,
+      bm9_req_addr    => open,
+      bm9_req_len     => open,
+      bm9_resp_valid  => open,
+      bm9_resp_ready  => open,
+      bm9_resp_data   => open,
+      bm9_resp_last   => open,
+      bm10_req_valid  => open,
+      bm10_req_ready  => open,
+      bm10_req_addr   => open,
+      bm10_req_len    => open,
+      bm10_resp_valid => open,
+      bm10_resp_ready => open,
+      bm10_resp_data  => open,
+      bm10_resp_last  => open,
+      bm11_req_valid  => open,
+      bm11_req_ready  => open,
+      bm11_req_addr   => open,
+      bm11_req_len    => open,
+      bm11_resp_valid => open,
+      bm11_resp_ready => open,
+      bm11_resp_data  => open,
+      bm11_resp_last  => open,
+      bm12_req_valid  => open,
+      bm12_req_ready  => open,
+      bm12_req_addr   => open,
+      bm12_req_len    => open,
+      bm12_resp_valid => open,
+      bm12_resp_ready => open,
+      bm12_resp_data  => open,
+      bm12_resp_last  => open,
+      bm13_req_valid  => open,
+      bm13_req_ready  => open,
+      bm13_req_addr   => open,
+      bm13_req_len    => open,
+      bm13_resp_valid => open,
+      bm13_resp_ready => open,
+      bm13_resp_data  => open,
+      bm13_resp_last  => open,
+      bm14_req_valid  => open,
+      bm14_req_ready  => open,
+      bm14_req_addr   => open,
+      bm14_req_len    => open,
+      bm14_resp_valid => open,
+      bm14_resp_ready => open,
+      bm14_resp_data  => open,
+      bm14_resp_last  => open,
+      bm15_req_valid  => open,
+      bm15_req_ready  => open,
+      bm15_req_addr   => open,
+      bm15_req_len    => open,
+      bm15_resp_valid => open,
+      bm15_resp_ready => open,
+      bm15_resp_data  => open,
+      bm15_resp_last  => open
       );
-
-  -----------------------------------------------------------------------------
-  -- Command Stream Slice
-  -----------------------------------------------------------------------------
-  slice_inst : StreamSlice
-    generic map (
-      DATA_WIDTH => 2 * BUS_ADDR_WIDTH + 2 * INDEX_WIDTH
-      ) port map (
-        clk       => clk,
-        reset     => d.reset_units,
-        in_valid  => d.command.valid,
-        in_ready  => cmd_ready,
-        in_data   => d.command.firstIdx & d.command.lastIdx & d.command.ctrl,
-        out_valid => s_cmd.valid,
-        out_ready => s_cmd.ready,
-        out_data  => s_cmd_tmp
-        );
-
-  s_cmd.ctrl     <= s_cmd_tmp(2 * BUS_ADDR_WIDTH-1 downto 0);
-  s_cmd.lastIdx  <= s_cmd_tmp(2 * BUS_ADDR_WIDTH + INDEX_WIDTH - 1 downto 2 * BUS_ADDR_WIDTH);
-  s_cmd.firstIdx <= s_cmd_tmp(2 * BUS_ADDR_WIDTH + 2 * INDEX_WIDTH - 1 downto 2 * BUS_ADDR_WIDTH + INDEX_WIDTH);
-
-
-  -----------------------------------------------------------------------------
-  -- ColumnReader
-  -----------------------------------------------------------------------------
-  hapl_cr : ColumnReader
-    generic map (
-      BUS_ADDR_WIDTH     => BUS_ADDR_WIDTH,
-      BUS_LEN_WIDTH      => BUS_LEN_WIDTH,
-      BUS_DATA_WIDTH     => BUS_DATA_WIDTH,
-      BUS_BURST_STEP_LEN => BUS_BURST_STEP_LEN,
-      BUS_BURST_MAX_LEN  => BUS_BURST_MAX_LEN,
-      INDEX_WIDTH        => INDEX_WIDTH,
-      CFG                => "listprim(8;epc=8)",  -- char array (haplos), 8 per cycle
-      -- CFG                => "list(struct(prim(8),prim(256)))",  -- struct array (reads)
-      CMD_TAG_ENABLE     => false,
-      CMD_TAG_WIDTH      => 1
-      )
-    port map (
-      bus_clk   => clk,
-      bus_reset => r.reset_units,
-      acc_clk   => clk,
-      acc_reset => r.reset_units,
-
-      cmd_valid    => s_cmd.valid,
-      cmd_ready    => s_cmd.ready,
-      cmd_firstIdx => s_cmd.firstIdx,
-      cmd_lastIdx  => s_cmd.lastIdx,
-      cmd_ctrl     => s_cmd.ctrl,
-      cmd_tag      => (others => '0'),  -- CMD_TAG_ENABLE is false
-
-      unlock_valid => open,
-      unlock_ready => '1',
-      unlock_tag   => open,
-
-      busReq_valid => req_valid,
-      busReq_ready => req_ready,
-      busReq_addr  => req_addr,
-      busReq_len   => req_len,
-
-      busResp_valid => rsp_valid,
-      busResp_ready => rsp_ready,
-      busResp_data  => rsp_data,
-      busResp_last  => rsp_last,
-
-      out_valid  => out_valid,
-      out_ready  => out_ready,
-      out_last   => out_last,
-      out_dvalid => out_dvalid,
-      out_data   => out_data
-      );
-
-  -- Output
-  str_elem_out <= d.str_elem_out;
-
-  -- Convert the stream inputs and outputs to something readable
-  conv_streams_in(out_valid, out_dvalid, out_last, out_data, str_elem_in);
-  conv_streams_out(str_elem_out, out_ready);
-
-  -- Control & Status
-  r_reset_start <= r.cs.reset_start;
-  r_done        <= r.cs.done;
-  r_busy        <= r.cs.busy;
-
-  sm_seq : process(clk) is
-  begin
-    if rising_edge(clk) then
-      r <= d;
-
-      r_control_reset <= control_reset;
-      r_control_start <= control_start;
-      reset_start     <= r_reset_start;
-
-      busy <= r_busy;
-      done <= r_done;
-
-      r_firstidx <= mm_regs(REG_FIRST_IDX);
-      r_lastidx  <= mm_regs(REG_LAST_IDX);
-
-      r_off_hi <= mm_regs(REG_OFF_ADDR_HI);
-      r_off_lo <= mm_regs(REG_OFF_ADDR_LO);
-
-      r_utf8_hi <= mm_regs(REG_UTF8_ADDR_HI);
-      r_utf8_lo <= mm_regs(REG_UTF8_ADDR_LO);
-
-      if control_reset = '1' then
-        r.state       <= STATE_IDLE;
-        r.reset_units <= '1';
-      end if;
-    end if;
-  end process;
-
-  sm_comb : process(r,
-                    cmd_ready,
-                    str_elem_in,
-                    r_firstidx,
-                    r_lastidx,
-                    r_off_hi,
-                    r_off_lo,
-                    r_utf8_hi,
-                    r_utf8_lo,
-                    r_control_start,
-                    r_control_reset)
-    is
-    variable v : reg;
-  begin
-    v               := r;
-    -- Inputs:
-    v.command.ready := cmd_ready;
-    v.str_elem_in   := str_elem_in;
-
-    -- Default outputs:
-    v.command.valid := '0';
-
-    v.str_elem_out.len.ready  := '0';
-    v.str_elem_out.utf8.ready := '0';
-
-    v.regex.input.valid := '0';
-    v.regex.input.last  := '0';
-
-    case v.state is
-      when STATE_IDLE =>
-        v.cs.done        := '0';
-        v.cs.busy        := '0';
-        v.cs.reset_start := '0';
-
-        v.reset_units := '1';
-
-        v.processed := (others => '0');
-
-        if control_start = '1' then
-          v.state          := STATE_RESET_START;
-          v.cs.reset_start := '1';
-        end if;
-
-      when STATE_RESET_START =>
-        v.cs.done := '0';
-        v.cs.busy := '1';
-
-        v.reset_units := '0';
-
-        if control_start = '0' then
-          v.state := STATE_REQUEST;
-        end if;
-
-      when STATE_REQUEST =>
-        v.cs.done        := '0';
-        v.cs.busy        := '1';
-        v.cs.reset_start := '0';
-        v.reset_units    := '0';
-
-        -- First four argument registers are buffer addresses
-        -- MSBs are index buffer address
-        v.command.ctrl(127 downto 96) := r_off_hi;
-        v.command.ctrl(95 downto 64)  := r_off_lo;
-        -- LSBs are data buffer address
-        v.command.ctrl(63 downto 32)  := r_utf8_hi;
-        v.command.ctrl(31 downto 0)   := r_utf8_lo;
-
-        -- Next two argument registers are first and last index
-        v.command.firstIdx := r_firstidx;
-        v.command.lastIdx  := r_lastidx;
-
-        -- Make command valid
-        v.command.valid := '1';
-
-        -- Wait for command accepted
-        if v.command.ready = '1' then
-          dumpStdOut("Requested haplotype arrays: " & integer'image(int(v.command.firstIdx)) & " ... " & integer'image(int(v.command.lastIdx)));
-          v.state := STATE_BUSY;
-        end if;
-
-      when STATE_BUSY =>
-        v.cs.done        := '0';
-        v.cs.busy        := '1';
-        v.cs.reset_start := '0';
-        v.reset_units    := '0';
-
-        -- Always ready to receive length
-        v.str_elem_out.len.ready := '1';
-
-        if v.str_elem_in.len.valid = '1' then
-          -- Do something when this is the last string
-          dumpStdOut("LAST STRING");
-        end if;
-        if (v.str_elem_in.len.last = '1' and (v.processed = u(v.command.lastIdx) - u(v.command.firstIdx))) -- TODO Laurens: add another condition to finish
-        then
-          dumpStdOut("Pair HMM unit is done");
-          v.state := STATE_DONE;
-        end if;
-
-        -- Always ready to receive utf8 char (haplo basepair)
-        v.str_elem_out.utf8.ready := '1';
-
-        if v.str_elem_in.utf8.valid = '1' then
-          -- Do something for every utf8 char (haplo basepair)
-          dumpStdOut(slv8char(v.str_elem_in.utf8.data(7 downto 0)) &
-                     slv8char(v.str_elem_in.utf8.data(15 downto 8)) &
-                     slv8char(v.str_elem_in.utf8.data(23 downto 16)) &
-                     slv8char(v.str_elem_in.utf8.data(31 downto 24)) &
-                     slv8char(v.str_elem_in.utf8.data(39 downto 32)) &
-                     slv8char(v.str_elem_in.utf8.data(47 downto 40)) &
-                     slv8char(v.str_elem_in.utf8.data(55 downto 48)) &
-                     slv8char(v.str_elem_in.utf8.data(63 downto 56))
-                     );
-        end if;
-
-        if v.str_elem_in.utf8.last = '1' then
-          -- Do something when this is the last utf8 char
-          dumpStdOut("LAST CHAR");
-        end if;
-
-      when STATE_DONE =>
-        v.cs.done        := '1';
-        v.cs.busy        := '0';
-        v.cs.reset_start := '0';
-        v.reset_units    := '0';  -- See issue #4, otherwise this could be '1'
-
-        if r_control_reset = '1' or r_control_start = '1' then
-          v.state := STATE_IDLE;
-        end if;
-    end case;
-
-    d <= v;
-  end process;
 
 end arrow_regexp;
