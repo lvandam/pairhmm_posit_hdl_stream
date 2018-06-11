@@ -95,7 +95,9 @@ architecture pairhmm_unit of pairhmm_unit is
   signal r_utf8_hi       : std_logic_vector(REG_WIDTH - 1 downto 0);
   signal r_utf8_lo       : std_logic_vector(REG_WIDTH - 1 downto 0);
 
-
+  -----------------------------------------------------------------------------
+  -- HAPLO STREAMS
+  -----------------------------------------------------------------------------
   -----------------------------------------------------------------------------
   -- Haplotype ColumnReader Interface
   -----------------------------------------------------------------------------
@@ -113,27 +115,6 @@ architecture pairhmm_unit of pairhmm_unit is
   signal out_hapl_dvalid : std_logic_vector(NUM_STREAMS_HAPL - 1 downto 0);
   signal out_hapl_data   : std_logic_vector(OUT_DATA_WIDTH_HAPL - 1 downto 0);
 
-  -----------------------------------------------------------------------------
-  -- Reads ColumnReader Interface
-  -----------------------------------------------------------------------------
-  constant INDEX_WIDTH_READ        : natural := 32;
-  constant VALUE_ELEM_WIDTH_READ   : natural := 264;  -- 8 bits for read basepair, 8*32 bits for probabilities
-  constant VALUES_PER_CYCLE_READ   : natural := 1;
-  constant NUM_STREAMS_READ        : natural := 3;  -- index stream, data stream en nog wat
-  constant VALUES_WIDTH_READ       : natural := VALUE_ELEM_WIDTH_READ * VALUES_PER_CYCLE_READ;
-  constant VALUES_COUNT_WIDTH_READ : natural := log2ceil(VALUES_PER_CYCLE_READ);  -- + 1
-  constant OUT_DATA_WIDTH_READ     : natural := INDEX_WIDTH_READ + VALUES_WIDTH_READ + VALUES_COUNT_WIDTH_READ;
-
-  signal out_read_valid  : std_logic_vector(1 downto 0);
-  signal out_read_ready  : std_logic_vector(1 downto 0);
-  signal out_read_last   : std_logic_vector(1 downto 0);
-  signal out_read_dvalid : std_logic_vector(1 downto 0);
-  signal out_read_data   : std_logic_vector(OUT_DATA_WIDTH_READ - 1 downto 0);
-
-
-  -----------------------------------------------------------------------------
-  -- STREAM STRUCTS
-  -----------------------------------------------------------------------------
   type len_stream_in_t is record
     valid  : std_logic;
     dvalid : std_logic;
@@ -157,10 +138,6 @@ architecture pairhmm_unit of pairhmm_unit is
     ready : std_logic;
   end record;
 
-
-  -----------------------------------------------------------------------------
-  -- HAPLO STREAMS
-  -----------------------------------------------------------------------------
   -- Command Stream
   type command_hapl_t is record
     valid    : std_logic;
@@ -219,6 +196,24 @@ architecture pairhmm_unit of pairhmm_unit is
   -----------------------------------------------------------------------------
   -- READ STREAMS
   -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -- Reads ColumnReader Interface
+  -----------------------------------------------------------------------------
+  constant INDEX_WIDTH_READ            : natural := 32;
+  constant VALUE_ELEM_WIDTH_READ_BP    : natural := 8;  -- 8 bit character
+  constant VALUE_ELEM_WIDTH_READ_PROBS : natural := 8 * 32;  -- 8 * 32-bit probabilities
+  constant VALUES_PER_CYCLE_READ       : natural := 1;
+  constant NUM_STREAMS_READ            : natural := 3;  -- index stream, data stream en nog wat
+  constant VALUES_WIDTH_READ           : natural := (VALUE_ELEM_WIDTH_READ_BP + VALUE_ELEM_WIDTH_READ_PROBS) * VALUES_PER_CYCLE_READ;
+  constant VALUES_COUNT_WIDTH_READ     : natural := log2ceil(VALUES_PER_CYCLE_READ);  -- + 1
+  constant OUT_DATA_WIDTH_READ         : natural := INDEX_WIDTH_READ + VALUES_WIDTH_READ + VALUES_COUNT_WIDTH_READ;
+
+  signal out_read_valid  : std_logic_vector(1 downto 0);
+  signal out_read_ready  : std_logic_vector(1 downto 0);
+  signal out_read_last   : std_logic_vector(1 downto 0);
+  signal out_read_dvalid : std_logic_vector(1 downto 0);
+  signal out_read_data   : std_logic_vector(OUT_DATA_WIDTH_READ - 1 downto 0);
+
   -- Command Stream
   type command_read_t is record
     valid    : std_logic;
@@ -233,7 +228,9 @@ architecture pairhmm_unit of pairhmm_unit is
     dvalid : std_logic;
     last   : std_logic;
     count  : std_logic_vector(VALUES_COUNT_WIDTH_READ - 1 downto 0);
-    data   : std_logic_vector(VALUES_WIDTH_READ - 1 downto 0);
+
+    data_bp    : std_logic_vector(VALUE_ELEM_WIDTH_READ_BP - 1 downto 0);
+    data_probs : std_logic_vector(VALUE_ELEM_WIDTH_READ_PROBS - 1 downto 0);
   end record;
 
   type read_data_stream_out_t is record
@@ -242,13 +239,11 @@ architecture pairhmm_unit of pairhmm_unit is
 
   type str_read_elem_in_t is record
     len  : len_stream_in_t;
-    -- utf8 : utf8_stream_in_t;
     data : read_data_stream_in_t;
   end record;
 
   type str_read_elem_out_t is record
     len  : len_stream_out_t;
-    -- utf8 : utf8_stream_out_t;
     data : read_data_stream_out_t;
   end record;
 
@@ -266,11 +261,12 @@ architecture pairhmm_unit of pairhmm_unit is
     str_read_elem_in.len.dvalid <= dvalid(0);
     str_read_elem_in.len.last   <= last (0);
 
-    str_read_elem_in.data.count  <= data(VALUES_COUNT_WIDTH_READ + VALUES_WIDTH_READ + INDEX_WIDTH_READ - 1 downto VALUES_WIDTH_READ + INDEX_WIDTH_READ);
-    str_read_elem_in.data.data   <= data(VALUES_WIDTH_READ + INDEX_WIDTH_READ - 1 downto INDEX_WIDTH_READ);
-    str_read_elem_in.data.valid  <= valid(1);
-    str_read_elem_in.data.dvalid <= dvalid(1);
-    str_read_elem_in.data.last   <= last(1);
+    str_read_elem_in.data.count      <= data(VALUES_COUNT_WIDTH_READ + VALUES_WIDTH_READ + INDEX_WIDTH_READ - 1 downto VALUES_WIDTH_READ + INDEX_WIDTH_READ);
+    str_read_elem_in.data.data_probs <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 downto INDEX_WIDTH_READ);
+    str_read_elem_in.data.data_bp    <= data(VALUE_ELEM_WIDTH_READ_BP + VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 downto VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ); -- TODO switch BP and probs order???
+    str_read_elem_in.data.valid      <= valid(1);
+    str_read_elem_in.data.dvalid     <= dvalid(1);
+    str_read_elem_in.data.last       <= last(1);
   end procedure;
 
   procedure conv_streams_read_out (
