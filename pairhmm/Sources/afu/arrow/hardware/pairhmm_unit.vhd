@@ -654,20 +654,22 @@ begin
         v.cs.reset_start := '0';
         v.reset_units    := '0';
 
+        -- Haplotypes
         -- First four argument registers are buffer addresses
         -- MSBs are index buffer address
         v.command_hapl.ctrl(127 downto 96) := r_hapl_off_hi;
         v.command_hapl.ctrl(95 downto 64)  := r_hapl_off_lo;
-
-        v.command_read.ctrl(191 downto 160) := r_read_off_hi; -- TODO
-        v.command_read.ctrl(159 downto 128) := r_read_off_lo; -- TODO
-
         -- LSBs are data buffer address
         v.command_hapl.ctrl(63 downto 32) := r_hapl_bp_hi;
         v.command_hapl.ctrl(31 downto 0)  := r_hapl_bp_lo;
 
+        -- Reads
+        v.command_read.ctrl(191 downto 160) := r_read_off_hi; -- TODO
+        v.command_read.ctrl(159 downto 128) := r_read_off_lo; -- TODO
+
         v.command_read.ctrl(127 downto 96) := r_read_bp_hi;
         v.command_read.ctrl(95 downto 64)  := r_read_bp_lo;
+        
         v.command_read.ctrl(63 downto 32)  := r_read_probs_hi;
         v.command_read.ctrl(31 downto 0)   := r_read_probs_lo;
 
