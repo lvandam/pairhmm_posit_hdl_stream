@@ -132,11 +132,12 @@ architecture arrow_regexp of arrow_regexp is
   --   1 data basepairs address      =  2
   --   1 data probabilities address  =  2
   ----------------------------------- Custom registers
-  --   1 first idx & last idx     =  2
-  --   1 results                  =  2
+  --   1 haplo first idx & last idx  =  2
+  --   1 read first idx & last idx   =  2
+  --   1 results                     =  2
   -----------------------------------
-  -- Total:                       20 regs
-  constant NUM_FLETCHER_REGS : natural := 20;
+  -- Total:                          22 regs
+  constant NUM_FLETCHER_REGS : natural := 22;
 
   -- The LSB index in the slave address
   constant SLV_ADDR_LSB : natural := log2floor(SLV_BUS_DATA_WIDTH / 4) - 1;
@@ -156,11 +157,11 @@ architecture arrow_regexp of arrow_regexp is
   constant REG_RETURN_HI : natural := 4;
   constant REG_RETURN_LO : natural := 5;
 
-  -- Index/Offset buffer address
-  constant REG_OFF_ADDR_HI : natural := 6;
-  constant REG_OFF_ADDR_LO : natural := 7;
+  -- HAPL Index/Offset buffer address
+  constant REG_HAPL_OFF_ADDR_HI : natural := 6;
+  constant REG_HAPL_OFF_ADDR_LO : natural := 7;
 
-  -- Data buffer address
+  -- HAPL Data buffer address
   constant REG_HAPL_BP_ADDR_HI : natural := 8;
   constant REG_HAPL_BP_ADDR_LO : natural := 9;
 
@@ -177,11 +178,15 @@ architecture arrow_regexp of arrow_regexp is
   constant REG_READ_PROBS_ADDR_LO : natural := 15;
 
   -- First/Last index haplotypes
-  constant REG_FIRST_IDX : natural := 16;
-  constant REG_LAST_IDX  : natural := 17;
+  constant REG_HAPL_FIRST_IDX : natural := 16;
+  constant REG_HAPL_LAST_IDX  : natural := 17;
+
+  -- First/Last index reads
+  constant REG_READ_FIRST_IDX : natural := 18;
+  constant REG_READ_LAST_IDX  : natural := 19;
 
   -- Register offset for each RegExp unit to put its result
-  constant REG_RESULT : natural := 18;
+  constant REG_RESULT : natural := 20;
 
   -- The offsets of the bits to signal busy and done for each of the units
   constant STATUS_BUSY_OFFSET : natural := 0;
@@ -220,12 +225,16 @@ architecture arrow_regexp of arrow_regexp is
   -----------------------------------------------------------------------------
   type reg_array_t is array (0 to CORES-1) of std_logic_vector(31 downto 0);
 
-  signal reg_array_firstidx   : reg_array_t;
-  signal reg_array_lastidx    : reg_array_t;
-  signal reg_array_off_hi     : reg_array_t;
-  signal reg_array_off_lo     : reg_array_t;
-  signal reg_array_hapl_bp_hi : reg_array_t;
-  signal reg_array_hapl_bp_lo : reg_array_t;
+  signal reg_array_hapl_firstidx, reg_array_read_firstidx : reg_array_t;
+  signal reg_array_hapl_lastidx, reg_array_read_lastidx   : reg_array_t;
+
+  -- Haplotypes buffer addresses
+  signal reg_array_hapl_off_hi, reg_array_hapl_off_lo     : reg_array_t;
+  signal reg_array_hapl_bp_hi, reg_array_hapl_bp_lo       : reg_array_t;
+  -- Reads buffer addresses
+  signal reg_array_read_off_hi, reg_array_read_off_lo     : reg_array_t;
+  signal reg_array_read_bp_hi, reg_array_read_bp_lo       : reg_array_t;
+  signal reg_array_read_probs_hi, reg_array_read_probs_lo : reg_array_t;
 
   signal bit_array_control_reset : std_logic_vector(CORES-1 downto 0);
   signal bit_array_control_start : std_logic_vector(CORES-1 downto 0);
@@ -365,13 +374,28 @@ begin
       -- Registers
       reg_gen : for I in 0 to CORES-1 loop
         -- Local
-        reg_array_firstidx(I)   <= mm_regs(REG_FIRST_IDX + I);
-        reg_array_lastidx(I)    <= mm_regs(REG_LAST_IDX + I);
-        -- Global Haplos
-        reg_array_off_hi (I)    <= mm_regs(REG_OFF_ADDR_HI);
-        reg_array_off_lo (I)    <= mm_regs(REG_OFF_ADDR_LO);
+        reg_array_hapl_firstidx(I) <= mm_regs(REG_HAPL_FIRST_IDX + I);
+        reg_array_hapl_lastidx(I)  <= mm_regs(REG_HAPL_LAST_IDX + I);
+
+        reg_array_read_firstidx(I) <= mm_regs(REG_READ_FIRST_IDX + I);
+        reg_array_read_lastidx(I)  <= mm_regs(REG_READ_LAST_IDX + I);
+
+        -- Global: Haplos
+        reg_array_hapl_off_hi (I) <= mm_regs(REG_HAPL_OFF_ADDR_HI);
+        reg_array_hapl_off_lo (I) <= mm_regs(REG_HAPL_OFF_ADDR_LO);
+
         reg_array_hapl_bp_hi(I) <= mm_regs(REG_HAPL_BP_ADDR_HI);
         reg_array_hapl_bp_lo(I) <= mm_regs(REG_HAPL_BP_ADDR_LO);
+
+        -- Global: Reads
+        reg_array_read_off_hi (I) <= mm_regs(REG_READ_OFF_ADDR_HI);
+        reg_array_read_off_lo (I) <= mm_regs(REG_READ_OFF_ADDR_LO);
+
+        reg_array_read_bp_hi (I) <= mm_regs(REG_READ_BP_ADDR_HI);
+        reg_array_read_bp_lo (I) <= mm_regs(REG_READ_BP_ADDR_LO);
+
+        reg_array_read_probs_hi (I) <= mm_regs(REG_READ_PROBS_ADDR_HI);
+        reg_array_read_probs_lo (I) <= mm_regs(REG_READ_PROBS_ADDR_LO);
       end loop;
     end if;
   end process;
@@ -488,12 +512,28 @@ begin
         busy          => bit_array_busy (I),
         done          => bit_array_done (I),
 
-        firstidx   => reg_array_firstidx (I),
-        lastidx    => reg_array_lastidx (I),
-        off_hi     => reg_array_off_hi (I),
-        off_lo     => reg_array_off_lo (I),
+        hapl_firstidx => reg_array_hapl_firstidx (I),
+        hapl_lastidx  => reg_array_hapl_lastidx (I),
+
+        read_firstidx => reg_array_read_firstidx (I),
+        read_lastidx  => reg_array_read_lastidx (I),
+
+        -- Haplotypes buffer addresses
+        hapl_off_hi => reg_array_hapl_off_hi (I),
+        hapl_off_lo => reg_array_hapl_off_lo (I),
+
         hapl_bp_hi => reg_array_hapl_bp_hi (I),
         hapl_bp_lo => reg_array_hapl_bp_lo (I),
+
+        -- Reads buffer addresses
+        read_off_hi => reg_array_read_off_hi (I),
+        read_off_lo => reg_array_read_off_lo (I),
+
+        read_bp_hi => reg_array_read_bp_hi (I),
+        read_bp_lo => reg_array_read_bp_lo (I),
+
+        read_probs_hi => reg_array_read_probs_hi (I),
+        read_probs_lo => reg_array_read_probs_lo (I),
 
         bus_hapl_req_addr  => bus_haplo_array(I).req_addr,
         bus_hapl_req_len   => bus_haplo_array(I).req_len,

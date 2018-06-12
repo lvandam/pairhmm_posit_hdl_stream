@@ -38,17 +38,31 @@ entity pairhmm_unit is
     busy : out std_logic;
     done : out std_logic;
 
-    firstidx : in std_logic_vector(REG_WIDTH-1 downto 0);
-    lastidx  : in std_logic_vector(REG_WIDTH-1 downto 0);
+    hapl_firstidx : in std_logic_vector(REG_WIDTH-1 downto 0);
+    hapl_lastidx  : in std_logic_vector(REG_WIDTH-1 downto 0);
 
-    off_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
-    off_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
+    read_firstidx : in std_logic_vector(REG_WIDTH-1 downto 0);
+    read_lastidx  : in std_logic_vector(REG_WIDTH-1 downto 0);
+
+    -- Haplotypes buffer addresses
+    hapl_off_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
+    hapl_off_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
 
     hapl_bp_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
     hapl_bp_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
 
+    -- Reads buffer addresses
+    read_off_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
+    read_off_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
+
+    read_bp_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
+    read_bp_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
+
+    read_probs_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
+    read_probs_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
+
     ---------------------------------------------------------------------------
-    -- Master bus Haplotype
+    -- Master bus Haplotypes
     ---------------------------------------------------------------------------
     -- Read request channel
     bus_hapl_req_addr  : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -83,17 +97,22 @@ end pairhmm_unit;
 
 architecture pairhmm_unit of pairhmm_unit is
   -- Register all ports to ease timing
-  signal r_control_reset : std_logic;
-  signal r_control_start : std_logic;
-  signal r_reset_start   : std_logic;
-  signal r_busy          : std_logic;
-  signal r_done          : std_logic;
-  signal r_firstidx      : std_logic_vector(REG_WIDTH - 1 downto 0);
-  signal r_lastidx       : std_logic_vector(REG_WIDTH - 1 downto 0);
-  signal r_off_hi        : std_logic_vector(REG_WIDTH - 1 downto 0);
-  signal r_off_lo        : std_logic_vector(REG_WIDTH - 1 downto 0);
-  signal r_hapl_bp_hi    : std_logic_vector(REG_WIDTH - 1 downto 0);
-  signal r_hapl_bp_lo    : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_control_reset                  : std_logic;
+  signal r_control_start                  : std_logic;
+  signal r_reset_start                    : std_logic;
+  signal r_busy                           : std_logic;
+  signal r_done                           : std_logic;
+  signal r_hapl_firstidx, r_read_firstidx : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_hapl_lastidx, r_read_lastidx   : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_hapl_off_hi, r_read_off_hi     : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_hapl_off_lo, r_read_off_lo     : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_hapl_bp_hi, r_hapl_bp_lo       : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_read_bp_hi, r_read_bp_lo       : std_logic_vector(REG_WIDTH - 1 downto 0);
+  signal r_read_probs_hi, r_read_probs_lo : std_logic_vector(REG_WIDTH - 1 downto 0);
+
+
+
+
 
   -----------------------------------------------------------------------------
   -- HAPLO STREAMS
@@ -535,14 +554,29 @@ begin
       busy <= r_busy;
       done <= r_done;
 
-      r_firstidx <= firstidx;
-      r_lastidx  <= lastidx;
+      -- First & Last indices
+      r_hapl_firstidx <= hapl_firstidx;
+      r_hapl_lastidx  <= hapl_lastidx;
 
-      r_off_hi <= off_hi;
-      r_off_lo <= off_lo;
+      r_read_firstidx <= read_firstidx;
+      r_read_lastidx  <= read_lastidx;
 
+      -- Offset Buffer Addresses
+      r_hapl_off_hi <= hapl_off_hi;
+      r_hapl_off_lo <= hapl_off_lo;
+
+      r_read_off_hi <= read_off_hi;
+      r_read_off_lo <= read_off_lo;
+
+      -- Data Buffer Addresses
       r_hapl_bp_hi <= hapl_bp_hi;
       r_hapl_bp_lo <= hapl_bp_lo;
+
+      r_read_bp_hi <= read_bp_hi;
+      r_read_bp_lo <= read_bp_lo;
+
+      r_read_probs_hi <= read_probs_hi;
+      r_read_probs_lo <= read_probs_lo;
 
       if control_reset = '1' then
         r.state       <= STATE_IDLE;
@@ -556,12 +590,13 @@ begin
                     cmd_read_ready,
                     str_hapl_elem_in,
                     str_read_elem_in,
-                    r_firstidx,
-                    r_lastidx,
-                    r_off_hi,
-                    r_off_lo,
-                    r_hapl_bp_hi,
-                    r_hapl_bp_lo,
+                    r_hapl_firstidx, r_hapl_lastidx,
+                    r_read_firstidx, r_read_lastidx,
+                    r_hapl_off_hi, r_hapl_off_lo,
+                    r_read_off_hi, r_read_off_lo,
+                    r_hapl_bp_hi, r_hapl_bp_lo,
+                    r_read_bp_hi, r_read_bp_lo,
+                    r_read_probs_hi, r_read_probs_lo,
                     r_control_start,
                     r_control_reset)
     is
@@ -621,26 +656,31 @@ begin
 
         -- First four argument registers are buffer addresses
         -- MSBs are index buffer address
-        v.command_hapl.ctrl(127 downto 96) := r_off_hi;
-        v.command_hapl.ctrl(95 downto 64)  := r_off_lo;
-        v.command_read.ctrl(127 downto 96) := (others => '0');  -- TODO
-        v.command_read.ctrl(95 downto 64)  := (others => '0');  -- TODO
+        v.command_hapl.ctrl(127 downto 96) := r_hapl_off_hi;
+        v.command_hapl.ctrl(95 downto 64)  := r_hapl_off_lo;
+
+        v.command_read.ctrl(191 downto 160) := r_read_off_hi; -- TODO
+        v.command_read.ctrl(159 downto 128) := r_read_off_lo; -- TODO
+
         -- LSBs are data buffer address
-        v.command_hapl.ctrl(63 downto 32)  := r_hapl_bp_hi;
-        v.command_hapl.ctrl(31 downto 0)   := r_hapl_bp_lo;
-        v.command_read.ctrl(63 downto 32)  := (others => '0');  -- TODO
-        v.command_read.ctrl(31 downto 0)   := (others => '0');  -- TODO
+        v.command_hapl.ctrl(63 downto 32) := r_hapl_bp_hi;
+        v.command_hapl.ctrl(31 downto 0)  := r_hapl_bp_lo;
+
+        v.command_read.ctrl(127 downto 96) := r_read_bp_hi;
+        v.command_read.ctrl(95 downto 64)  := r_read_bp_lo;
+        v.command_read.ctrl(63 downto 32)  := r_read_probs_hi;
+        v.command_read.ctrl(31 downto 0)   := r_read_probs_lo;
 
         -- Next two argument registers are first and last index
-        v.command_hapl.firstIdx := r_firstidx;
-        v.command_read.firstIdx := (others => '0');  -- TODO
+        v.command_hapl.firstIdx := r_hapl_firstidx;
+        v.command_read.firstIdx := r_read_firstidx; -- TODO
 
-        v.command_hapl.lastIdx := r_lastidx;
-        v.command_read.lastIdx := (others => '0');  -- TODO
+        v.command_hapl.lastIdx := r_hapl_lastidx;
+        v.command_read.lastIdx := r_read_lastidx; -- TODO
 
         -- Make command valid
         v.command_hapl.valid := '1';
-        v.command_read.valid := '0';
+        v.command_read.valid := '1'; -- TODO
 
         -- Wait for command accepted
         if v.command_hapl.ready = '1' then
@@ -670,6 +710,7 @@ begin
 
         -- Always ready to receive utf8 char (haplo basepair)
         v.str_hapl_elem_out.utf8.ready := '1';
+        -- Always ready to receive utf8 char (read basepair)
         v.str_read_elem_out.data.ready := '1';  -- TODO
 
         if v.str_hapl_elem_in.utf8.valid = '1' then
@@ -683,6 +724,11 @@ begin
                      slv8char(v.str_hapl_elem_in.utf8.data(55 downto 48)) &
                      slv8char(v.str_hapl_elem_in.utf8.data(63 downto 56))
                      );
+        end if;
+
+        if v.str_read_elem_in.data.valid = '1' then
+          -- Do something for every utf8 char (read basepair)
+          dumpStdOut(slv8char(v.str_read_elem_in.data.data_bp(7 downto 0)) & slv8char(v.str_read_elem_in.data.data_bp(7 downto 0)) & slv8char(v.str_read_elem_in.data.data_bp(7 downto 0)));
         end if;
 
         if v.str_hapl_elem_in.utf8.last = '1' then

@@ -232,17 +232,31 @@ package arrow_regexp_pkg is
       busy : out std_logic;
       done : out std_logic;
 
-      firstidx : in std_logic_vector(REG_WIDTH-1 downto 0);
-      lastidx  : in std_logic_vector(REG_WIDTH-1 downto 0);
+      hapl_firstidx : in std_logic_vector(REG_WIDTH-1 downto 0);
+      hapl_lastidx  : in std_logic_vector(REG_WIDTH-1 downto 0);
 
-      off_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
-      off_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
+      read_firstidx : in std_logic_vector(REG_WIDTH-1 downto 0);
+      read_lastidx  : in std_logic_vector(REG_WIDTH-1 downto 0);
+
+      -- Haplotypes buffer addresses
+      hapl_off_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
+      hapl_off_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
 
       hapl_bp_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
       hapl_bp_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
 
+      -- Reads buffer addresses
+      read_off_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
+      read_off_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
+
+      read_bp_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
+      read_bp_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
+
+      read_probs_hi : in std_logic_vector(REG_WIDTH-1 downto 0);
+      read_probs_lo : in std_logic_vector(REG_WIDTH-1 downto 0);
+
       ---------------------------------------------------------------------------
-      -- Master bus Haplotype
+      -- Master bus Haplotypes
       ---------------------------------------------------------------------------
       -- Read request channel
       bus_hapl_req_addr  : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
