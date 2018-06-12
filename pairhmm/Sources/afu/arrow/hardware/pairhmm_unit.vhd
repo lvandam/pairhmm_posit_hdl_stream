@@ -111,9 +111,6 @@ architecture pairhmm_unit of pairhmm_unit is
   signal r_read_probs_hi, r_read_probs_lo : std_logic_vector(REG_WIDTH - 1 downto 0);
 
 
-
-
-
   -----------------------------------------------------------------------------
   -- HAPLO STREAMS
   -----------------------------------------------------------------------------
@@ -224,8 +221,8 @@ architecture pairhmm_unit of pairhmm_unit is
   constant VALUES_PER_CYCLE_READ       : natural := 1;
   constant NUM_STREAMS_READ            : natural := 3;  -- index stream, data stream en nog wat
   constant VALUES_WIDTH_READ           : natural := (VALUE_ELEM_WIDTH_READ_BP + VALUE_ELEM_WIDTH_READ_PROBS) * VALUES_PER_CYCLE_READ;
-  constant VALUES_COUNT_WIDTH_READ     : natural := log2ceil(VALUES_PER_CYCLE_READ);  -- + 1
-  constant OUT_DATA_WIDTH_READ         : natural := INDEX_WIDTH_READ + VALUES_WIDTH_READ + VALUES_COUNT_WIDTH_READ;
+  -- constant VALUES_COUNT_WIDTH_READ     : natural := log2ceil(VALUES_PER_CYCLE_READ);-- + 1;
+  constant OUT_DATA_WIDTH_READ         : natural := INDEX_WIDTH_READ + VALUES_WIDTH_READ;-- + VALUES_COUNT_WIDTH_READ;
 
   signal out_read_valid  : std_logic_vector(1 downto 0);
   signal out_read_ready  : std_logic_vector(1 downto 0);
@@ -246,7 +243,7 @@ architecture pairhmm_unit of pairhmm_unit is
     valid  : std_logic;
     dvalid : std_logic;
     last   : std_logic;
-    count  : std_logic_vector(VALUES_COUNT_WIDTH_READ - 1 downto 0);
+    -- count  : std_logic_vector(VALUES_COUNT_WIDTH_READ - 1 downto 0);
 
     data_bp    : std_logic_vector(VALUE_ELEM_WIDTH_READ_BP - 1 downto 0);
     data_probs : std_logic_vector(VALUE_ELEM_WIDTH_READ_PROBS - 1 downto 0);
@@ -280,9 +277,13 @@ architecture pairhmm_unit of pairhmm_unit is
     str_read_elem_in.len.dvalid <= dvalid(0);
     str_read_elem_in.len.last   <= last (0);
 
-    str_read_elem_in.data.count      <= data(VALUES_COUNT_WIDTH_READ + VALUES_WIDTH_READ + INDEX_WIDTH_READ - 1 downto VALUES_WIDTH_READ + INDEX_WIDTH_READ);
-    str_read_elem_in.data.data_probs <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 downto INDEX_WIDTH_READ);
-    str_read_elem_in.data.data_bp    <= data(VALUE_ELEM_WIDTH_READ_BP + VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 downto VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ);  -- TODO switch BP and probs order???
+    -- str_read_elem_in.data.count      <= data(VALUES_COUNT_WIDTH_READ + VALUES_WIDTH_READ + INDEX_WIDTH_READ - 1 downto VALUES_WIDTH_READ + INDEX_WIDTH_READ);
+    -- str_read_elem_in.data.data_bp    <= data(VALUE_ELEM_WIDTH_READ_BP + VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 downto VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ);  -- TODO switch BP and probs order???
+    -- str_read_elem_in.data.data_probs <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 downto INDEX_WIDTH_READ);
+
+    str_read_elem_in.data.data_bp    <= data(VALUE_ELEM_WIDTH_READ_BP + INDEX_WIDTH_READ - 1 downto INDEX_WIDTH_READ);  -- TODO switch BP and probs order???
+    str_read_elem_in.data.data_probs <= data(VALUE_ELEM_WIDTH_READ_PROBS + VALUE_ELEM_WIDTH_READ_BP + INDEX_WIDTH_READ - 1 downto VALUE_ELEM_WIDTH_READ_BP + INDEX_WIDTH_READ);
+
     str_read_elem_in.data.valid      <= valid(1);
     str_read_elem_in.data.dvalid     <= dvalid(1);
     str_read_elem_in.data.last       <= last(1);
@@ -669,7 +670,7 @@ begin
 
         v.command_read.ctrl(127 downto 96) := r_read_bp_hi;
         v.command_read.ctrl(95 downto 64)  := r_read_bp_lo;
-        
+
         v.command_read.ctrl(63 downto 32)  := r_read_probs_hi;
         v.command_read.ctrl(31 downto 0)   := r_read_probs_lo;
 
