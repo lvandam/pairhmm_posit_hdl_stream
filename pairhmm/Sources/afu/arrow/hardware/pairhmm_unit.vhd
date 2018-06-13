@@ -220,9 +220,9 @@ architecture pairhmm_unit of pairhmm_unit is
   constant VALUE_ELEM_WIDTH_READ_PROBS : natural := 8 * 32;  -- 8 * 32-bit probabilities
   constant VALUES_PER_CYCLE_READ       : natural := 1;
   constant NUM_STREAMS_READ            : natural := 3;  -- index stream, data stream en nog wat
-  constant VALUES_WIDTH_READ           : natural := (VALUE_ELEM_WIDTH_READ_BP + VALUE_ELEM_WIDTH_READ_PROBS) * VALUES_PER_CYCLE_READ;
+  constant VALUES_WIDTH_READ           : natural := VALUE_ELEM_WIDTH_READ_BP + VALUE_ELEM_WIDTH_READ_PROBS;  -- * VALUES_PER_CYCLE_READ;
   -- constant VALUES_COUNT_WIDTH_READ     : natural := log2ceil(VALUES_PER_CYCLE_READ);-- + 1;
-  constant OUT_DATA_WIDTH_READ         : natural := INDEX_WIDTH_READ + VALUES_WIDTH_READ;-- + VALUES_COUNT_WIDTH_READ;
+  constant OUT_DATA_WIDTH_READ         : natural := INDEX_WIDTH_READ + VALUES_WIDTH_READ;  -- + VALUES_COUNT_WIDTH_READ;
 
   signal out_read_valid  : std_logic_vector(1 downto 0);
   signal out_read_ready  : std_logic_vector(1 downto 0);
@@ -239,14 +239,25 @@ architecture pairhmm_unit of pairhmm_unit is
     ctrl     : std_logic_vector(NUM_STREAMS_READ * BUS_ADDR_WIDTH - 1 downto 0);
   end record;
 
+  type read_data_stream_in_probs_t is record
+    eta        : std_logic_vector(31 downto 0);
+    zeta       : std_logic_vector(31 downto 0);
+    epsilon    : std_logic_vector(31 downto 0);
+    delta      : std_logic_vector(31 downto 0);
+    beta       : std_logic_vector(31 downto 0);
+    alpha      : std_logic_vector(31 downto 0);
+    distm_diff : std_logic_vector(31 downto 0);
+    distm_simi : std_logic_vector(31 downto 0);
+  end record;
+
   type read_data_stream_in_t is record
     valid  : std_logic;
     dvalid : std_logic;
     last   : std_logic;
     -- count  : std_logic_vector(VALUES_COUNT_WIDTH_READ - 1 downto 0);
 
-    data_bp    : std_logic_vector(VALUE_ELEM_WIDTH_READ_BP - 1 downto 0);
-    data_probs : std_logic_vector(VALUE_ELEM_WIDTH_READ_PROBS - 1 downto 0);
+    bp   : std_logic_vector(VALUE_ELEM_WIDTH_READ_BP - 1 downto 0);
+    prob : read_data_stream_in_probs_t;  -- width: VALUE_ELEM_WIDTH_READ_PROBS
   end record;
 
   type read_data_stream_out_t is record
@@ -271,22 +282,26 @@ architecture pairhmm_unit of pairhmm_unit is
     signal str_read_elem_in : out str_read_elem_in_t
     ) is
   begin
-    -- TODO do something with the data
     str_read_elem_in.len.data   <= data (INDEX_WIDTH_READ - 1 downto 0);
     str_read_elem_in.len.valid  <= valid (0);
     str_read_elem_in.len.dvalid <= dvalid(0);
     str_read_elem_in.len.last   <= last (0);
 
-    -- str_read_elem_in.data.count      <= data(VALUES_COUNT_WIDTH_READ + VALUES_WIDTH_READ + INDEX_WIDTH_READ - 1 downto VALUES_WIDTH_READ + INDEX_WIDTH_READ);
-    -- str_read_elem_in.data.data_bp    <= data(VALUE_ELEM_WIDTH_READ_BP + VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 downto VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ);  -- TODO switch BP and probs order???
-    -- str_read_elem_in.data.data_probs <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 downto INDEX_WIDTH_READ);
+    str_read_elem_in.data.bp <= data(VALUE_ELEM_WIDTH_READ_BP + VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 downto VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ);  -- TODO switch BP and probs order???
 
-    str_read_elem_in.data.data_bp    <= data(VALUE_ELEM_WIDTH_READ_BP + INDEX_WIDTH_READ - 1 downto INDEX_WIDTH_READ);  -- TODO switch BP and probs order???
-    str_read_elem_in.data.data_probs <= data(VALUE_ELEM_WIDTH_READ_PROBS + VALUE_ELEM_WIDTH_READ_BP + INDEX_WIDTH_READ - 1 downto VALUE_ELEM_WIDTH_READ_BP + INDEX_WIDTH_READ);
+    -- ...
+    str_read_elem_in.data.prob.eta        <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 - 0*32 downto INDEX_WIDTH_READ + 7*32);
+    str_read_elem_in.data.prob.zeta       <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 - 1*32 downto INDEX_WIDTH_READ + 6*32);
+    str_read_elem_in.data.prob.epsilon    <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 - 2*32 downto INDEX_WIDTH_READ + 5*32);
+    str_read_elem_in.data.prob.delta      <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 - 3*32 downto INDEX_WIDTH_READ + 4*32);
+    str_read_elem_in.data.prob.beta       <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 - 4*32 downto INDEX_WIDTH_READ + 3*32);
+    str_read_elem_in.data.prob.alpha      <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 - 5*32 downto INDEX_WIDTH_READ + 2*32);
+    str_read_elem_in.data.prob.distm_diff <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 - 6*32 downto INDEX_WIDTH_READ + 1*32);
+    str_read_elem_in.data.prob.distm_simi <= data(VALUE_ELEM_WIDTH_READ_PROBS + INDEX_WIDTH_READ - 1 - 7*32 downto INDEX_WIDTH_READ + 0*32);
 
-    str_read_elem_in.data.valid      <= valid(1);
-    str_read_elem_in.data.dvalid     <= dvalid(1);
-    str_read_elem_in.data.last       <= last(1);
+    str_read_elem_in.data.valid  <= valid(1);
+    str_read_elem_in.data.dvalid <= dvalid(1);
+    str_read_elem_in.data.last   <= last(1);
   end procedure;
 
   procedure conv_streams_read_out (
@@ -661,29 +676,29 @@ begin
         v.command_hapl.ctrl(127 downto 96) := r_hapl_off_hi;
         v.command_hapl.ctrl(95 downto 64)  := r_hapl_off_lo;
         -- LSBs are data buffer address
-        v.command_hapl.ctrl(63 downto 32) := r_hapl_bp_hi;
-        v.command_hapl.ctrl(31 downto 0)  := r_hapl_bp_lo;
+        v.command_hapl.ctrl(63 downto 32)  := r_hapl_bp_hi;
+        v.command_hapl.ctrl(31 downto 0)   := r_hapl_bp_lo;
 
         -- Reads
-        v.command_read.ctrl(191 downto 160) := r_read_off_hi; -- TODO
-        v.command_read.ctrl(159 downto 128) := r_read_off_lo; -- TODO
+        v.command_read.ctrl(191 downto 160) := r_read_off_hi;  -- TODO
+        v.command_read.ctrl(159 downto 128) := r_read_off_lo;  -- TODO
 
         v.command_read.ctrl(127 downto 96) := r_read_bp_hi;
         v.command_read.ctrl(95 downto 64)  := r_read_bp_lo;
 
-        v.command_read.ctrl(63 downto 32)  := r_read_probs_hi;
-        v.command_read.ctrl(31 downto 0)   := r_read_probs_lo;
+        v.command_read.ctrl(63 downto 32) := r_read_probs_hi;
+        v.command_read.ctrl(31 downto 0)  := r_read_probs_lo;
 
         -- Next two argument registers are first and last index
         v.command_hapl.firstIdx := r_hapl_firstidx;
-        v.command_read.firstIdx := r_read_firstidx; -- TODO
+        v.command_read.firstIdx := r_read_firstidx;  -- TODO
 
         v.command_hapl.lastIdx := r_hapl_lastidx;
-        v.command_read.lastIdx := r_read_lastidx; -- TODO
+        v.command_read.lastIdx := r_read_lastidx;  -- TODO
 
         -- Make command valid
         v.command_hapl.valid := '1';
-        v.command_read.valid := '1'; -- TODO
+        v.command_read.valid := '1';    -- TODO
 
         -- Wait for command accepted
         if v.command_hapl.ready = '1' then
@@ -730,8 +745,8 @@ begin
         end if;
 
         if v.str_read_elem_in.data.valid = '1' then
-          -- Do something for every utf8 char (read basepair)
-          dumpStdOut(slv8char(v.str_read_elem_in.data.data_bp(7 downto 0)) & slv8char(v.str_read_elem_in.data.data_bp(7 downto 0)) & slv8char(v.str_read_elem_in.data.data_bp(7 downto 0)));
+          -- TODO Do something for every utf8 char (read basepair)
+          dumpStdOut(slv8string(v.str_read_elem_in.data.bp(7 downto 0)));
         end if;
 
         if v.str_hapl_elem_in.utf8.last = '1' then

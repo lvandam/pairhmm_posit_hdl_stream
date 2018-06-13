@@ -290,6 +290,7 @@ package arrow_regexp_pkg is
   end component;
 
   function slv8char (a : in std_logic_vector(7 downto 0)) return character;
+  function slv8string (a : in std_logic_vector(7 downto 0)) return string;
 
 end package;
 
@@ -307,5 +308,18 @@ package body arrow_regexp_pkg is
       when others     => return 'I';    --
     end case;
   end function slv8char;
+
+  function slv8string (a : in std_logic_vector(7 downto 0)) return string is
+  begin
+    case a is
+      when "01000001" => return "A";
+      when "01000011" => return "C";
+      when "01000111" => return "G";
+      when "01010100" => return "T";
+      when "01001110" => return "N";
+      when "01010011" => return "S";
+      when others     => return "I";
+    end case;
+  end function slv8string;
 
 end package body arrow_regexp_pkg;
