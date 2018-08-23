@@ -28,6 +28,10 @@ public:
 
     DebugValues() = default;
 
+    void reserve(int length) {
+	items.reserve(length);
+	}
+
     void debugValue(T value, const char *format, ...) {
         char buf[1024];
 

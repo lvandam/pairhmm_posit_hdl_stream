@@ -39,7 +39,8 @@ public:
     }
 
     void calculate(t_batch *batches) {
-        for (int i = 0; i < workload->batches; i++) {
+        debug_values.reserve(workload->batches * PIPE_DEPTH);
+	for (int i = 0; i < workload->batches; i++) {
             int x = workload->bx[i];
             int y = workload->by[i];
 
@@ -56,9 +57,8 @@ public:
                     result_sw[i * PIPE_DEPTH + j][0] += M[x][c];
                     result_sw[i * PIPE_DEPTH + j][0] += I[x][c];
                 }
-                
-                debug_values.debugValue(result_sw[i * PIPE_DEPTH + j][0], "result[%d][%d]", i, j);
 
+                debug_values.debugValue(result_sw[i * PIPE_DEPTH + j][0], "result[%d][%d]", i, j);
                 if (show_table) {
                     print_mid_table(&batches[i], j, x, y, M, I, D);
                 }

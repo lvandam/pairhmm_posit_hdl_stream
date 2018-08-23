@@ -60,13 +60,10 @@ void writeBenchmark(PairHMMFloat<cpp_dec_float_100> &pairhmm_dec50, PairHMMFloat
 
         string name = dec_values[i].name;
         E = dec_values[i].value;
-
         auto E_f_entry = std::find_if(float_values.begin(), float_values.end(), find_entry(name));
         E_f = E_f_entry->value;
-
         auto E_p_entry = std::find_if(posit_values.begin(), posit_values.end(), find_entry(name));
         E_p = E_p_entry->value;
-
         auto E_hw_entry = std::find_if(hw_values.begin(), hw_values.end(), find_entry(name));
         E_hw = E_hw_entry->value;
 
@@ -77,8 +74,8 @@ void writeBenchmark(PairHMMFloat<cpp_dec_float_100> &pairhmm_dec50, PairHMMFloat
         da_F = decimal_accuracy(E, E_f);
         da_P = decimal_accuracy(E, E_p);
         da_HW = decimal_accuracy(E, E_hw);
-
-        if (E == 0) {
+ 
+       if (E == 0) {
             dE_f = 0;
             dE_p = 0;
             dE_hw = 0;
@@ -89,6 +86,7 @@ void writeBenchmark(PairHMMFloat<cpp_dec_float_100> &pairhmm_dec50, PairHMMFloat
         }
 
         // Relative error values
+	outfile << name << ",";
         outfile << setprecision(100) << fixed << dE_f << "," << dE_p << "," << dE_hw << "," << flush;
         outfile << setprecision(100) << fixed << log10(abs(dE_f)) << "," << log10(abs(dE_p)) << "," << log10(abs(dE_hw)) << "," << flush;
         outfile << setprecision(100) << fixed << E << "," << E_f << "," << E_p << "," << E_hw << "," << flush;
@@ -254,7 +252,7 @@ t_workload *gen_workload(unsigned long pairs, unsigned long fixedX, unsigned lon
     }
 
     workload->pairs = pairs;
-
+cout << workload->pairs << endl;
     if (workload->pairs % PIPE_DEPTH != 0) {
         printf("Number of pairs must be an integer multiple of %d.\n", PIPE_DEPTH);
         exit(EXIT_FAILURE);
@@ -274,7 +272,8 @@ t_workload *gen_workload(unsigned long pairs, unsigned long fixedX, unsigned lon
         workload->hapl[i] = fixedY;
         workload->read[i] = fixedX;
         workload->cups_req += fixedY * fixedX;
-    }
+    	cout << workload->cups_req << endl;
+	}
 
     // Set batch info
     DEBUG_PRINT("Batch ║ MAX X ║ MAX Y ║ Passes ║  Bytes ║\n");

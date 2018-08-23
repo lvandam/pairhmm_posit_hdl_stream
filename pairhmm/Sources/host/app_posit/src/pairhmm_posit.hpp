@@ -42,6 +42,7 @@ public:
     }
 
     void calculate(t_batch *batches) {
+	debug_values.reserve(workload->batches * PIPE_DEPTH);
         for (int i = 0; i < workload->batches; i++) {
             int x = workload->bx[i];
             int y = workload->by[i];

@@ -169,20 +169,32 @@ int main(int argc, char *argv[]) {
     start = omp_get_wtime();
     while (!wed0->status) {
         usleep(1); //sleep(5);
-        // for (int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
-        //     // Interpret 32-bit value from HW as posits and print
-        //     posit<NBITS, ES> res0, res1, res2, res3;
-        //     res0.set_raw_bits(result_hw[i].b[0]);
-        //     res1.set_raw_bits(result_hw[i].b[1]);
-        //     res2.set_raw_bits(result_hw[i].b[2]);
-        //     res3.set_raw_bits(result_hw[i].b[3]);
-        //
-        //     cout << i << ": " << hexstring(res0.collect()) << " " << hexstring(res1.collect()) << " "
-        //          << hexstring(res2.collect()) << " " << hexstring(res3.collect()) << endl;
-        // }
+         for (int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
+             // Interpret 32-bit value from HW as posits and print
+             posit<NBITS, ES> res0, res1, res2, res3;
+             res0.set_raw_bits(result_hw[i].b[0]);
+             res1.set_raw_bits(result_hw[i].b[1]);
+             res2.set_raw_bits(result_hw[i].b[2]);
+             res3.set_raw_bits(result_hw[i].b[3]);
+        
+           cout << i << ": " << hexstring(res0.collect()) << " " << hexstring(res1.collect()) << " "
+                << hexstring(res2.collect()) << " " << hexstring(res3.collect()) << endl;
+         }
     }
     stop = omp_get_wtime();
     t_fpga = stop - start;
+
+for (int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
+             // Interpret 32-bit value from HW as posits and print
+             posit<NBITS, ES> res0, res1, res2, res3;
+             res0.set_raw_bits(result_hw[i].b[0]);
+             res1.set_raw_bits(result_hw[i].b[1]);
+             res2.set_raw_bits(result_hw[i].b[2]);
+             res3.set_raw_bits(result_hw[i].b[3]);
+
+           cout << i << ": " << hexstring(res0.collect()) << " " << hexstring(res1.collect()) << " "
+                << hexstring(res2.collect()) << " " << hexstring(res3.collect()) << endl;
+         }
 
     // Check for errors with SW calculation
     if (calculate_sw) {
@@ -192,14 +204,15 @@ int main(int argc, char *argv[]) {
             // Store HW posit result for decimal accuracy calculation
             posit<NBITS, ES> res_hw;
             res_hw.set_raw_bits(result_hw[i].b[0]);
-            hw_debug_values.debugValue(res_hw, "result[%d][0]", i);
+            hw_debug_values.debugValue(res_hw, "result[0][%d]", i);
         }
-
+	cout << "Writing benchmark..." << endl;
         writeBenchmark(pairhmm_dec50, pairhmm_float, pairhmm_posit, hw_debug_values,
                        "pairhmm_stream_es" + std::to_string(ES) + "_" + std::to_string(pairs) + "_" + std::to_string(x) + "_" + std::to_string(y) + "_" + std::to_string(initial_constant_power) + ".txt",
                        false, true);
 
         int errs_posit = 0;
+	cout << "Counting errors..." << endl;
         errs_posit = pairhmm_posit.count_errors((uint32_t *) result_hw);
         DEBUG_PRINT("Posit errors: %d\n", errs_posit);
     }
@@ -207,11 +220,6 @@ int main(int argc, char *argv[]) {
     // Release the afu
     cxl_mmio_unmap(afu);
     cxl_afu_free(afu);
-
-    free(workload);
-    free(result_hw);
-    free(batch);
-    free(wed0);
 
     float p_fpga      = ((double)workload->cups_req / (double)t_fpga)  / 1000000; // in MCUPS
     float p_sw        = ((double)workload->cups_req / (double)t_sw)    / 1000000; // in MCUPS
@@ -230,8 +238,14 @@ int main(int argc, char *argv[]) {
     outfile << "Y = " << y << endl;
     outfile << "Initial Constant = " << initial_constant_power << endl;
     outfile << "cups,t_fill_batch,t_fpga,p_fpga,t_sw,p_sw,t_float,p_float,t_dec,p_dec,utilization,speedup" << endl;
-    outfile << setprecision(20) << fixed << workload->cups_req <<","<< t_fill_batch <<","<< t_fpga <<","<< p_fpga <<","<< t_sw <<","<< p_sw <<","<< t_float <<","<< p_float <<","<< t_dec <<","<< p_dec <<","<< utilization <<","<< speedup << endl;
+    outfile << setprecision(20) << fixed << (unsigned long)workload->cups_req <<","<< t_fill_batch <<","<< t_fpga <<","<< p_fpga <<","<< t_sw <<","<< p_sw <<","<< t_float <<","<< p_float <<","<< t_dec <<","<< p_dec <<","<< utilization <<","<< speedup << endl;
     outfile.close();
+
+
+    free(workload);
+    free(result_hw);
+    free(batch);
+    free(wed0);
 
     return (0);
 
