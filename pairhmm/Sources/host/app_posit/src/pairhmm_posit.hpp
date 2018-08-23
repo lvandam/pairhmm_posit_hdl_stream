@@ -69,7 +69,7 @@ public:
 
                 result_sw[i*PIPE_DEPTH+j][0] = result_sw_m[i * PIPE_DEPTH + j][0] + result_sw_i[i * PIPE_DEPTH + j][0];
 
-                debug_values.debugValue(result_sw[i * PIPE_DEPTH + j][0], "result[%d][0]", (i * PIPE_DEPTH + j));
+                debug_values.debugValue(result_sw[i * PIPE_DEPTH + j][0], "result[%d][%d]", i, j);//(i * PIPE_DEPTH + j));
 
                 if (show_table) {
                     print_mid_table(&batches[i], j, x, y, M, I, D);

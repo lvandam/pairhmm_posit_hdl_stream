@@ -12,6 +12,7 @@
 #include "defines.hpp"
 
 using namespace sw::unum;
+using namespace std;
 
 typedef struct struct_workload {
     int pairs;
@@ -70,7 +71,7 @@ typedef union union_result {
     uint32_t b[4];        // integer image and padding
 } t_result;
 
-void fill_batch(t_batch *b, int pair_size, int padded_size, float initial);
+void fill_batch(t_batch *batch, string& x_string, string& y_string, int x, int y, float initial);
 
 void init_batch_address(t_batch *b, void *batch, int x, int y);
 

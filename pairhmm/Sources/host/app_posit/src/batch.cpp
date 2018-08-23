@@ -12,8 +12,8 @@
 using namespace std;
 using namespace sw::unum;
 
-const char XDATA[] = "GTGGTGCGAGTAGTGAGTAGTGGCTTCCATTGGCGACCGGCCGATATTGCTGCCTACTTGGAGATTTTAAGTACTACTGTTAGTAATCGCGTAATCGCCTTTGTTCTGCGAACACTCGTCATCATATCATACGTACGTCTTTGCTGCACCGTAGCGGGCAATAGGAGGAAGTCCCGGCCCGGTTGCAAAAACCCAATAGTCACTGTGGTACGATAGTGGTATCACCGTGTCAATAATTAGACCATGTTGTCCATATGTGACCGTTCAGCGCACTTAAAATGCTCTGTACTATAAGTTGATGGAATACTACGGCGTTAATCGGGTCTTTTGTCGTACGAATTTAGACGGCCTACATCTTGACAACGCCGGCTTTTGTTGGATGGCCCGTAATCCAATGGAACACAGTTTCTGTAGCATTGAGCAGTACCCGGTATAGACTTCTGCGCTCTAACCTTACTGTATATATCTGTGGTTGTTCCGTAGCCGTTGAGTCGAGCTTTGTAAAAGCAGGGCCTGCGGTAACGTAGAATGATCCTCCCATGGCCGGGGAGCCGTCAAGG";
-const char YDATA[] = "ATTGTCTGCCTCCACCACCTTGAATCGTAAATCGAGCACGATCACCCGTACGGTTATCGGCCAGATACTCCTCTGAAGGTGGTGCGAGAGCTGTAACATCGCTTGACGGACAGGCCCTCCAGGGTCAACCCCACGGATAATGACATGCGCCACCCAACTACATTTTTATTACTTAGTAGACACCGTACACACGTGGTGCCGAGACGTATTAGTGTTGTTAATTTTACAGTCGCACTGCGTGACGGGTGCCGCGCATGCCTGTAGGTGGGCGTCTGCCCATATGTGTCTTACAAGATGTGAGCCTTTGAGGGGACATAAAATTGGGTTTAAACTAGCATACATTTTTGATCAGCGAGATTGTTGCTCCCGACTAGTCGGCGTCCTCAGGTGGCCCTTTTCCTGCAACTGGTTTAAACGTGGTATGTCGCTTGGCCCGTGTCACGTCCTTTGCTGAAGGTGCCAGACACCATTGGGCAGACTGCTATGGGGATCACGAGGGCTATGGTGACTGCTACAACTGCGATTACTGACCAGCGAAACACTTTTACTACTTATAGGTG";
+// const char XDATA[] = "GTCGCGTACCTGTGGTATAAGAGCTTTGGGCTTTCGCAGTCCCGACTAGTCTGAACTTACCCAGACTCCCAGTCTGTAGTGAATAAGGTGAAAAGATTTGGTTTGCCTCAAACATCCCAGACGCCGCGCGGACCTCTGGAAGACGGTAAGACAGTCTG";
+// const char YDATA[] = "CGGAAACTCATAATGAGGGCGAAGCAGGTCTGCCGCTAGGACAAGGCTTAATAACCCAAGTGTGACATCGTTCTTACGGAAGTAGGTAATGTCCCT";
 
 posit<NBITS, ES> random_number(float offset, float dev) {
     float num_float;
@@ -29,7 +29,30 @@ posit<NBITS, ES> random_number(float offset, float dev) {
     return posit<NBITS, ES>(num_float);
 }
 
-void fill_batch(t_batch *batch, int x, int y, float initial) {
+uint32_t getProb(unsigned char rb) {
+    // uint32_t prob_A = 0x39201000;
+    // uint32_t prob_C = 0x39202000;
+    // uint32_t prob_T = 0x39203000;
+    // uint32_t prob_G = 0x39204000;
+    //
+    // if(rb == 'A') return prob_A;
+    // if(rb == 'C') return prob_C;
+    // if(rb == 'T') return prob_T;
+    // if(rb == 'G') return prob_G;
+    // return 0x39200000;
+    uint32_t prob_A = 0x39038FA0;
+    uint32_t prob_C = 0x398B1970;
+    uint32_t prob_T = 0x387CDA80;
+    uint32_t prob_G = 0x38393A00;
+
+    if(rb == 'A') return prob_A;
+    if(rb == 'C') return prob_C;
+    if(rb == 'T') return prob_T;
+    if(rb == 'G') return prob_G;
+    return 0x38741A00;
+}
+
+void fill_batch(t_batch *batch, string& x_string, string& y_string, int x, int y, float initial) {
     t_inits *init = batch->init;
     t_bbase *read = batch->read;
     t_bbase *hapl = batch->hapl;
@@ -47,7 +70,7 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
     init->y_size = yp;
     init->y_padded = ybp;
 
-    posit<NBITS, ES> zeta(0), eta(0), upsilon(0), delta(0), beta(0), alpha(0), distm_diff(0), distm_simi(0);
+    posit<NBITS, ES> zeta(0), eta(0), epsilon(0), delta(0), beta(0), alpha(0), distm_diff(0), distm_simi(0);
 
     for (int k = 0; k < PIPE_DEPTH; k++) {
         posit<NBITS, ES> initial_posit(initial / yp);
@@ -57,7 +80,8 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
 
         for (int i = 0; i < xbp; i++) {
             if (i < x) {
-                read[i].base[k] = XDATA[i + k];
+                // read[i].base[k] = XDATA[i + k];
+                read[i].base[k] = x_string[i + k];
             } else // padding:
             {
                 read[i].base[k] = 'S';
@@ -66,7 +90,8 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
 
         for (int i = 0; i < ybp; i++) {
             if (i < y) {
-                hapl[i].base[k] = YDATA[i + k];
+                // hapl[i].base[k] = YDATA[i + k];
+                hapl[i].base[k] = y_string[i + k];
             } else {
                 hapl[i].base[k] = 'S';
             }
@@ -76,6 +101,8 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
             srand((k * PIPE_DEPTH + i) * xp + x * 9949 + y * 9133); // Seed number generator
 
             eta = random_number(0.5, 0.1);
+            // if(k==0)
+            //         cout << "generated: " << hexstring(eta.collect()) << endl;
             zeta = random_number(0.125, 0.05);
             epsilon = random_number(0.5, 0.1);
             delta = random_number(0.125, 0.05);
@@ -83,6 +110,15 @@ void fill_batch(t_batch *batch, int x, int y, float initial) {
             alpha = random_number(0.125, 0.05);
             distm_diff = random_number(0.5, 0.1);
             distm_simi = random_number(0.125, 0.05);
+
+            // eta.set_raw_bits(getProb(read[i].base[k]));
+            // zeta.set_raw_bits(getProb(read[i].base[k]));
+            // epsilon.set_raw_bits(getProb(read[i].base[k]));
+            // delta.set_raw_bits(getProb(read[i].base[k]));
+            // beta.set_raw_bits(getProb(read[i].base[k]));
+            // alpha.set_raw_bits(getProb(read[i].base[k]));
+            // distm_diff.set_raw_bits(0x00000000);// distm_diff.set_raw_bits(getProb(read[i].base[k]));
+            // distm_simi.set_raw_bits(getProb(read[i].base[k]));
 
             prob[i * PIPE_DEPTH + k].p[0].b = (int) eta.collect().to_ulong();
             prob[i * PIPE_DEPTH + k].p[1].b = (int) zeta.collect().to_ulong();

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <posit/posit>
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include <omp.h>
 
 // libcxl
 extern "C" {
@@ -24,76 +25,46 @@ extern "C" {
 
 using namespace std;
 using namespace sw::unum;
-using boost::multiprecision::cpp_dec_float_50;
+using boost::multiprecision::cpp_dec_float_100;
 
 
 int main(int argc, char *argv[]) {
+    // Times
+    double start, stop;
+    double t_fill_batch, t_create_core, t_fpga, t_sw, t_float, t_dec = 0.0;
+
     struct cxl_afu_h *afu;
     void *batch;
     t_result *result_hw;
     t_workload *workload;
     t_batch *batches;
 
+    float f_hw = 125e6;
+    float max_cups = f_hw * (float)16;
+
+    unsigned long pairs, x, y = 0;
     int initial_constant_power = 1;
     bool calculate_sw = true;
     bool show_results = false;
     bool show_table = false;
 
     DEBUG_PRINT("Parsing input arguments...\n");
-    if (argc < 5) {
-        fprintf(stderr,
-                "ERROR: Correct usage is: %s <-f = file, -m = manual> ... \n-m: <pairs> <X> <Y> <initial constant power> ... \n-f: <input file>\n... <sw solve?*> <show results?*> <show MID table?*> (* is optional)\n",
-                APP_NAME);
-        return (-1);
-    } else {
-        if (strncmp(argv[1], "-f", 2) == 0) {
-            if ((workload = load_workload(argv[2])) == NULL) {
-                fprintf(stderr, "ERROR: %s cannot be opened.\n", argv[2]);
-                return (-1);
-            }
-
-            if (argc >= 4) {
-                istringstream(argv[3]) >> calculate_sw;
-            }
-            if (argc >= 5) {
-                istringstream(argv[4]) >> show_results;
-            }
-            if (argc >= 6) {
-                istringstream(argv[5]) >> show_table;
-            }
-
-            BENCH_PRINT("%s, ", argv[2]);
-            BENCH_PRINT("%8d, ", (int) workload->pairs);
-        } else if (strncmp(argv[1], "-m", 2) == 0) {
-            DEBUG_PRINT("Manual input mode selected. %d arguments supplied.\n", argc);
-            int pairs = strtoul(argv[2], NULL, 0);
-            int x = strtoul(argv[3], NULL, 0);
-            int y = strtoul(argv[4], NULL, 0);
-            initial_constant_power = strtoul(argv[5], NULL, 0);
+    if (argc > 4) {
+            pairs = strtoul(argv[1], NULL, 0);
+            x = strtoul(argv[2], NULL, 0);
+            y = strtoul(argv[3], NULL, 0);
+            initial_constant_power = strtoul(argv[4], NULL, 0);
 
             workload = gen_workload(pairs, x, y);
 
-            if (argc >= 7) {
-                istringstream(argv[6]) >> calculate_sw;
-            }
-            if (argc >= 8) {
-                istringstream(argv[7]) >> show_results;
-            }
-            if (argc >= 9) {
-                istringstream(argv[8]) >> show_table;
-            }
-
             BENCH_PRINT("M, ");
             BENCH_PRINT("%8d, %8d, %8d, ", workload->pairs, x, y);
-        } else {
-            fprintf(stderr,
-                    "ERROR: Correct usage is: %s <-f = file, -m = manual> ... \n-m: <pairs> <X> <Y> <initial constant power> ... \n-f: <input file>\n... <sw solve?*> <show results?*> <show MID table?*> (* is optional)\n",
-                    APP_NAME);
-            return (EXIT_FAILURE);
-        }
+    } else {
+        fprintf(stderr,
+                "ERROR: Correct usage is: %s <pairs> <X> <Y> <initial constant power>\n",
+                "pairhmm");
+        return (-1);
     }
-
-    BENCH_PRINT("%16lu, ", workload->cups_req);
 
     DEBUG_PRINT("Total workload bytes: %17d \n", (unsigned int) workload->bytes);
     DEBUG_PRINT("CUPS required       : %17lu \n", workload->cups_req);
@@ -117,24 +88,43 @@ int main(int argc, char *argv[]) {
 
     void *batch_cur = batch;
 
+    start = omp_get_wtime();
     batches = (t_batch *) malloc(sizeof(t_batch) * workload->batches);
+
+    // Generate random basepair strings for reads and haplotypes
+    std::string x_string = randomBasepairs(16 + pbp(px(x, y)));
+    std::string y_string = randomBasepairs(16 + pbp(py(y)));
 
     for (int q = 0; q < workload->batches; q++) {
         init_batch_address(&batches[q], batch_cur, workload->bx[q], workload->by[q]);
-        fill_batch(&batches[q], workload->bx[q], workload->by[q], powf(2.0, initial_constant_power));
-        print_batch_info(&batches[q]);
+        fill_batch(&batches[q], x_string, y_string, workload->bx[q], workload->by[q], powf(2.0, initial_constant_power));
+        // print_batch_info(&batches[q]);
         batch_cur = (void *) ((uint64_t) batch_cur + (uint64_t) workload->bbytes[q]);
     }
+    stop = omp_get_wtime();
+    t_fill_batch = stop - start;
 
     PairHMMPosit pairhmm_posit(workload, show_results, show_table);
     PairHMMFloat<float> pairhmm_float(workload, show_results, show_table);
-    PairHMMFloat<cpp_dec_float_50> pairhmm_dec50(workload, show_results, show_table);
+    PairHMMFloat<cpp_dec_float_100> pairhmm_dec50(workload, show_results, show_table);
 
     if (calculate_sw) {
         DEBUG_PRINT("Calculating on host...\n");
+
+        start = omp_get_wtime();
         pairhmm_posit.calculate(batches);
+        stop = omp_get_wtime();
+        t_sw = stop - start;
+
+        start = omp_get_wtime();
         pairhmm_float.calculate(batches);
+        stop = omp_get_wtime();
+        t_float = stop - start;
+
+        start = omp_get_wtime();
         pairhmm_dec50.calculate(batches);
+        stop = omp_get_wtime();
+        t_dec = stop - start;
     }
 
     DEBUG_PRINT("Clearing HW result memory\n");
@@ -176,20 +166,23 @@ int main(int argc, char *argv[]) {
 
     DEBUG_PRINT("Waiting for last result...\n");
 
+    start = omp_get_wtime();
     while (!wed0->status) {
-        sleep(5);
-        for (int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
-            // Interpret 32-bit value from HW as posits and print
-            posit<NBITS, ES> res0, res1, res2, res3;
-            res0.set_raw_bits(result_hw[i].b[0]);
-            res1.set_raw_bits(result_hw[i].b[1]);
-            res2.set_raw_bits(result_hw[i].b[2]);
-            res3.set_raw_bits(result_hw[i].b[3]);
-
-            cout << i << ": " << hexstring(res0.collect()) << " " << hexstring(res1.collect()) << " "
-                 << hexstring(res2.collect()) << " " << hexstring(res3.collect()) << endl;
-        }
+        usleep(1); //sleep(5);
+        // for (int i = 0; i < workload->batches * PIPE_DEPTH; i++) {
+        //     // Interpret 32-bit value from HW as posits and print
+        //     posit<NBITS, ES> res0, res1, res2, res3;
+        //     res0.set_raw_bits(result_hw[i].b[0]);
+        //     res1.set_raw_bits(result_hw[i].b[1]);
+        //     res2.set_raw_bits(result_hw[i].b[2]);
+        //     res3.set_raw_bits(result_hw[i].b[3]);
+        //
+        //     cout << i << ": " << hexstring(res0.collect()) << " " << hexstring(res1.collect()) << " "
+        //          << hexstring(res2.collect()) << " " << hexstring(res3.collect()) << endl;
+        // }
     }
+    stop = omp_get_wtime();
+    t_fpga = stop - start;
 
     // Check for errors with SW calculation
     if (calculate_sw) {
@@ -203,7 +196,8 @@ int main(int argc, char *argv[]) {
         }
 
         writeBenchmark(pairhmm_dec50, pairhmm_float, pairhmm_posit, hw_debug_values,
-                       std::to_string(initial_constant_power) + ".txt", false, true);
+                       "pairhmm_stream_es" + std::to_string(ES) + "_" + std::to_string(pairs) + "_" + std::to_string(x) + "_" + std::to_string(y) + "_" + std::to_string(initial_constant_power) + ".txt",
+                       false, true);
 
         int errs_posit = 0;
         errs_posit = pairhmm_posit.count_errors((uint32_t *) result_hw);
@@ -214,12 +208,30 @@ int main(int argc, char *argv[]) {
     cxl_mmio_unmap(afu);
     cxl_afu_free(afu);
 
-    BENCH_PRINT("\n");
-
     free(workload);
     free(result_hw);
     free(batch);
     free(wed0);
+
+    float p_fpga      = ((double)workload->cups_req / (double)t_fpga)  / 1000000; // in MCUPS
+    float p_sw        = ((double)workload->cups_req / (double)t_sw)    / 1000000; // in MCUPS
+    float p_float     = ((double)workload->cups_req / (double)t_float) / 1000000; // in MCUPS
+    float p_dec       = ((double)workload->cups_req / (double)t_dec)   / 1000000; // in MCUPS
+    float utilization = ((double)workload->cups_req / (double)t_fpga)  / max_cups;
+    float speedup     = t_sw / t_fpga;
+
+    cout << "Adding timing data..." << endl;
+    time_t t = chrono::system_clock::to_time_t(chrono::system_clock::now());
+    ofstream outfile("pairhmm_stream_es" + std::to_string(ES) + "_" + std::to_string(pairs) + "_" + std::to_string(x) + "_" + std::to_string(y) + "_" + std::to_string(initial_constant_power) + ".txt", ios::out | ios::app);
+    outfile << endl << "===================" << endl;
+    outfile << ctime(&t) << endl;
+    outfile << "Pairs = " << pairs << endl;
+    outfile << "X = " << x << endl;
+    outfile << "Y = " << y << endl;
+    outfile << "Initial Constant = " << initial_constant_power << endl;
+    outfile << "cups,t_fill_batch,t_fpga,p_fpga,t_sw,p_sw,t_float,p_float,t_dec,p_dec,utilization,speedup" << endl;
+    outfile << setprecision(20) << fixed << workload->cups_req <<","<< t_fill_batch <<","<< t_fpga <<","<< p_fpga <<","<< t_sw <<","<< p_sw <<","<< t_float <<","<< p_float <<","<< t_dec <<","<< p_dec <<","<< utilization <<","<< speedup << endl;
+    outfile.close();
 
     return (0);
 

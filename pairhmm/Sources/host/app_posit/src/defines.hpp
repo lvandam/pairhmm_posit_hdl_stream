@@ -6,7 +6,7 @@ using namespace sw::unum;
 
 // POSIT
 #define NBITS 32
-#define ES 3
+#define ES 2
 
 #define DEBUG              1
 
@@ -69,7 +69,7 @@ using namespace sw::unum;
 
 struct Entry {
     string name;
-    cpp_dec_float_50 value;
+    cpp_dec_float_100 value;
 };
 
 struct find_entry {
