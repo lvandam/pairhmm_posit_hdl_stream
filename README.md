@@ -1,1 +1,1 @@
-# pairhmm_posit_hdl
+# Pair-HMM Accelerator for Posit Arithmetic
